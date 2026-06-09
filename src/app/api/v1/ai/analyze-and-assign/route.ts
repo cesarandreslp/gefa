@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
         const tenantInfo = await db.tenant.findUnique({ where: { id: auth.user!.tenantId } });
         const sigla = tenantInfo?.sigla || 'VU';
-        const tenantName = tenantInfo?.name || 'Ventanilla Única Digital';
+        const tenantName = tenantInfo?.name || 'GEFA — Gestión Familiar';
 
         // 3. Generar número de radicación
         console.log('🔢 Generando número de radicación...');

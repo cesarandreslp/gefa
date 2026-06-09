@@ -9,7 +9,7 @@
  * - Validación de configuración
  * - Manejo de errores
  *
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 
@@ -64,7 +64,7 @@ export class EmailService {
       secure: process.env.SMTP_SECURE === "true",
       user: process.env.SMTP_USER || "",
       pass: process.env.SMTP_PASS || "",
-      fromName: process.env.SMTP_FROM_NAME || process.env.NOREPLY_FROM_NAME || "Ventanilla Única Digital",
+      fromName: process.env.SMTP_FROM_NAME || process.env.NOREPLY_FROM_NAME || "GEFA — Gestión Familiar",
       fromEmail: process.env.SMTP_FROM || process.env.SMTP_FROM_EMAIL || process.env.NOREPLY_FROM_EMAIL || process.env.SMTP_USER || "",
     };
   }
@@ -321,7 +321,7 @@ export class EmailService {
           
           <div class="footer">
             <p style="margin: 5px 0;"><strong>${tenantName}</strong></p>
-            <p style="margin: 5px 0; font-size: 11px;">Sistema de Ventanilla Única Digital</p>
+            <p style="margin: 5px 0; font-size: 11px;">GEFA — Gestión Familiar</p>
             <p style="margin: 5px 0; font-size: 11px; color: #666;">
               Este mensaje fue enviado automáticamente. Por favor no responda a este correo.
             </p>
@@ -484,7 +484,7 @@ export class EmailService {
           
           <div class="footer">
             <p style="margin: 5px 0;"><strong>${tenantName}</strong></p>
-            <p style="margin: 5px 0; font-size: 11px;">Sistema de Ventanilla Única Digital</p>
+            <p style="margin: 5px 0; font-size: 11px;">GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>
@@ -497,7 +497,7 @@ export class EmailService {
         subject,
         html,
         replyTo: false,
-        fromName: process.env.NOREPLY_FROM_NAME || "Ventanilla Única Digital",
+        fromName: process.env.NOREPLY_FROM_NAME || "GEFA — Gestión Familiar",
         fromEmail:
           process.env.NOREPLY_FROM_EMAIL || "noreply@ventanillaunica.gov.co",
       });
@@ -891,7 +891,7 @@ export class EmailService {
         <div class="container">
           <div class="header">
             <h1>${fullTenantName}</h1>
-            <p>Ventanilla Única Digital — Comunicación Oficial</p>
+            <p>GEFA — Gestión Familiar — Comunicación Oficial</p>
           </div>
 
           <div class="subject-bar">
@@ -902,7 +902,7 @@ export class EmailService {
             <p style="margin-top:0;">Señores,<br><strong>${destinatarioLabel}</strong></p>
             <p>Cordial saludo,</p>
             <p>
-              La presente tiene como finalidad remitir para su conocimiento, análisis y gestión, la solicitud radicada a través de la Ventanilla Única Digital de <strong>${fullTenantName}</strong>, la cual ha sido asignada a su dependencia por competencia funcional.
+              La presente tiene como finalidad remitir para su conocimiento, análisis y gestión, la solicitud radicada a través de la plataforma GEFA — Gestión Familiar de <strong>${fullTenantName}</strong>, la cual ha sido asignada a su dependencia por competencia funcional.
             </p>
 
             <p class="section-label">Información general del trámite</p>
@@ -947,7 +947,7 @@ export class EmailService {
 
           <div class="footer">
             <p style="margin:0 0 6px;"><strong>Atentamente,<br>${fullTenantName}</strong></p>
-            <p style="margin:0;">Ventanilla Única Digital</p>
+            <p style="margin:0;">GEFA — Gestión Familiar</p>
             ${caseDetails?.tenantEmail ? `<p style="margin:2px 0;">${caseDetails.tenantEmail}</p>` : ''}
             ${caseDetails?.tenantPhone ? `<p style="margin:2px 0;">${caseDetails.tenantPhone}</p>` : ''}
           </div>

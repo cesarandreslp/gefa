@@ -8,7 +8,7 @@
  * Query params:
  * - limit: Cantidad de reportes (default 50)
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 

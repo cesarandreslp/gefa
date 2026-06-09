@@ -6,7 +6,7 @@
  * Acceso: ADMIN, SUPERVISOR
  * Auditoría: No (solo lectura)
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

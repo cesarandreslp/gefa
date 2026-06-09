@@ -11,8 +11,8 @@ export async function generateMetadata() {
   const tenant = await resolveTenantByHost(host);
 
   return {
-    title: tenant ? `${tenant.name} - Ventanilla Única` : 'Sistema de Ventanilla Única',
-    description: `Portal oficial de la ventanilla única para ${tenant?.name || 'Entidad Pública'}.`,
+    title: tenant ? `${tenant.name} · GEFA — Gestión Familiar` : 'GEFA — Gestión Familiar',
+    description: `Portal oficial de GEFA — Gestión Familiar para ${tenant?.name || 'Entidad Pública'}.`,
   };
 }
 

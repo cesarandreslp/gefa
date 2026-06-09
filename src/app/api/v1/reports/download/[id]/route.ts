@@ -9,7 +9,7 @@
  * Query params:
  * - format: csv (por ahora solo CSV)
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 

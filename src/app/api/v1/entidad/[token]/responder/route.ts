@@ -190,7 +190,7 @@ export async function POST(
         where: { id: tenantId },
         select: { name: true },
       });
-      const tenantName = tenant?.name || 'Ventanilla Única Digital';
+      const tenantName = tenant?.name || 'GEFA — Gestión Familiar';
 
       try {
         const origin = request.headers.get('origin');
@@ -229,7 +229,7 @@ export async function POST(
               </div>
               <div class="footer">
                 <p><strong>⚠️ Mensaje automático — no responder</strong></p>
-                <p>${tenantName} — Ventanilla Única Digital</p>
+                <p>${tenantName} — GEFA — Gestión Familiar</p>
               </div>
             </div>
             </body>

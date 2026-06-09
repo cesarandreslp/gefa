@@ -6,7 +6,7 @@
  * Acceso: ADMIN
  * Auditoría: No (solo testing)
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     // 4. Enviar email de prueba
     const success = await EmailService.sendEmail({
       to,
-      subject: subject || 'Email de prueba - Ventanilla Única',
+      subject: subject || 'Email de prueba · GEFA — Gestión Familiar',
       html: message || '<p>Este es un email de prueba del sistema de notificaciones.</p>',
     });
 

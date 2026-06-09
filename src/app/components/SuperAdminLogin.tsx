@@ -243,7 +243,7 @@ export default function SuperAdminLogin() {
           color: '#475569',
           marginTop: '2rem',
         }}>
-          Sistema de Ventanilla Única Multi-Entidad
+          GEFA — Gestión Familiar Multi-Entidad
         </p>
       </div>
     </div>

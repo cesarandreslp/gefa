@@ -6,7 +6,7 @@
  * Acceso: PÚBLICO
  * Cache: 24 horas
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

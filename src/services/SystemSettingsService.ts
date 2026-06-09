@@ -10,7 +10,7 @@
  * - Valores por defecto
  * - Calendario de negocio
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

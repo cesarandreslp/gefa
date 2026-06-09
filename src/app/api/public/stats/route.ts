@@ -12,7 +12,7 @@
  * - periodFrom: Fecha inicio (ISO 8601)
  * - periodTo: Fecha fin (ISO 8601)
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 

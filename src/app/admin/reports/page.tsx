@@ -13,7 +13,7 @@
  * - Listado de reportes generados
  * - Descarga CSV
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 

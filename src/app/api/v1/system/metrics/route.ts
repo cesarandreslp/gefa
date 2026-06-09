@@ -6,7 +6,7 @@
  * Acceso: ADMIN
  * Propósito: Métricas básicas para panel administrativo
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 13, 2026
  */
 

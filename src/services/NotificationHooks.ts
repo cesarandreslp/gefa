@@ -9,7 +9,7 @@
  * - Logging completo
  * - Fácil integración en endpoints
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

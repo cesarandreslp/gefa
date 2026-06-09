@@ -70,7 +70,7 @@ export async function POST(
         where: { id: caso.tenantId },
         select: { name: true }
       });
-      const tenantName = tenant?.name || 'Ventanilla Única Digital';
+      const tenantName = tenant?.name || 'GEFA — Gestión Familiar';
       const directorName = auth.user.email;
 
       await EmailService.sendEmail({

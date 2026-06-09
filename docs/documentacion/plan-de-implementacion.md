@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 22. Rebranding de UI: reemplazar referencias a "Ventanilla Única" por GEFA
+**Estado:** COMPLETADO
+**Objetivo:** El producto ya es GEFA (gestión de comisarías de familia), pero quedan textos fijos heredados que dicen "Ventanilla Única" / "Sistema de Ventanilla Única" en etiquetas visibles (títulos, metadatos, encabezados, mensajes de UI). Cambiar esas referencias de marca a GEFA. NO tocar el rol funcional `VENTANILLA_UNICA` (recepción/mostrador) ni identificadores de código que romperían RBAC/seed; solo el texto de marca visible al usuario.
+
+**Decisión de alcance (confirmada con el usuario):** se cambia **solo la marca del producto** y el texto a usar es **"GEFA — Gestión Familiar"**. Se deja intacto el **rol/cargo de mostrador** "Ventanilla Única" (es un cargo legítimo de recepción), incluido su código `VENTANILLA_UNICA`, su label visible y su provisioning.
+
+**Implementación:** reemplazo por **frases de marca** (no la palabra suelta) para no afectar el rol — script temporal `scripts/_rebrand.js` (creado y borrado tras usarse) que aplicó, en orden de más larga a más corta y en UTF-8: `Sistema de Ventanilla Única Digital`, `Sistema de Ventanilla Única`, `Sistema Ventanilla Única`, `plataforma Ventanilla Única`, `Ventanilla Única Digital` → `GEFA — Gestión Familiar`. **39 archivos** modificados (metadatos `@author`, `fromName`/pies de `EmailService` y `TemplateService`, footer de reportes en `ReportService`, fallbacks `tenant?.name || 'Ventanilla Única Digital'` en endpoints de email, login del super-admin, `constants.NAME`, `DashboardHeader`, etc.).
+**Ajustes manuales (4) de marca con redacción distinta:** `app/layout.tsx` (title del navegador → `${tenant.name} · GEFA — Gestión Familiar` y description), `notifications/test` (asunto de email de prueba), `TemplateService` ("mensaje automático del sistema GEFA — Gestión Familiar") y `EmailService:905` (gramática: "a través de la **plataforma** GEFA — Gestión Familiar").
+
+**Verificación:** `npm run type-check` en verde. Las 19 referencias que quedan a "Ventanilla Única" son todas del **rol/cargo** (definición del rol, notificaciones al usuario de ventanilla, labels, comentarios de lógica) — ninguna es marca de producto.
+
 ### 21. Datos de ejemplo: superadmin del SaaS, tenant demo y sus usuarios/casos
 **Estado:** COMPLETADO
 **Objetivo:** Dejar el entorno listo para probar: crear (a) las credenciales del superadmin del control plane, (b) un tenant de ejemplo (comisaría) con su configuración, usuarios por rol y catálogos, y (c) algunos casos/expedientes de familia con información de muestra para ver el sistema funcionando de extremo a extremo.

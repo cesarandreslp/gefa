@@ -10,7 +10,7 @@
  * - Información del sistema
  * - Actualización manual
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 13, 2026
  */
 

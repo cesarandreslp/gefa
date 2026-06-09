@@ -29,7 +29,7 @@ export default function DashboardHeader() {
           setUserRole(user.role?.name || '');
           
           if (user.tenant) {
-            setTenantName(user.tenant.name || 'Sistema Ventanilla Única');
+            setTenantName(user.tenant.name || 'GEFA — Gestión Familiar');
             setTenantSigla(user.tenant.sigla || 'VU');
           }
         }

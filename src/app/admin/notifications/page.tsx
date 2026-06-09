@@ -11,7 +11,7 @@
  * - Botón para procesar cola manualmente
  * - Estadísticas de notificaciones
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

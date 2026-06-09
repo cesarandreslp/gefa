@@ -171,7 +171,7 @@ export async function POST(
           const officialName = nuevoFuncionario?.fullName || 'Funcionario asignado';
 
           const tenant = await db.tenant.findUnique({ where: { id: auth.user.tenantId } });
-          const tenantName = tenant?.name || 'Ventanilla Única Digital';
+          const tenantName = tenant?.name || 'GEFA — Gestión Familiar';
 
           EmailService.sendCitizenReassignmentEmail(
             tenantName,

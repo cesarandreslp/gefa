@@ -16,7 +16,7 @@
  * - Umbrales del sistema
  * - Auditoría de cambios
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

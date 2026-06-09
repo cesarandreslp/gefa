@@ -103,7 +103,7 @@ export async function POST(
       where: { id: caso.tenantId },
       include: { settings: true, institutionType: true }
     });
-    const tenantName = tenant?.name || 'Ventanilla Única Digital';
+    const tenantName = tenant?.name || 'GEFA — Gestión Familiar';
     const tenantType = (tenant as { institutionType?: { name?: string } })?.institutionType?.name || undefined;
     const tenantEmail = tenant?.settings?.institutionalEmail || tenant?.institutionalEmail || undefined;
     const tenantPhone = tenant?.settings?.phone || tenant?.phone || undefined;

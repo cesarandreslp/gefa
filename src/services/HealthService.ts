@@ -9,7 +9,7 @@
  * - Uptime del sistema
  * - Métricas básicas de salud
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 13, 2026
  */
 

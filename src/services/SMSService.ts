@@ -8,7 +8,7 @@
  * - Estructura lista para expansión
  * - Por ahora solo loguea los mensajes
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 

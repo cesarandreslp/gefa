@@ -9,7 +9,7 @@
  * - Renderizado con variables
  * - Validación de variables requeridas
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 12, 2026
  */
 
@@ -59,7 +59,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
           </div>
           <div class="footer">
-            <p>Este es un mensaje automático del sistema de Ventanilla Única</p>
+            <p>Este es un mensaje automático del sistema GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>
@@ -105,7 +105,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             </div>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única - Entidad Institucional</p>
+            <p>GEFA — Gestión Familiar - Entidad Institucional</p>
           </div>
         </div>
       </body>
@@ -148,7 +148,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única</p>
+            <p>GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>
@@ -187,7 +187,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única</p>
+            <p>GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>
@@ -228,7 +228,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p><strong>Por favor, gestione este caso con prioridad.</strong></p>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única - Alertas Automáticas</p>
+            <p>GEFA — Gestión Familiar - Alertas Automáticas</p>
           </div>
         </div>
       </body>
@@ -267,7 +267,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única</p>
+            <p>GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>
@@ -299,7 +299,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             <p>{{message}}</p>
           </div>
           <div class="footer">
-            <p>Sistema de Ventanilla Única</p>
+            <p>GEFA — Gestión Familiar</p>
           </div>
         </div>
       </body>

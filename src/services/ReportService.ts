@@ -10,7 +10,7 @@
  * - Metadata institucional completa
  * - Reproducible y determinístico
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 
@@ -52,7 +52,7 @@ export interface ReportData {
 export class ReportService {
   private static readonly LEGAL_NOTE =
     'Este reporte es un documento oficial de la Entidad Institucional. ' +
-    'La información contenida es auténtica y verificable. Generado automáticamente por el Sistema de Ventanilla Única. ' +
+    'La información contenida es auténtica y verificable. Generado automáticamente por el GEFA — Gestión Familiar. ' +
     'Ley 1712/2014 (Transparencia y Acceso a la Información Pública).';
 
   /**

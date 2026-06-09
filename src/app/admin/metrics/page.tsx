@@ -12,7 +12,7 @@
  * - Gráficas simples sin librerías pesadas
  * - Explicación de cada indicador
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 9, 2026
  */
 

@@ -6,7 +6,7 @@
  * Acceso: ADMIN, SUPERVISOR
  * Propósito: Diagnóstico operativo detallado
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 13, 2026
  */
 

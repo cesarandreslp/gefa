@@ -202,7 +202,7 @@ export default function RegistroEntidadPage() {
             🏛️ Registro de Nueva Entidad
           </h1>
           <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem' }}>
-            Configure su entidad en la plataforma Ventanilla Única
+            Configure su entidad en la plataforma GEFA — Gestión Familiar
           </p>
         </div>
 

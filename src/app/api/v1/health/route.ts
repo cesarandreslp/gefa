@@ -6,7 +6,7 @@
  * Acceso: PÚBLICO (sin autenticación)
  * Propósito: Health check para monitoreo externo
  * 
- * @author Sistema Ventanilla Única
+ * @author GEFA — Gestión Familiar
  * @date Enero 13, 2026
  */
 

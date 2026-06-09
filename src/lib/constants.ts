@@ -14,7 +14,7 @@
 // ============================================================================
 
 export const INSTITUTION = {
-  NAME: process.env.INSTITUTION_NAME || 'Ventanilla Única Digital',
+  NAME: process.env.INSTITUTION_NAME || 'GEFA — Gestión Familiar',
   NIT: process.env.INSTITUTION_NIT || '',
   ADDRESS: process.env.INSTITUTION_ADDRESS || '',
   CITY: process.env.INSTITUTION_CITY || '',
