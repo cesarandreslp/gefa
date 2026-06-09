@@ -6,6 +6,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 26. Reconstruir la cara pública del ciudadano según el flujo REAL de comisaría de familia
+**Estado:** EN CURSO
+**Objetivo:** Corregir el rumbo de la entrada #25. En vez de **ocultar/redirigir** el flujo ciudadano heredado de personería (PQRS/tutelas), reconstruirlo correctamente para una **comisaría de familia**. Premisa del usuario: los componentes técnicos se reutilizan, pero el **flujo de negocio** de una comisaría (denuncia de violencia → medida de protección → conciliación/audiencia → PARD → seguimiento) NO es el de una personería (PQRS/derecho de petición/tutela). Pasos: (1) revertir el código de la entrada #25 (los redirects); (2) investigar el flujo documentado de comisaría; (3) rediseñar la cara pública (radicar/consultar/seguimiento) con vocabulario de comisaría y datos reales del tenant, sobre la infraestructura heredada; (4) consolidar en un solo flujo (sin duplicar con `/comisaria-en-linea`).
+
 ### 25. Branding/contenido por defecto del tenant: quitar herencia de personería
 **Estado:** COMPLETADO (flujo ciudadano; quedan 2 páginas informativas pendientes)
 **Objetivo:** El contenido por defecto que ve un tenant (landing de entidad: servicios, subtítulo hero, CTA, etc.) se hereda de `ventanilla_unica_base` (personería: tutelas, derechos de petición…). Es crítico porque cada tenant nuevo nace con ese branding ajeno. Reescribir los defaults a GEFA / comisaría de familia (o neutralizarlos) para que un tenant recién creado muestre contenido propio del dominio de familia.
