@@ -7,8 +7,25 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 ## 2026-06-09
 
 ### 9. Fase 3 — Módulo 2: APIs de dominio familiar
-**Estado:** EN CURSO
-**Objetivo:** Crear los endpoints REST del dominio de comisaría de familia sobre los modelos del Módulo 1 (`Person`, `CaseParty`, `ProtectionMeasure`, `RestorationProcess`, `Hearing`, `Assessment`), usando `getPrismaForTenant` y `protectAPIRoute`. Hardening de acceso para `Assessment` (confidencial) y expedientes con NNA.
+**Estado:** COMPLETADO
+**Objetivo:** Crear los endpoints REST del dominio de comisaría de familia sobre los modelos del Módulo 1, con aislamiento por tenant (`auth.db`) y RBAC, incluido hardening de `Assessment`.
+
+**Helper compartido — `src/lib/familyApi.ts`:** centraliza el RBAC para evitar divergencias sobre datos sensibles. Grupos de roles:
+- `FAMILY_READ_ROLES` (ADMIN, DIRECTOR, ASIGNACION_DE_CASOS, FUNCIONARIO, VENTANILLA_UNICA) — lectura del expediente no confidencial.
+- `FAMILY_INTAKE_ROLES` (ADMIN, DIRECTOR, FUNCIONARIO, VENTANILLA_UNICA) — alta/edición de personas y partes.
+- `FAMILY_WRITE_ROLES` (ADMIN, DIRECTOR, FUNCIONARIO) — actos con efecto jurídico (medidas, PARD, audiencias).
+- `FAMILY_CONFIDENTIAL_ROLES` (ADMIN, DIRECTOR, FUNCIONARIO) — **valoraciones** (excluye ventanilla y auxiliar). Hardening Ley 1581/2012 + Ley 1098/2006.
+- `findCaseInTenant()` (guard anti-fuga entre comisarías) e `isValidEnum()` (validación de enums Prisma).
+
+**12 rutas nuevas bajo `/api/v1/family/` (namespace propio, sin colisionar con el dominio heredado):**
+- `persons` (GET lista/búsqueda paginada, POST — deriva `isMinor` por `birthDate`, 409 si duplicado) y `persons/[id]` (GET con vínculos a casos, PATCH).
+- `cases/[caseId]/parties` (GET, POST — valida `PartyRole`, exige representante legal para NNA, 409 en duplicado) y `parties/[partyId]` (DELETE).
+- `cases/[caseId]/measures` (GET, POST) y `measures/[id]` (PATCH — incumplimiento/revocación/renovación/notificación policial).
+- `cases/[caseId]/restoration` (GET, POST — valida que el `childId` sea NNA) y `restoration/[id]` (GET, PATCH etapa/hallazgos/cierre).
+- `cases/[caseId]/hearings` (GET, POST) y `hearings/[id]` (PATCH realización/acta/resultado/siguiente audiencia).
+- `cases/[caseId]/assessments` (GET, POST) y `assessments/[id]` (GET, PATCH) — **acceso restringido**, `isConfidential` por defecto.
+
+**Verificación:** `npm run type-check` OK. `npm run build` OK — las 12 rutas aparecen como dinámicas (`ƒ`) en el manifiesto.
 
 ### 8. Fase 3 — Módulo 1b: seed de tipos de caso de comisaría de familia
 **Estado:** COMPLETADO
