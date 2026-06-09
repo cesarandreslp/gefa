@@ -6,6 +6,21 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 21. Datos de ejemplo: superadmin del SaaS, tenant demo y sus usuarios/casos
+**Estado:** COMPLETADO
+**Objetivo:** Dejar el entorno listo para probar: crear (a) las credenciales del superadmin del control plane, (b) un tenant de ejemplo (comisaría) con su configuración, usuarios por rol y catálogos, y (c) algunos casos/expedientes de familia con información de muestra para ver el sistema funcionando de extremo a extremo.
+
+**Implementación — `scripts/seed-demo-gefa.ts` (nuevo, idempotente):** se ejecutó contra la BD apuntada por `DATABASE_URL`. Crea/asegura:
+- **SUPER_ADMIN (control plane):** `superadmin@system.local` / `superadmin123` (rol global `SUPER_ADMIN`, `tenantId` null).
+- **Tenant demo:** *Comisaría de Familia de Guadalajara de Buga* (`CFBUGA`, dominio `cf-buga.gov.co`) con `TenantSettings`. `databaseUrl` null → opera en la BD global (modo desarrollo; el patrón `dbUrl ? getTenantPrisma : mainPrisma` lo resuelve a la principal).
+- **Roles del tenant:** `ADMIN`, `DIRECTOR` (Comisario/a — único con acceso al visor de auditoría), `FUNCIONARIO` (equipo interdisciplinario), `VENTANILLA_UNICA`.
+- **Usuarios:** admin / comisaria / psicologa / trabajo.social / abogada / ventanilla `@cfbuga.gov.co` (credenciales en el resumen del script).
+- **Catálogos:** 7 estados de familia (globales) + 7 tipos de caso `{code}_CFBUGA`.
+- **3 expedientes** con partes, equipo, historial y auditoría: `CFBUGA-2026-000001` VIF (medida de protección vigente + valoración de riesgo ALTO confidencial + audiencia de descargos), `CFBUGA-2026-000002` PARD de NNA (proceso de restablecimiento en seguimiento + 2 valoraciones confidenciales), `CFBUGA-2026-000003` CAV (radicado por el portal ciudadano, audiencia de conciliación programada).
+- **22 registros de `ActionLog` encadenados** con el mismo SHA-256 de `computeAuditChecksum` — verificado: `chainIntact = true`, 0 filas alteradas; el visor de la Fase 8 los mostrará como cadena íntegra.
+
+**Verificación:** conteos OK (3 casos, 7 personas, 3 valoraciones confidenciales, etc.) e integridad de la cadena revalidada con el algoritmo del visor. Re-ejecutable: limpia solo los datos de dominio del tenant demo antes de resembrar.
+
 ### 20. Fase 8 — Cierre: visor de auditoría por caso en el panel admin
 **Estado:** COMPLETADO
 **Objetivo:** Completar lo que resta de la Fase 8 (hardening). El `ActionLog` encadenado por checksum (entrada #18) ya se escribe en cada acción de familia, pero no hay forma de consultarlo desde la UI. Crear un visor de trazabilidad por expediente: endpoint admin protegido por RBAC que lea el `ActionLog` del caso y una vista en el panel admin que muestre el historial inmutable (quién, qué, cuándo, IP), con verificación de integridad de la cadena de hashes.
