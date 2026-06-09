@@ -6,6 +6,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 28. Preparar el plan de la fase mayor: migración de enums + unificación de login
+**Estado:** COMPLETADO — plan entregado en `docs/documentacion/PLAN_REFACTOR_COMISARIA.md` (pendiente aprobación para ejecutar)
+**Objetivo:** A pedido del usuario, NO ejecutar aún el refactor mayor sino **preparar el plan**: (a) unificar el login y la navegación en el panel de comisaría `/admin/*` retirando el panel Ventanilla `/home/*`; (b) migrar los enums de personería del schema (DocumentType, etc.) a valores de comisaría en todas las BD de tenants (multitenant). Investigar los dos flujos de login, el mapeo `/home`↔`/admin`, los enums afectados y la mecánica de migración existente; entregar un plan por fases con riesgos y rollback.
+
 ### 27. Sanear rastros de personería en el panel interno y el núcleo (post-cara pública)
 **Estado:** EN CURSO
 **Objetivo:** Aplicar el principio "GEFA es comisaría, no personería" al resto del sistema (panel interno y núcleo), no solo a la cara pública (#26). Auditoría hecha: hay un panel Ventanilla heredado (`/home/*`, bandeja PQRS) coexistiendo con el de comisaría (`/admin/*`), más tipos de personería en `CaseTypes.ts` y endpoints `general-request`/`contact`. Ejecutar por fases verificables (type-check + commit por fase), de menor a mayor riesgo, reescribiendo o retirando con reemplazo de comisaría — sin ocultar. Primer paso: verificar qué del panel Ventanilla está vivo vs muerto para retirar con seguridad.
