@@ -110,11 +110,11 @@ export default async function HomePage() {
             {landingConfig.heroSubtitle}
           </p>
           <div className="hero-actions">
-            <Link href="/atencion-ciudadano/solicitud" className="btn btn-secondary btn-lg">
-              Radicar Solicitud
+            <Link href="/comisaria-en-linea" className="btn btn-secondary btn-lg">
+              Radicar denuncia o solicitud
             </Link>
-            <Link href="/atencion-ciudadano/consultar" className="btn btn-outline btn-lg">
-              Consultar Solicitud
+            <Link href="/comisaria-en-linea?tab=consultar" className="btn btn-outline btn-lg">
+              Consultar mi caso
             </Link>
           </div>
         </div>

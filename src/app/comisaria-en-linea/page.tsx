@@ -84,6 +84,8 @@ export default function ComisariaEnLineaPage() {
     if (rad) {
       setQFiling(rad);
       setTab('consultar');
+    } else if (params.get('tab') === 'consultar') {
+      setTab('consultar');
     }
   }, []);
 
