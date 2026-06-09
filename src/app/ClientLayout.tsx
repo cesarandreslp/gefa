@@ -50,7 +50,7 @@ export default function ClientLayout({
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const isDashboard = pathname?.startsWith('/home');
+  const isDashboard = pathname?.startsWith('/admin');
 
   // Cerrar sesión si el navegador fue cerrado (sessionStorage no sobrevive al cierre).
   // Las rutas /super-admin y /admin/* tienen su seguridad manejada por el middleware
@@ -202,7 +202,7 @@ export default function ClientLayout({
                 <a href="/atencion-ciudadano/consultar" className="nav-link">Consultar Solicitud</a>
                 {mounted && isLoggedIn && !isDashboard && (
                   <a
-                    href="/home"
+                    href="/admin/inbox"
                     className="nav-link"
                     style={{
                       backgroundColor: 'var(--color-primary)',
@@ -365,7 +365,7 @@ export default function ClientLayout({
                 {/* Mi Panel (solo cuando está logueado y fuera del dashboard) */}
                 {mounted && isLoggedIn && !isDashboard && (
                   <a
-                    href="/home"
+                    href="/admin/inbox"
                     className="mobile-menu-link"
                     style={{
                       display: 'block',

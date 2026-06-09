@@ -33,6 +33,22 @@ const nextConfig = {
     ],
   },
   
+  // Panel interno unificado en /admin (comisaría). El panel Ventanilla heredado
+  // /home se retira: estas reglas redirigen sus rutas al equivalente de comisaría.
+  async redirects() {
+    return [
+      { source: '/home/casos/:path*', destination: '/admin/cases', permanent: false },
+      { source: '/home/cierre-casos/:path*', destination: '/admin/cases', permanent: false },
+      { source: '/home/cargos', destination: '/admin/cargos', permanent: false },
+      { source: '/home/usuarios/:path*', destination: '/admin/usuarios', permanent: false },
+      { source: '/home/registro', destination: '/admin/usuarios', permanent: false },
+      { source: '/home/configuracion-entidad', destination: '/admin/entidad', permanent: false },
+      { source: '/home/editor-landing', destination: '/admin/settings', permanent: false },
+      { source: '/home', destination: '/admin/inbox', permanent: false },
+      { source: '/home/:path*', destination: '/admin/inbox', permanent: false },
+    ];
+  },
+
   // Headers de seguridad
   async headers() {
     return [

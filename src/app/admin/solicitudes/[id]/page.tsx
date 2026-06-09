@@ -119,7 +119,7 @@ export default function SolicitudDetallePage() {
       <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '2rem' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <button
-            onClick={() => router.push('/home/bandeja-entrada')}
+            onClick={() => router.push('/admin/inbox')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -169,7 +169,7 @@ export default function SolicitudDetallePage() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <button
-            onClick={() => router.push('/home/bandeja-entrada')}
+            onClick={() => router.push('/admin/inbox')}
             style={{
               display: 'flex',
               alignItems: 'center',

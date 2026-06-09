@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 29. Ejecutar Fase A del refactor: unificar login y navegación en /admin
+**Estado:** COMPLETADO
+
+**Hecho:**
+- `LoginModal.tsx`: ambos handlers redirigen a `/admin/inbox` (antes a `/home`/`/home/bandeja-entrada` por nivel). SUPER_ADMIN sigue a `/super-admin`.
+- `ClientLayout.tsx`: enlaces "ir al panel" → `/admin/inbox`; `isDashboard` detecta `/admin` (antes `/home`).
+- `admin/cargos`, `admin/usuarios`, `admin/solicitudes/[id]`: botones de volver → `/admin/inbox`.
+- `next.config.js`: `redirects()` de compatibilidad `/home/*` → equivalente en `/admin` (casos→cases, cargos→cargos, usuarios/registro→usuarios, configuracion-entidad→entidad, editor-landing→settings, resto→inbox).
+- **Retirado el panel Ventanilla**: borrado `src/app/home/*` (sin imports cruzados ni producción). `npm run type-check` en verde (tras limpiar cache `.next/types/app/home`).
+
+**Siguiente:** Fase C (retiro de `general-request`/`contact`, limpieza de `CaseTypes.ts` y textos/correos) y Fase B (migración del enum `DocumentType`).
+**Objetivo:** Ejecutar la Fase A del `PLAN_REFACTOR_COMISARIA.md` (aprobado; sin tenants en producción). Unificar el login en el panel de comisaría `/admin/*`: `LoginModal` y enlaces internos dejan de apuntar a `/home` (Ventanilla) y van a `/admin/inbox`; las rutas `/home/*` se redirigen a su equivalente en `/admin` (compatibilidad) para luego retirarse.
+
 ### 28. Preparar el plan de la fase mayor: migración de enums + unificación de login
 **Estado:** COMPLETADO — plan entregado en `docs/documentacion/PLAN_REFACTOR_COMISARIA.md` (pendiente aprobación para ejecutar)
 **Objetivo:** A pedido del usuario, NO ejecutar aún el refactor mayor sino **preparar el plan**: (a) unificar el login y la navegación en el panel de comisaría `/admin/*` retirando el panel Ventanilla `/home/*`; (b) migrar los enums de personería del schema (DocumentType, etc.) a valores de comisaría en todas las BD de tenants (multitenant). Investigar los dos flujos de login, el mapeo `/home`↔`/admin`, los enums afectados y la mecánica de migración existente; entregar un plan por fases con riesgos y rollback.

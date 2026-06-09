@@ -104,17 +104,10 @@ export default function LoginModal({
       const roleLevel = data.data?.user?.role?.level;
 
       if (roleCode === 'SUPER_ADMIN') {
-        console.log('✅ Redirigiendo a SUPER_ADMIN (Control Global)');
         router.push('/super-admin');
-      } else if (roleLevel && roleLevel >= 90) {
-        console.log('✅ Redirigiendo a panel principal de Administrador Tenant');
-        router.push('/home'); // Revertido al híbrido original
-      } else if (roleLevel === 85) {
-        console.log('✅ Redirigiendo a bandeja-entrada (funcionario nivel 85)');
-        router.push('/home/bandeja-entrada');
       } else {
-        console.log('✅ Redirigiendo a home (nivel', roleLevel, ')');
-        router.push('/home');
+        // Panel unificado de la comisaría
+        router.push('/admin/inbox');
       }
       setIsLoginModalOpen(false);
     } catch {
@@ -163,14 +156,9 @@ export default function LoginModal({
       const roleLevel = data.user?.role?.level || data.data?.user?.role?.level;
       if (roleCode === 'SUPER_ADMIN') {
         router.push('/super-admin');
-      } else if (roleLevel && roleLevel >= 90) {
-        router.push('/home');
-        router.refresh();
-      } else if (roleLevel === 85) {
-        router.push('/home/bandeja-entrada');
-        router.refresh();
       } else {
-        router.push('/home');
+        // Panel unificado de la comisaría
+        router.push('/admin/inbox');
         router.refresh();
       }
     } catch (error) {
