@@ -17,6 +17,8 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - **Retirado el panel Ventanilla**: borrado `src/app/home/*` (sin imports cruzados ni producción). `npm run type-check` en verde (tras limpiar cache `.next/types/app/home`).
 
 **Siguiente:** Fase C (retiro de `general-request`/`contact`, limpieza de `CaseTypes.ts` y textos/correos) y Fase B (migración del enum `DocumentType`).
+
+**Fase C.1 (hecha):** retirados los endpoints muertos `cases/general-request` y `api/v1/contact` (sin llamadas vivas) y el script `test-general-request.js`. `npm run type-check` en verde.
 **Objetivo:** Ejecutar la Fase A del `PLAN_REFACTOR_COMISARIA.md` (aprobado; sin tenants en producción). Unificar el login en el panel de comisaría `/admin/*`: `LoginModal` y enlaces internos dejan de apuntar a `/home` (Ventanilla) y van a `/admin/inbox`; las rutas `/home/*` se redirigen a su equivalente en `/admin` (compatibilidad) para luego retirarse.
 
 ### 28. Preparar el plan de la fase mayor: migración de enums + unificación de login
