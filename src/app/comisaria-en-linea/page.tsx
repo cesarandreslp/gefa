@@ -78,11 +78,14 @@ export default function ComisariaEnLineaPage() {
   const [result, setResult] = useState<StatusResult | null>(null);
 
   // Pre-llenar la consulta si llega ?radicado= (ej. clic desde el comprobante)
+  // o abrir la pestaña de consulta con ?tab=consultar.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const rad = params.get('radicado');
     if (rad) {
       setQFiling(rad);
+      setTab('consultar');
+    } else if (params.get('tab') === 'consultar') {
       setTab('consultar');
     }
   }, []);

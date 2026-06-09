@@ -6,6 +6,23 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 25. Branding/contenido por defecto del tenant: quitar herencia de personería
+**Estado:** COMPLETADO (flujo ciudadano; quedan 2 páginas informativas pendientes)
+**Objetivo:** El contenido por defecto que ve un tenant (landing de entidad: servicios, subtítulo hero, CTA, etc.) se hereda de `ventanilla_unica_base` (personería: tutelas, derechos de petición…). Es crítico porque cada tenant nuevo nace con ese branding ajeno. Reescribir los defaults a GEFA / comisaría de familia (o neutralizarlos) para que un tenant recién creado muestre contenido propio del dominio de familia.
+
+**Diagnóstico:** `landingDefaults.ts` (catálogo de servicios) y `la-entidad`/`servicios` ya estaban adaptados a comisaría de familia. El branding de personería estaba en el **flujo ciudadano heredado** (`atencion-ciudadano/*`), hardcodeado e idéntico para todos los tenants: términos PQRS (Derechos de Petición, Tutelas, Quejas Disciplinarias), vocabulario "petición/queja/reclamo" y datos ficticios ("Entidad Institucional", "Carrera 10 #10-10", `contacto@entidadciudad.gov.co`). Ese flujo además se solapaba con el portal nuevo `/comisaria-en-linea` (Fase 7).
+
+**Decisión del usuario:** **unificar en el portal GEFA** — apuntar los accesos ciudadanos al portal y retirar/redirigir las páginas PQRS heredadas redundantes.
+
+**Implementación:**
+- **`src/app/page.tsx`** (landing del tenant): los botones del hero "Radicar Solicitud" → `/comisaria-en-linea` y "Consultar Solicitud" → `/comisaria-en-linea?tab=consultar` (antes apuntaban a `/atencion-ciudadano/solicitud` y `/consultar`).
+- **`src/app/comisaria-en-linea/page.tsx`**: ahora también abre la pestaña de consulta con `?tab=consultar` (además del `?radicado=` ya existente).
+- **`src/app/atencion-ciudadano/page.tsx`** y **`.../solicitud/page.tsx`**: reemplazadas por un `redirect('/comisaria-en-linea')` (se retira el hub PQRS y el formulario PQRS de 1194 líneas; la ruta se conserva para no romper enlaces antiguos). Los servicios del catálogo que apuntaban a `/atencion-ciudadano/solicitud` quedan cubiertos por el redirect.
+
+**No tocado a propósito (bajo riesgo):** `/atencion-ciudadano/consultar` se conserva intacta porque es destino de enlaces en correos del flujo heredado (Ventanilla) y soporta respuestas del ciudadano; el backend heredado sigue operando.
+
+**Pendiente (informativas/legales, no son flujo PQRS):** `atencion-ciudadano/contacto` y `privacidad` aún tienen datos ficticios y vocabulario "petición/tutela". Opción futura: hacerlas dinámicas con los datos del tenant o redirigirlas. `npm run type-check` en verde.
+
 ### 24. Asignar dominio al tenant demo para probar la landing de entidad en Vercel
 **Estado:** COMPLETADO
 **Objetivo:** Que el host del preview resuelva a la comisaría demo (CFBUGA) y se vea su landing de entidad, no la del producto. El usuario eligió la vía de subdominio. Como `*.vercel.app` no admite sub-subdominios (`cfbuga.gefa-black.vercel.app` no es válido), se usa un alias `*.vercel.app` de primer nivel: `gefa-cfbuga.vercel.app`. Acción de datos: fijar `Tenant.domain` del tenant demo a ese host (el alias debe añadirse luego en Vercel → Project → Domains).
