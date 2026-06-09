@@ -1,19 +1,20 @@
 // ============================================================================
-// SCHEMA DE PRISMA - VENTANILLA ÚNICA PERSONERÍA MUNICIPAL
+// SCHEMA DE PRISMA - GEFA (Gestión Familiar)
 // ============================================================================
-// Personería Municipal de Guadalajara de Buga, Valle del Cauca, Colombia
-// 
-// Este schema define el modelo de datos completo del sistema de Ventanilla
-// Única, cumpliendo con toda la normativa colombiana aplicable.
+// Plataforma SaaS multitenant para Comisarías de Familia colombianas.
+// Reemplaza el expediente en papel por un expediente digital con trazabilidad
+// para casos de violencia intrafamiliar, medidas de protección, PARD y
+// valoraciones psicosociales.
 //
 // Normativa aplicada:
-// - Ley 1755/2015: Derecho de Petición
-// - Ley 1437/2011: CPACA
+// - Art. 42 Constitución Política: protección de la familia
+// - Ley 294/1996 y Ley 575/2000: violencia intrafamiliar
+// - Ley 1098/2006: Código de Infancia y Adolescencia
+// - Ley 1257/2008: no violencia contra la mujer
 // - Ley 1581/2012: Protección de Datos Personales
-// - Ley 1712/2014: Transparencia
+// - Decreto 4840/2007 y Ley 2126/2021: comisarías de familia
 //
-// Fecha: Enero 8, 2026
-// Versión: 1.0
+// Versión: 2.0 — Fase 3: dominio familiar
 // ============================================================================
 
 generator client {
@@ -63,7 +64,7 @@ model Tenant {
   institutionTypeId   String?
   institutionType     InstitutionType? @relation(fields: [institutionTypeId], references: [id])
 
-  // Relaciones 1:N
+  // Relaciones 1:N — infraestructura heredada
   users               User[]
   citizens            Citizen[]
   cases               Case[]
@@ -76,6 +77,14 @@ model Tenant {
   documents           Document[]
   actionLogs          ActionLog[]
   notifications       Notification[]
+
+  // Relaciones 1:N — dominio familia (Fase 3)
+  persons             Person[]
+  caseParties         CaseParty[]
+  protectionMeasures  ProtectionMeasure[]
+  restorationProcesses RestorationProcess[]
+  hearings            Hearing[]
+  assessments         Assessment[]
 
   @@index([sigla])
   @@index([isActive])
@@ -263,18 +272,29 @@ model Case {
   
   // Metadatos flexibles (JSON para datos específicos por tipo)
   metadata       Json?
-  
+
+  // Dominio familia (Fase 3) — campos opcionales aditivos
+  violenceTypes  String[]  // valores de enum ViolenceType
+  caseModality   String?   // valor de enum CaseModality
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relaciones
+
+  // Relaciones — infraestructura heredada
   assignments    Assignment[]
   documents      Document[]
   stateHistory   CaseStateHistory[]
   actionLogs     ActionLog[]
   notifications  Notification[]
   assignmentHistory CaseAssignmentHistory[] @relation("assignmentHistory")
+
+  // Relaciones — dominio familia (Fase 3)
+  caseParties         CaseParty[]
+  protectionMeasures  ProtectionMeasure[]
+  restorationProcesses RestorationProcess[]
+  hearings            Hearing[]
+  assessments         Assessment[]
   
   @@index([filingNumber])
   @@index([citizenId])
@@ -599,6 +619,12 @@ model User {
   assignmentsHistory CaseAssignmentHistory[] @relation("assignedByHistory")
   reports      Report[]
   systemSettings SystemSetting[]
+
+  // Relaciones — dominio familia (Fase 3)
+  issuedMeasures       ProtectionMeasure[]
+  presidedHearings     Hearing[]
+  conductedAssessments Assessment[]
+  managedRestorations  RestorationProcess[]
 
   // Relación recursiva para conectar Auxiliares con el Oficial que los creó
   supervisorId String?
@@ -1094,6 +1120,382 @@ model EmailDirectory {
 
   @@index([email])
   @@map("email_directory")
+}
+
+// ============================================================================
+// FASE 3 — DOMINIO DE FAMILIA (modelos principales)
+// ============================================================================
+
+// --- Enums de dominio familiar ---
+
+/// Rol de una persona dentro de un caso de familia
+enum PartyRole {
+  VICTIMA          // Persona afectada directamente
+  AGRESOR          // Persona que ejerce la violencia
+  NNA              // Niño, niña o adolescente involucrado
+  TESTIGO          // Testigo de los hechos
+  DENUNCIANTE      // Quien interpone la denuncia (puede no ser víctima)
+  INTERVINIENTE    // Otro interviniente reconocido por la comisaría
+}
+
+/// Tipos de violencia o conflicto familiar
+enum ViolenceType {
+  FISICA
+  PSICOLOGICA
+  SEXUAL
+  ECONOMICA
+  PATRIMONIAL
+  NEGLIGENCIA
+  ABANDONO
+}
+
+/// Modalidad del caso (clasifica el tipo de trámite)
+enum CaseModality {
+  VIOLENCIA_INTRAFAMILIAR      // Ley 294/1996, Ley 575/2000
+  CONFLICTO_FAMILIAR           // Conflicto sin VIF declarada
+  CUSTODIA_ALIMENTOS_VISITAS   // Conciliación sobre NNA
+  MEDIDA_PROTECCION_NNA        // Medida de protección directa a NNA
+  PARD                         // Proceso Administrativo de Restablecimiento de Derechos
+  CONCILIACION_FAMILIAR        // Conciliación familiar general
+  ORIENTACION_JURIDICA         // Solo orientación, sin proceso
+}
+
+/// Tipos de medidas de protección que puede imponer una comisaría
+enum ProtectionMeasureType {
+  MEDIDA_POLICIA               // Solicitud de auxilio policial
+  CENTROS_REFUGIO              // Remisión a casa de refugio
+  PROHIBICION_APROXIMACION     // Prohibición de acercarse a la víctima
+  SUSPENSION_CONVIVENCIA       // Suspensión temporal de la convivencia
+  REINTEGRO_AL_HOGAR           // Reintegro con condiciones
+  TRATAMIENTO_REEDUCATIVO      // Tratamiento reeducativo / terapéutico
+  MEDIDA_NNA                   // Medida de protección específica para NNA
+  ALIMENTOS_PROVISIONALES      // Cuota alimentaria provisional
+  MEDIDA_REPARACION            // Reparación de daños materiales
+  OTRA
+}
+
+/// Estado de vigencia de una medida de protección
+enum MeasureStatus {
+  VIGENTE
+  INCUMPLIDA
+  REVOCADA
+  VENCIDA
+  CUMPLIDA
+}
+
+/// Tipos de audiencia en comisaría de familia
+enum HearingType {
+  CONCILIACION       // Audiencia de conciliación
+  NOTIFICACION       // Notificación personal
+  DESCARGOS          // Audiencia de descargos al agresor
+  FALLO              // Audiencia de fallo / decisión
+  SEGUIMIENTO        // Seguimiento a medidas impuestas
+  VERIFICACION       // Verificación de cumplimiento
+  RESTABLECIMIENTO   // Audiencia de restablecimiento de derechos (PARD)
+  INCUMPLIMIENTO     // Audiencia por incumplimiento de medida
+}
+
+/// Tipos de valoración psicosocial
+enum AssessmentType {
+  PSICOLOGICA        // Valoración psicológica
+  TRABAJO_SOCIAL     // Valoración de trabajo social
+  JURIDICA           // Valoración jurídica / concepto
+  MEDICA             // Valoración médica / forense
+  INTERDISCIPLINARIA // Valoración en equipo interdisciplinario
+  RIESGO             // Valoración de riesgo (SARA, EPV, formulario VIF)
+}
+
+/// Etapas del Proceso Administrativo de Restablecimiento de Derechos
+enum PardStage {
+  APERTURA           // Apertura del proceso (Art. 52 Ley 1098/2006)
+  DEFINICION_MEDIDAS // Definición de medidas de restablecimiento
+  SEGUIMIENTO        // Seguimiento a medidas adoptadas
+  CIERRE             // Cierre y archivo del proceso
+}
+
+/// Nivel de riesgo determinado en valoración
+enum RiskLevel {
+  BAJO
+  MEDIO
+  ALTO
+  EXTREMO
+}
+
+// --- Modelos de dominio familiar ---
+
+/// Persona involucrada en un caso de familia (víctima, agresor, NNA, testigo)
+/// Remplaza a Citizen en el dominio de comisaría; Citizen se conserva por compatibilidad.
+model Person {
+  id String @id @default(uuid())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Identificación
+  documentType   String  // CC, CE, TI, RC, PA, PEP, PPT
+  documentNumber String
+
+  // Datos personales
+  firstName      String
+  secondName     String?
+  firstLastName  String
+  secondLastName String?
+
+  // Demografía
+  birthDate      DateTime? @db.Date
+  gender         String?   // M, F, NB, NR (no reporta)
+  ethnicity      String?
+  disability     String?
+
+  // Contacto
+  email          String?
+  phone          String?
+  address        String?
+  neighborhood   String?
+  city           String?
+  department     String?
+
+  // Grupos de especial protección constitucional
+  isMinor        Boolean  @default(false) // NNA: < 18 años (Ley 1098/2006)
+  isPriorityGroup Boolean @default(false)
+  priorityReason String?  // NNA, ADULTO_MAYOR, DISCAPACIDAD, VICTIMA_VIF, MIGRANTE…
+
+  // Protección de datos personales (Ley 1581/2012)
+  dataConsent    Boolean  @default(false)
+  dataConsentDate DateTime?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  caseParties          CaseParty[]
+  assessments          Assessment[]
+  restorationProcesses RestorationProcess[]
+
+  @@unique([documentNumber, tenantId])
+  @@index([documentNumber])
+  @@index([tenantId])
+  @@index([isMinor])
+  @@map("persons")
+}
+
+/// Vinculación de una persona a un caso con su rol (víctima, agresor, NNA, etc.)
+model CaseParty {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+
+  caseId   String
+  case     Case    @relation(fields: [caseId], references: [id])
+
+  personId String
+  person   Person  @relation(fields: [personId], references: [id])
+
+  role     PartyRole
+
+  // Representación legal (obligatoria para NNA)
+  legalRepresentativeName  String? // Nombre del representante legal externo
+  legalRepresentativeUserId String? // userId si es un usuario del sistema
+
+  notes    String? @db.Text
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([caseId, personId, role])
+  @@index([caseId])
+  @@index([personId])
+  @@index([role])
+  @@map("case_parties")
+}
+
+/// Medida de protección impuesta por la comisaría de familia
+/// Fundamento: Art. 17 Ley 294/1996, Art. 11 Ley 1257/2008
+model ProtectionMeasure {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+
+  caseId   String
+  case     Case    @relation(fields: [caseId], references: [id])
+
+  measureType   ProtectionMeasureType
+  description   String  @db.Text
+  legalBasis    String  // ej: "Art. 17 Ley 294/1996; Art. 11 Ley 1257/2008"
+
+  // Vigencia
+  issuedAt      DateTime @default(now())
+  expiresAt     DateTime?
+
+  // Estado
+  status        MeasureStatus @default(VIGENTE)
+
+  // Quién la impone
+  issuedByUserId String?
+  issuedBy       User?   @relation(fields: [issuedByUserId], references: [id])
+
+  // Incumplimiento
+  violatedAt     DateTime?
+  violationNotes String?  @db.Text
+
+  // Renovación
+  renewedAt      DateTime?
+  renewalNotes   String?  @db.Text
+
+  // Notificación policial
+  policeStation     String?
+  policeNotifiedAt  DateTime?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([issuedAt])
+  @@map("protection_measures")
+}
+
+/// Proceso Administrativo de Restablecimiento de Derechos (PARD)
+/// Fundamento: Art. 52 Ley 1098/2006 (Código de Infancia y Adolescencia)
+model RestorationProcess {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+
+  caseId   String
+  case     Case    @relation(fields: [caseId], references: [id])
+
+  // NNA objeto del proceso
+  childId  String
+  child    Person  @relation(fields: [childId], references: [id])
+
+  // Funcionario responsable
+  responsibleUserId String?
+  responsibleUser   User?   @relation(fields: [responsibleUserId], references: [id])
+
+  // Etapa y base legal
+  stage      PardStage @default(APERTURA)
+  legalBasis String    // ej: "Art. 52 Ley 1098/2006"
+
+  // Cronograma
+  openedAt   DateTime @default(now())
+  closedAt   DateTime?
+  closureReason String? @db.Text
+
+  // Contenido técnico
+  findings         String? @db.Text // Hallazgos del equipo interdisciplinario
+  recommendations  String? @db.Text // Recomendaciones
+  measureAdopted   String? @db.Text // Medida de restablecimiento adoptada
+
+  // Seguimiento posterior
+  followUpMonths   Int?    // Meses de seguimiento acordados
+  nextFollowUpAt   DateTime?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([childId])
+  @@index([stage])
+  @@map("restoration_processes")
+}
+
+/// Audiencia celebrada o programada en el marco de un caso
+model Hearing {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+
+  caseId   String
+  case     Case    @relation(fields: [caseId], references: [id])
+
+  hearingType HearingType
+
+  // Programación
+  scheduledAt DateTime
+  location    String?
+  isVirtual   Boolean  @default(false)
+  meetingUrl  String?
+
+  // Ejecución
+  conductedAt DateTime?
+  wasHeld     Boolean  @default(false)
+  notHeldReason String? // Motivo si no se realizó
+
+  // Quien preside
+  presidedByUserId String?
+  presidedBy       User?   @relation(fields: [presidedByUserId], references: [id])
+
+  // Asistentes: [{name, role, documentNumber}]
+  attendees Json?
+
+  // Acta y resultado
+  minutes  String? @db.Text // Acta de la audiencia
+  outcome  String? @db.Text // Decisión / resultado
+
+  // Continuación
+  nextHearingAt   DateTime?
+  nextHearingType HearingType?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([scheduledAt])
+  @@index([hearingType])
+  @@map("hearings")
+}
+
+/// Valoración psicosocial, jurídica o de riesgo realizada en el marco de un caso
+/// ACCESO RESTRINGIDO: solo FUNCIONARIO y DIRECTOR (datos sensibles NNA / víctimas)
+model Assessment {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+
+  caseId   String
+  case     Case    @relation(fields: [caseId], references: [id])
+
+  assessmentType AssessmentType
+
+  // Profesional que realiza la valoración
+  assessorUserId String?
+  assessor       User?    @relation(fields: [assessorUserId], references: [id])
+
+  // Persona valorada
+  assessedPersonId String?
+  assessedPerson   Person?  @relation(fields: [assessedPersonId], references: [id])
+
+  // Ejecución
+  conductedAt DateTime
+
+  // Resultado
+  findings        String   @db.Text
+  riskLevel       RiskLevel @default(BAJO)
+  recommendations String?  @db.Text
+
+  // Confidencialidad (Ley 1581/2012 + Ley 1098/2006)
+  isConfidential Boolean @default(true)
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([assessedPersonId])
+  @@index([conductedAt])
+  @@index([isConfidential])
+  @@map("assessments")
 }
 
 // ============================================================================

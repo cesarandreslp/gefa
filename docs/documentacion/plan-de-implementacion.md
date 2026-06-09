@@ -6,6 +6,23 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 7. Paso 4 / Fase 3 — Módulo 1: modelos de dominio de familia (schema)
+**Estado:** COMPLETADO
+**Objetivo:** Iniciar la reescritura del dominio (petición → familia) de forma ADITIVA y no destructiva.
+
+**Cambios en `prisma/schema.prisma`:**
+- **Encabezado**: actualizado de "VENTANILLA ÚNICA PERSONERÍA MUNICIPAL" a "GEFA (Gestión Familiar)" con el marco normativo correcto (Art. 42 CP, Leyes 294/1996, 575/2000, 1098/2006, 1257/2008, Decreto 4840/2007, Ley 2126/2021).
+- **8 enums nuevos**: `PartyRole`, `ViolenceType`, `CaseModality`, `ProtectionMeasureType`, `MeasureStatus`, `HearingType`, `AssessmentType`, `PardStage`, `RiskLevel`.
+- **6 modelos nuevos**: `Person`, `CaseParty`, `ProtectionMeasure`, `RestorationProcess`, `Hearing`, `Assessment`.
+- **Campos aditivos en `Case`**: `violenceTypes String[]` y `caseModality String?`.
+- **Relaciones agregadas** a `Tenant` (6 nuevas), `Case` (5 nuevas), `User` (4 nuevas — `issuedMeasures`, `presidedHearings`, `conductedAssessments`, `managedRestorations`).
+- Los modelos heredados (`Case`, `Citizen`, `CaseType`) permanecen intactos para mantener build y app operativos.
+
+**BD (Neon control plane)**: `prisma db push` aplicado OK — 32 tablas (6 nuevas: `persons`, `case_parties`, `protection_measures`, `restoration_processes`, `hearings`, `assessments`). Cliente Prisma regenerado.
+**Verificación**: `npm run type-check` pasa sin errores.
+
+---
+
 ### 5. Conectar repo GitHub ↔ Vercel y blob stores por CLI
 **Estado:** COMPLETADO (parcial — ver nota de git)
 **Objetivo:** Completar por CLI (sin trabajo manual del usuario) las conexiones pendientes del Paso 3: vincular el repo GitHub al proyecto Vercel (deploy automático) y conectar los blob stores para inyectar `BLOB_READ_WRITE_TOKEN`.
