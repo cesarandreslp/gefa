@@ -50,6 +50,8 @@ const nextConfig = {
       { source: '/admin/inbox/:path*', destination: '/admin/family', permanent: false },
       { source: '/admin/inbox', destination: '/admin/family', permanent: false },
       { source: '/admin/solicitudes/:path*', destination: '/admin/family', permanent: false },
+      { source: '/admin/cases/:path*', destination: '/admin/family', permanent: false },
+      { source: '/admin/cases', destination: '/admin/family', permanent: false },
     ];
   },
 

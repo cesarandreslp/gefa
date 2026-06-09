@@ -15,6 +15,7 @@ import {
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
 } from './ExpedienteActions';
+import { CaseDocuments } from './CaseDocuments';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Expediente {
@@ -308,6 +309,9 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
       </div>
+
+      {/* Documentos del expediente */}
+      <CaseDocuments caseId={data.id} />
 
       {/* Trazabilidad / auditoría (solo dirección y administración) */}
       <AuditSection caseId={data.id} />

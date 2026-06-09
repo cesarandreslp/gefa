@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 33. Gestión documental en el expediente de familia (portar desde /admin/cases)
+**Estado:** COMPLETADO
+**Objetivo:** El expediente de familia (`/admin/family/[caseId]`) no permite subir/ver documentos; `/admin/cases/[id]` sí (`UploadDocumentForm` + endpoint `cases/[id]/documents`). Portar la gestión documental al expediente de familia (listar + subir, con tipos de comisaría) reutilizando el endpoint existente, para completar el expediente y poder retirar `/admin/cases`.
+
+**Hecho:**
+- **`CaseDocuments.tsx` (nuevo)** en `/admin/family/[caseId]`: lista los documentos (GET `cases/[caseId]/documents`) y permite subir (POST FormData, tipos de comisaría DENUNCIA/ACTA/AUTO/VALORACION/OFICIO/CITACION, máx. 25 MB) recargando su propia lista. Reutiliza el endpoint genérico existente (válido para casos de familia; roles ADMIN/DIRECTOR/FUNCIONARIO/VENTANILLA). Insertado en el expediente antes del visor de auditoría.
+- **Retirado `/admin/cases`** (UI heredada de Ventanilla): redirect en `next.config.js` → `/admin/family`. El endpoint `/api/v1/cases/[id]/documents` se conserva (lo usa `CaseDocuments`). Sin enlaces ni imports cruzados. Type-check en verde.
+
+**Con esto el panel interno queda sin UI de Ventanilla** (retirados `/home`, `/admin/inbox`, `/admin/solicitudes`, `/admin/cases`) y el expediente de familia es completo (partes, equipo, medidas, PARD, audiencias, valoraciones, documentos, auditoría).
+
 ### 32. Tablero de inicio del panel + retiro de páginas heredadas (inbox/cases/solicitudes)
 **Estado:** COMPLETADO
 
