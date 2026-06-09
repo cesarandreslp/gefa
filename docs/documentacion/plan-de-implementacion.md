@@ -6,6 +6,22 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 14. Fase 4 — Alertas de vencimiento (cron) y dashboard de vencimientos
+**Estado:** COMPLETADO
+**Objetivo:** Cerrar la Fase 4 con el control de términos: job (Vercel Cron) + dashboard por comisaría + pantalla de vencimientos.
+
+**Lógica compartida — `src/lib/familyVencimientos.ts` (nuevo):** `markExpiredMeasures()` marca como `VENCIDA` toda medida `VIGENTE` con `expiresAt` pasado; `computeVencimientos()` devuelve medidas vencidas, medidas próximas a vencer (≤ 5 días) y PARD atrasados (no `CIERRE` con `nextFollowUpAt` pasado o `openedAt` > 120 días ≈ término Art. 100 Ley 1098/2006). Constantes `MEASURE_WARNING_DAYS` y `PARD_TERM_DAYS`.
+
+**Cron — `POST/GET /api/cron/family-vencimientos` (nuevo):** fan-out sobre `tenant.findMany({ isActive })`; para cada tenant usa su BD propia (`getTenantPrisma`) o el control plane como fallback, marca vencidas y arma un resumen por tenant. Protegido con `CRON_SECRET` (exige `Authorization: Bearer <secret>` si la variable existe). `maxDuration = 60`.
+
+**Programación — `vercel.json` (nuevo):** cron diario `0 7 * * *` → `/api/cron/family-vencimientos`. `CRON_SECRET` generado y cargado por **Vercel CLI** en Production y Development.
+
+**Dashboard — `GET /api/v1/family/vencimientos` (nuevo):** versión por comisaría (tenant del usuario, `FAMILY_READ_ROLES`) con las 3 listas + conteos.
+
+**Pantalla — `admin/family/vencimientos/page.tsx` (nueva):** tarjetas de medidas vencidas (rojo), próximas a vencer (ámbar) y PARD atrasados (morado), con enlace al expediente. Botón "Vencimientos" añadido en el encabezado del listado de casos.
+**Verificación:** `type-check` OK; `build` OK (cron, API y página en el manifiesto).
+**Con esto la Fase 4 queda cubierta.** Pendiente futuro: envío real de notificaciones (email/SMS) a funcionarios cuando exista asignación de casos al equipo (Fase 5).
+
 ### 13. Fase 4 — Medidas de protección, PARD y audiencias: acciones en el expediente
 **Estado:** COMPLETADO
 **Objetivo:** Según el roadmap de `plan-plataforma-gestion-familiar.md`, la Fase 4 es el corazón legal de la comisaría. Las APIs ya existían (Módulo 2) pero el expediente solo mostraba datos; se cablearon las acciones operativas desde la UI.

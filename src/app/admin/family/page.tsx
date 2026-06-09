@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Users, FileText } from 'lucide-react';
+import { Plus, Search, Users, FileText, AlertTriangle } from 'lucide-react';
 import { CASE_MODALITY_LABELS } from '@/domain/catalogs/familyLabels';
 
 interface FamilyCaseRow {
@@ -53,12 +53,20 @@ export default function FamilyCasesPage() {
           <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Casos de Familia</h1>
           <p style={{ color: '#6b7280', margin: '0.25rem 0 0' }}>{total} caso(s) radicado(s)</p>
         </div>
-        <button
-          onClick={() => router.push('/admin/family/nuevo')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', borderRadius: '8px', padding: '0.6rem 1.1rem', fontWeight: 600, cursor: 'pointer' }}
-        >
-          <Plus size={18} /> Radicar caso
-        </button>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button
+            onClick={() => router.push('/admin/family/vencimientos')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'white', color: '#b45309', border: '1px solid #fcd34d', borderRadius: '8px', padding: '0.6rem 1.1rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            <AlertTriangle size={18} /> Vencimientos
+          </button>
+          <button
+            onClick={() => router.push('/admin/family/nuevo')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', borderRadius: '8px', padding: '0.6rem 1.1rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Plus size={18} /> Radicar caso
+          </button>
+        </div>
       </div>
 
       <form
