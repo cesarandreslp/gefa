@@ -6,6 +6,21 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 4. Paso 2 del plan — Limpiar módulos de personería
+**Estado:** EN CURSO
+**Objetivo:** Retirar de forma controlada los módulos específicos de personería (transparencia, textos legales, folios, defaults de landing/transparencia) según la sección 1 de `MIGRACION-PENDIENTE.md`, verificando el build tras cada borrado para mantenerlo verde.
+
+**Bloque 1 — Transparencia (Ley 1712) + calculadora de folios — COMPLETADO.** Build y type-check verdes tras los borrados.
+- Eliminados: `src/app/api/public/transparency/route.ts`, `src/app/admin/transparencia/page.tsx`, `src/lib/transparencyDefaults.ts`, `src/lib/foliosCalculator.ts` (este último sin importadores).
+- `src/app/api/v1/mi-entidad/route.ts`: removido el import y uso de `getTransparencyConfig` (GET ya no expone `transparencyConfig`; PATCH ya no persiste `transparencyConfig` en metadata). Se conserva `getLandingConfig` (el landing se rehace en bloque aparte).
+- `src/app/admin/AdminNav.tsx`: quitada la entrada de menú "🔍 Transparencia".
+- `src/app/home/page.tsx`: quitado el botón "Índice de Transparencia" y el import ahora-no-usado de `Eye`.
+- Nota: el *campo* `folios` del modelo `Case` NO se tocó (pertenece al dominio, se aborda en Fase 3). Los enlaces a `/transparencia` en `ClientLayout.tsx`/`landingDefaults.ts` pertenecen al landing público y se resuelven en el bloque de "Rehacer landing".
+
+**Bloque 2 — legal-texts + landing: PENDIENTE** (siguiente).
+
+---
+
 ### 3. Garantizar un usuario ADMIN del tenant por cada tenant creado
 **Estado:** COMPLETADO
 **Objetivo:** Igual que existe el panel super-admin para el administrador del SaaS, cada tenant (comisaría) debe tener su propio usuario ADMIN al ser creado, para que pueda administrar su entidad.

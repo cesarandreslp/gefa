@@ -22,7 +22,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: '⚙️ SLA',            path: '/admin/sla-config',   roles: ['ADMIN', 'DIRECTOR'] },
   { label: '🔧 Configuración',  path: '/admin/settings',     roles: ['ADMIN', 'DIRECTOR'] },
   { label: '🏛️ Entidad',        path: '/admin/entidad',      roles: ['ADMIN', 'DIRECTOR'] },
-  { label: '🔍 Transparencia',  path: '/admin/transparencia',roles: ['ADMIN', 'DIRECTOR'] },
   { label: '📧 Notificaciones', path: '/admin/notifications',roles: ['ADMIN', 'DIRECTOR'] },
   { label: '🔧 Sistema',        path: '/admin/system',       roles: ['ADMIN', 'DIRECTOR'] },
 ];

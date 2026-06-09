@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
 import { clearTenantCache } from '@/lib/tenantResolver';
 import { getLandingConfig } from '@/lib/landingDefaults';
-import { getTransparencyConfig } from '@/lib/transparencyDefaults';
 
 // Campos que viven en TenantSettings
 const SETTINGS_FIELDS = [
@@ -81,10 +80,6 @@ export async function GET(request: NextRequest) {
       landingConfig: getLandingConfig(
         s?.metadata as Record<string, unknown> | null
       ),
-      // Transparencia config
-      transparencyConfig: getTransparencyConfig(
-        s?.metadata as Record<string, unknown> | null
-      ),
     };
 
     return NextResponse.json({ success: true, data: result });
@@ -152,13 +147,12 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
-    // 3. Guardar landing config o transparency config en metadata si se enviaron
-    if (body.landingConfig !== undefined || body.transparencyConfig !== undefined) {
+    // 3. Guardar landing config en metadata si se envió
+    if (body.landingConfig !== undefined) {
       const existing = await db.tenantSettings.findUnique({ where: { tenantId } });
       const currentMetadata = (existing?.metadata as Record<string, unknown>) || {};
       const updatedMetadata = { ...currentMetadata };
-      if (body.landingConfig !== undefined) updatedMetadata.landingConfig = body.landingConfig;
-      if (body.transparencyConfig !== undefined) updatedMetadata.transparencyConfig = body.transparencyConfig;
+      updatedMetadata.landingConfig = body.landingConfig;
       await db.tenantSettings.upsert({
         where: { tenantId },
         update: { metadata: updatedMetadata as any },

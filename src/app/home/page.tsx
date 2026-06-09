@@ -15,8 +15,7 @@ import {
   Search,
   CheckCircle,
   Building,
-  Globe,
-  Eye
+  Globe
 } from 'lucide-react';
 
 interface UserRoleData {
@@ -1108,25 +1107,6 @@ export default function HomePage() {
                         </span>
                       </button>
 
-                      <button
-                        onClick={() => router.push('/admin/transparencia')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          padding: '1rem',
-                          backgroundColor: '#f0f9ff',
-                          border: '1px solid #bae6fd',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        <Eye size={20} color="#0284c7" />
-                        <span style={{ fontSize: '0.95rem', fontWeight: '500', color: '#111827' }}>
-                          Índice de Transparencia
-                        </span>
-                      </button>
 
                       <button
                         onClick={() => router.push('/home/editor-landing')}
