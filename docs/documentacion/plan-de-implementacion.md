@@ -6,6 +6,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 20. Fase 8 — Cierre: visor de auditoría por caso en el panel admin
+**Estado:** COMPLETADO
+**Objetivo:** Completar lo que resta de la Fase 8 (hardening). El `ActionLog` encadenado por checksum (entrada #18) ya se escribe en cada acción de familia, pero no hay forma de consultarlo desde la UI. Crear un visor de trazabilidad por expediente: endpoint admin protegido por RBAC que lea el `ActionLog` del caso y una vista en el panel admin que muestre el historial inmutable (quién, qué, cuándo, IP), con verificación de integridad de la cadena de hashes.
+
+**Implementación:**
+- **`src/lib/familyApi.ts`:** (a) nuevo conjunto **`FAMILY_AUDIT_ROLES = ['ADMIN', 'DIRECTOR']`** — el visor expone IPs y accesos a datos confidenciales, así que es de control interno (dirección/administración), no del funcionario que opera el caso (revisión final de RBAC). (b) Extraído **`computeAuditChecksum()`** como fuente única de verdad del encadenado SHA-256; `auditFamily()` se refactorizó para usarlo, de modo que la escritura y el verificador no diverjan.
+- **`src/app/api/v1/family/cases/[caseId]/audit/route.ts` (GET, nuevo):** protegido por `FAMILY_AUDIT_ROLES`, valida pertenencia del caso al tenant (`findCaseInTenant`). Lee el `ActionLog` del caso (orden desc) y **re-verifica la integridad de cada fila** recalculando su checksum con `computeAuditChecksum`; marca `integrityValid` por entrada y devuelve un `summary` (`total`, `tampered`, `chainIntact`). Expone quién/qué/cuándo/IP/rol; no devuelve `before`/`after` (podrían contener PII).
+- **`src/app/admin/family/[caseId]/ExpedienteActions.tsx`:** nuevo componente **`AuditSection`** — hace su propio fetch y **se auto-oculta** si el endpoint responde 401/403 (el patrón de `assessmentsDenied`), de modo que solo dirección/administración ve la sección. Muestra el badge de integridad de la cadena, etiquetas legibles por acción (mapa `AUDIT_ACTION_LABELS`, incl. "Acceso a valoración (confidencial)") y un borde rojo + aviso "⚠ alterado" en filas cuyo checksum no cuadre.
+- **`src/app/admin/family/[caseId]/page.tsx`:** se renderiza `<AuditSection>` al cierre del expediente.
+
+**Decisión:** el visor es solo lectura y **no auto-audita** su propia consulta, para no contaminar la cadena del caso con entradas recursivas de cada apertura del panel. `npm run type-check` en verde.
+
+**Con esto la Fase 8 queda cerrada** (auditoría escrita + anonimización + visor de trazabilidad + RBAC del visor). Pendiente futuro/operativo: pruebas de carga.
+
 ### 19. Fase 7 — Portal ciudadano ("Comisaría en línea")
 **Estado:** COMPLETADO
 **Objetivo:** Portal público por tenant: (a) **radicación en línea** de una solicitud/denuncia por la ciudadanía (sin autenticación, rate-limited, tenant por host) que crea el caso en estado inicial para revisión del personal; (b) **consulta de estado** del caso por número de radicado + documento del denunciante, devolviendo solo información no sensible (estado y fechas, sin datos de víctimas/NNA/agresor). Reutiliza la resolución de tenant y el rate limit heredados.

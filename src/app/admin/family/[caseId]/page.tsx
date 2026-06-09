@@ -13,7 +13,7 @@ import {
   AddMeasureForm, MeasureStatusControl,
   AddHearingForm, HearingOutcomeControl,
   AddPardForm, PardStageControl,
-  AddAssessmentForm, TeamSection,
+  AddAssessmentForm, TeamSection, AuditSection,
 } from './ExpedienteActions';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -308,6 +308,9 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
       </div>
+
+      {/* Trazabilidad / auditoría (solo dirección y administración) */}
+      <AuditSection caseId={data.id} />
     </div>
   );
 }

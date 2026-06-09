@@ -49,6 +49,14 @@ export const FAMILY_WRITE_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 export const FAMILY_CONFIDENTIAL_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 
 /**
+ * Roles con acceso al VISOR DE AUDITORÍA (trazabilidad del expediente).
+ * Es una herramienta de control interno: expone IPs y quién accedió a datos
+ * confidenciales. Se limita a la dirección/administración, no al funcionario
+ * que opera el caso.
+ */
+export const FAMILY_AUDIT_ROLES = ['ADMIN', 'DIRECTOR'];
+
+/**
  * Verifica que un caso exista y pertenezca al tenant del usuario.
  * Devuelve el caso (id) o null. Evita fuga de datos entre comisarías.
  */
@@ -88,6 +96,34 @@ interface AuditUser {
  * con encadenado de checksum tipo blockchain. Best-effort: nunca lanza ni
  * interrumpe el request; si falla, solo deja traza en consola.
  */
+/**
+ * Calcula el checksum SHA-256 de una entrada del `ActionLog`. Fuente única de
+ * verdad del encadenado: la usa tanto la escritura (`auditFamily`) como el
+ * verificador de integridad del visor de auditoría, para que no diverjan.
+ */
+export function computeAuditChecksum(input: {
+  action: string;
+  userId?: string | null;
+  entityType: string;
+  entityId: string;
+  timestamp: Date;
+  previousHash: string;
+}): string {
+  return crypto
+    .createHash('sha256')
+    .update(
+      JSON.stringify({
+        action: input.action,
+        userId: input.userId,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        timestamp: input.timestamp.toISOString(),
+        previousHash: input.previousHash,
+      })
+    )
+    .digest('hex');
+}
+
 export async function auditFamily(
   db: PrismaClient,
   request: NextRequest,
@@ -105,10 +141,7 @@ export async function auditFamily(
     });
     const previousHash = last?.checksum || 'GENESIS_BLOCK';
     const timestamp = new Date();
-    const checksum = crypto
-      .createHash('sha256')
-      .update(JSON.stringify({ action, userId: user.userId, entityType, entityId, timestamp: timestamp.toISOString(), previousHash }))
-      .digest('hex');
+    const checksum = computeAuditChecksum({ action, userId: user.userId, entityType, entityId, timestamp, previousHash });
 
     await db.actionLog.create({
       data: {

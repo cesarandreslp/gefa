@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, X, UserPlus, Trash2 } from 'lucide-react';
+import { Plus, X, UserPlus, Trash2, ShieldCheck, ShieldAlert, History, RefreshCw } from 'lucide-react';
 import {
   PROTECTION_MEASURE_TYPE_LABELS, MEASURE_STATUS_LABELS,
   HEARING_TYPE_LABELS, ASSESSMENT_TYPE_LABELS, RISK_LEVEL_LABELS,
@@ -413,3 +413,100 @@ export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: bool
 }
 
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  FAMILY_PERSON_CREATED: 'Persona registrada',
+  FAMILY_PERSON_UPDATED: 'Persona actualizada',
+  FAMILY_CASE_CREATED: 'Caso radicado',
+  FAMILY_CASE_STATE_CHANGED: 'Cambio de estado',
+  FAMILY_PARTY_ADDED: 'Parte vinculada',
+  FAMILY_PARTY_REMOVED: 'Parte retirada',
+  FAMILY_MEASURE_ISSUED: 'Medida de protección emitida',
+  FAMILY_MEASURE_UPDATED: 'Medida actualizada',
+  FAMILY_PARD_OPENED: 'PARD aperturado',
+  FAMILY_PARD_UPDATED: 'PARD actualizado',
+  FAMILY_HEARING_SCHEDULED: 'Audiencia programada',
+  FAMILY_HEARING_UPDATED: 'Audiencia actualizada',
+  FAMILY_TEAM_ASSIGNED: 'Profesional asignado',
+  FAMILY_TEAM_REMOVED: 'Profesional retirado',
+  FAMILY_ASSESSMENT_CREATED: 'Valoración registrada',
+  FAMILY_ASSESSMENT_UPDATED: 'Valoración actualizada',
+  FAMILY_ASSESSMENT_ACCESSED: 'Acceso a valoración (confidencial)',
+};
+
+// Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del
+// usuario no tiene acceso al ActionLog (endpoint responde 401/403): solo
+// dirección/administración. Es información de control interno.
+export function AuditSection({ caseId }: { caseId: string }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [entries, setEntries] = useState<any[] | null>(null);
+  const [summary, setSummary] = useState<{ total: number; tampered: number; chainIntact: boolean } | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/audit`);
+      if (res.status === 401 || res.status === 403) { setDenied(true); return; }
+      if (res.ok) {
+        const json = await res.json();
+        setEntries(json.data ?? []);
+        setSummary(json.summary ?? null);
+      }
+    } catch { /* noop */ } finally { setLoading(false); }
+  }, [caseId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (denied) return null;
+
+  const fmt = (iso: string) => new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+          <History size={18} /> Trazabilidad del expediente {summary && `(${summary.total})`}
+        </h2>
+        <button onClick={load} disabled={loading} title="Actualizar" style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.35rem 0.6rem', cursor: 'pointer', color: '#6b7280' }}>
+          <RefreshCw size={14} className={loading ? 'spin' : undefined} />
+        </button>
+      </div>
+
+      {summary && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 600, padding: '0.35rem 0.7rem', borderRadius: '999px', marginBottom: '0.85rem', background: summary.chainIntact ? '#ecfdf5' : '#fef2f2', color: summary.chainIntact ? '#047857' : '#b91c1c', border: `1px solid ${summary.chainIntact ? '#a7f3d0' : '#fecaca'}` }}>
+          {summary.chainIntact ? <ShieldCheck size={15} /> : <ShieldAlert size={15} />}
+          {summary.chainIntact ? 'Cadena de integridad verificada' : `${summary.tampered} registro(s) alterado(s)`}
+        </div>
+      )}
+
+      {loading && entries === null ? (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Cargando…</p>
+      ) : entries && entries.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin registros de auditoría para este expediente.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.4rem' }}>
+          {entries?.map((e) => (
+            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', border: '1px solid #f3f4f6', borderLeft: `3px solid ${e.integrityValid ? '#10b981' : '#dc2626'}`, borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#111827' }}>
+                  {AUDIT_ACTION_LABELS[e.action] ?? e.action}
+                  {!e.integrityValid && <span style={{ color: '#dc2626', marginLeft: '0.4rem', fontSize: '0.78rem' }}>⚠ alterado</span>}
+                </div>
+                <div style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                  {e.userEmail} · {e.userRole}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.8rem', color: '#374151' }}>{fmt(e.timestamp)}</div>
+                <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>IP {e.ipAddress}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <style>{`.spin { animation: aud-spin 1s linear infinite; } @keyframes aud-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
