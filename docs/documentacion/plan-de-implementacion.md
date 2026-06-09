@@ -7,8 +7,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 ## 2026-06-09
 
 ### 26. Reconstruir la cara pública del ciudadano según el flujo REAL de comisaría de familia
-**Estado:** EN CURSO
+**Estado:** COMPLETADO
 **Objetivo:** Corregir el rumbo de la entrada #25. En vez de **ocultar/redirigir** el flujo ciudadano heredado de personería (PQRS/tutelas), reconstruirlo correctamente para una **comisaría de familia**. Premisa del usuario: los componentes técnicos se reutilizan, pero el **flujo de negocio** de una comisaría (denuncia de violencia → medida de protección → conciliación/audiencia → PARD → seguimiento) NO es el de una personería (PQRS/derecho de petición/tutela). Pasos: (1) revertir el código de la entrada #25 (los redirects); (2) investigar el flujo documentado de comisaría; (3) rediseñar la cara pública (radicar/consultar/seguimiento) con vocabulario de comisaría y datos reales del tenant, sobre la infraestructura heredada; (4) consolidar en un solo flujo (sin duplicar con `/comisaria-en-linea`).
+
+**Investigación:** `plan-plataforma-gestion-familiar.md` define el flujo de comisaría (denuncia/medida/PARD/conciliación/seguimiento) y el portal ciudadano "crea casos en estado preliminar para revisión". Confirmado que el problema era solo la **cara pública** heredada con vocabulario PQRS de personería (petición/queja/tutela) y datos ficticios ("Entidad Institucional", "Carrera 10 #10-10"), idéntica en todos los tenants.
+
+**Resolución (reescribir y consolidar, no ocultar):**
+- **Reescritas a comisaría con datos dinámicos del tenant:** `atencion-ciudadano` (hub: radicar/consultar + líneas de emergencia 155/123/122/141 ICBF + sede del tenant), `privacidad` (habeas data de comisaría, Ley 1581/2012 + Ley 1098/2006, datos sensibles de víctimas/NNA) y `atencion-ciudadano/contacto` (datos del tenant + CTA al portal).
+- **Consolidación del motor (sin duplicar, sin redirect):** el portal se extrajo a un componente reutilizable `comisaria-en-linea/ComisariaPortal.tsx` con prop `initialTab`. Lo renderizan: `comisaria-en-linea/page.tsx`, `atencion-ciudadano/solicitud` (reemplaza el formulario PQRS de 1194 líneas) y `atencion-ciudadano/consultar` (reemplaza la consulta heredada de Ventanilla). Un solo flujo ciudadano de comisaría en todas las URLs.
+- **Landing del tenant:** botones "Radicar denuncia o solicitud" / "Consultar mi caso" → portal.
+
+**Resultado:** sin contenido de personería en la cara pública (grep limpio), sin flujos duplicados, datos reales del tenant. `npm run type-check` en verde. El backend heredado (casos, emails, estados) se conserva intacto.
 
 ### 25. Branding/contenido por defecto del tenant: quitar herencia de personería
 **Estado:** COMPLETADO (flujo ciudadano; quedan 2 páginas informativas pendientes)
