@@ -274,8 +274,8 @@ model Case {
   metadata       Json?
 
   // Dominio familia (Fase 3) — campos opcionales aditivos
-  violenceTypes  String[]  // valores de enum ViolenceType
-  caseModality   String?   // valor de enum CaseModality
+  violenceTypes  ViolenceType[]
+  caseModality   CaseModality?
 
   // Auditoría
   createdAt DateTime @default(now())

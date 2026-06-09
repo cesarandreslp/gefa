@@ -5,6 +5,7 @@ import { auditService } from '@/services/AuditService';
 import { getClientIp, getUserAgent } from '@/lib/validation';
 import { getTenantPrisma } from '@/lib/tenantDb';
 import { FAMILY_CASE_TYPES } from '@/domain/catalogs/familyCaseTypes';
+import { FAMILY_CASE_STATES } from '@/domain/catalogs/familyCaseStates';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -163,6 +164,15 @@ export async function POST(request: NextRequest) {
         await tx.role.create({
           data: { tenantId: tenant.id, code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', description: 'Atención directa al ciudadano. Solo lectura de casos y ciudadanos.', level: 75, isActive: true }
         });
+
+        // Seed workflow states (estados de comisaría de familia) in tenant DB
+        for (const st of FAMILY_CASE_STATES) {
+          await tx.caseState.upsert({
+            where: { code: st.code },
+            update: {},
+            create: { ...st, isActive: true },
+          });
+        }
 
         // Create base case types (catálogo de comisaría de familia) in tenant DB
         for (const ct of FAMILY_CASE_TYPES) {

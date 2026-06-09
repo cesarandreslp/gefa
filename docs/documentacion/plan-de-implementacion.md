@@ -6,6 +6,21 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 10. Fase 3 — Módulo 3: radicación de caso de familia (endpoint orquestador)
+**Estado:** COMPLETADO
+**Objetivo:** Crear `POST /api/v1/family/cases` (+ GET listado y GET expediente) que orqueste la radicación de un caso de comisaría de familia, reutilizando la infraestructura heredada de radicación/SLA.
+
+**Decisión de diseño (a pedido del usuario):** `Case.citizenId` se mantiene **obligatorio**. La radicación de familia crea/encuentra un `Citizen` **espejo** del radicante principal (víctima > denunciante > primera parte) para satisfacer el FK, mientras el modelo real de partes vive en `Person`/`CaseParty`. (Se descartó la alternativa de hacer `citizenId` opcional porque rompía ~13 archivos del dominio heredado.)
+
+**Schema:** `Case.violenceTypes` y `Case.caseModality` pasaron de `String`/`String[]` a los enums tipados `ViolenceType[]` / `CaseModality?` (Prisma solo genera los enums usados por algún modelo). `prisma db push` aplicado.
+
+**Estados del workflow — `src/domain/catalogs/familyCaseStates.ts` (nuevo):** se detectó que el provisioning de tenants **no sembraba `CaseState`** (solo lo hacía `seed.ts`), por lo que una comisaría nueva no podía radicar. Catálogo canónico de 7 estados de comisaría: `RADICADO` (inicial) → `EN_VALORACION` → `EN_AUDIENCIA` → `MEDIDA_ADOPTADA` → `EN_SEGUIMIENTO` → `CERRADO`; `REMITIDO` (salida por competencia). Sembrado en: `super-admin/tenants`, `registro-entidad` y `seed-family.ts` (estados globales por BD).
+
+**Endpoint `POST /api/v1/family/cases`:** valida tipo de caso, partes (rol `PartyRole`, exige `personId` o `person`) y `violenceTypes`; deriva `caseModality` del tipo (`CASE_TYPE_MODALITY`); resuelve el estado inicial (`isInitial`, 422 si falta); genera radicado secuencial (`caseService.generateFilingNumber`); calcula vencimiento (`LegalTermsCalculator`); eleva prioridad si hay NNA o modalidad sensible. En una transacción: resuelve/crea las `Person` (dedupe por documento, deriva `isMinor` por edad), crea el `Citizen` espejo, el `Case`, el historial inicial y las `CaseParty`.
+**`GET /api/v1/family/cases`:** listado paginado de casos con `caseModality`, filtros `search`/`modality`/`stateCode`.
+**`GET /api/v1/family/cases/[caseId]`:** expediente (caso + partes + medidas + PARD + audiencias); **excluye** valoraciones (confidenciales, vía su endpoint restringido) — solo expone `_count.assessments`.
+**Verificación:** `type-check` OK, `build` OK (rutas en el manifiesto).
+
 ### 9. Fase 3 — Módulo 2: APIs de dominio familiar
 **Estado:** COMPLETADO
 **Objetivo:** Crear los endpoints REST del dominio de comisaría de familia sobre los modelos del Módulo 1, con aislamiento por tenant (`auth.db`) y RBAC, incluido hardening de `Assessment`.

@@ -18,6 +18,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { auditService } from '@/services/AuditService';
 import { FAMILY_CASE_TYPES as CASE_TYPES_BASE } from '@/domain/catalogs/familyCaseTypes';
+import { FAMILY_CASE_STATES } from '@/domain/catalogs/familyCaseStates';
 
 const SALT_ROUNDS = 10;
 
@@ -210,6 +211,15 @@ export async function POST(request: NextRequest) {
           },
         });
         createdRoles[roleData.code] = role.id;
+      }
+
+      // 2.5 Sembrar estados del workflow de comisaría de familia
+      for (const st of FAMILY_CASE_STATES) {
+        await tx.caseState.upsert({
+          where: { code: st.code },
+          update: {},
+          create: { ...st, isActive: true },
+        });
       }
 
       // 3. Crear tipos de caso base para el tenant

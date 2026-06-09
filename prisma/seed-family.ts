@@ -16,13 +16,26 @@
 
 import { PrismaClient } from '@prisma/client';
 import { FAMILY_CASE_TYPES } from '../src/domain/catalogs/familyCaseTypes';
+import { FAMILY_CASE_STATES } from '../src/domain/catalogs/familyCaseStates';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const siglaFilter = process.argv[2]?.trim().toUpperCase();
 
-  console.log('🌱 Seed de tipos de caso de comisaría de familia\n');
+  console.log('🌱 Seed de comisaría de familia (estados + tipos de caso)\n');
+
+  // Estados del workflow: globales por BD (CaseState no tiene tenantId)
+  console.log('📋 Estados del workflow:');
+  for (const st of FAMILY_CASE_STATES) {
+    await prisma.caseState.upsert({
+      where: { code: st.code },
+      update: {},
+      create: { ...st, isActive: true },
+    });
+    console.log(`   ✅ ${st.code} — ${st.name}`);
+  }
+  console.log('');
 
   const tenants = await prisma.tenant.findMany({
     where: siglaFilter ? { sigla: siglaFilter } : undefined,
