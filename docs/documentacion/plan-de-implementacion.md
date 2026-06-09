@@ -6,6 +6,26 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 12. Fase 3 — Módulo 4: workflow de estados y seguimiento (motor)
+**Estado:** EN CURSO
+**Objetivo:** Implementar las transiciones de estado del caso de familia (`RADICADO → EN_VALORACION → … → CERRADO`/`REMITIDO`) con endpoint de cambio de estado e historial, reutilizando el patrón de `CaseStateHistory`; coherencia con el avance de medidas/PARD/audiencias.
+
+### 11. Fase 3 — Módulo 3b: pantallas de admin (radicación + expediente de familia)
+**Estado:** COMPLETADO
+**Objetivo:** Crear las pantallas del panel admin que consumen las APIs del Módulo 2/3.
+
+**Patrón:** client components que hacen `fetch('/api/v1/family/*')` (cookie `auth-token` automática; `protectAPIRoute` resuelve tenant + RBAC). Estilos inline coherentes con el shell `admin`.
+
+**Catálogo de etiquetas — `src/domain/catalogs/familyLabels.ts` (nuevo):** mapas valor-enum → texto en español (roles de parte, tipos de violencia, modalidades, tipos/estados de medida, tipos de audiencia, etapas PARD, niveles de riesgo) para no divergir entre vistas.
+
+**Pantallas (`src/app/admin/family/`):**
+- `page.tsx` — listado de casos de familia: búsqueda por radicado/asunto, tabla con modalidad, nº de partes (con badge NNA), estado coloreado; botón "Radicar caso".
+- `nuevo/page.tsx` — formulario de radicación: tipo de caso (desde `FAMILY_CASE_TYPES`), canal, asunto, descripción, checkboxes de tipos de violencia, y **partes dinámicas** (agregar/quitar) con rol, documento y datos personales; exige representante legal cuando el rol es NNA. Hace `POST /api/v1/family/cases` y redirige al expediente.
+- `[caseId]/page.tsx` — expediente digital: encabezado (radicado, estado, vencimiento, prioridad, tipos de violencia, descripción), partes, medidas de protección, PARD, audiencias y **valoraciones** (consultadas aparte a su endpoint confidencial; si el rol no tiene acceso muestra aviso de restricción en vez de los datos).
+
+**Navegación:** añadida la entrada "👨‍👩‍👧 Familia" → `/admin/family` en `AdminNav.tsx`.
+**Verificación:** `type-check` OK; `build` OK (las 3 páginas en el manifiesto).
+
 ### 10. Fase 3 — Módulo 3: radicación de caso de familia (endpoint orquestador)
 **Estado:** COMPLETADO
 **Objetivo:** Crear `POST /api/v1/family/cases` (+ GET listado y GET expediente) que orqueste la radicación de un caso de comisaría de familia, reutilizando la infraestructura heredada de radicación/SLA.

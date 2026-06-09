@@ -15,6 +15,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: '📥 Bandeja',        path: '/admin/inbox' },
+  { label: '👨‍👩‍👧 Familia',       path: '/admin/family' },
   { label: 'Expedientes',       path: '/admin/cases' },
   { label: '📊 Supervisión',    path: '/admin/supervision',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'ASIGNACION_DE_CASOS'] },
   { label: '📈 Métricas',       path: '/admin/metrics',      roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
