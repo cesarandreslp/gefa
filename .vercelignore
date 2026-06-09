@@ -1,0 +1,18 @@
+# Dependencias y artefactos de build (Vercel los reconstruye en sus servidores)
+node_modules
+.next
+.git
+.vercel
+
+# Documentación y material de trabajo (no se necesita en runtime; pesa cientos de MB)
+docs
+
+# Logs y temporales
+*.log
+npm-debug.log*
+.DS_Store
+
+# Entorno local
+.env
+.env.local
+.env.*.local

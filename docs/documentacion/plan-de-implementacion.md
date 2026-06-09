@@ -11,7 +11,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Objetivo:** Completar por CLI (sin trabajo manual del usuario) las conexiones pendientes del Paso 3: vincular el repo GitHub al proyecto Vercel (deploy automático) y conectar los blob stores para inyectar `BLOB_READ_WRITE_TOKEN`.
 
 - **Blob Storage — RESUELTO por CLI.** Los stores `gefa-files`/`gefa-attachments` habían quedado huérfanos (la conexión interactiva previa se cortó, sin token). Se creó `gefa-storage` (`store_o9k3WUHC9AMBSAvO`, privado, iad1) con `vercel blob create-store --access private --yes`, que lo enlazó al proyecto e inyectó **`BLOB_READ_WRITE_TOKEN`** en Production, Preview y Development. Verificado con `vercel env ls`. (Los 2 stores huérfanos quedaron vacíos; su borrado quedó pendiente porque es una acción destructiva en infra cloud.)
-- **Git GitHub↔Vercel — NO posible solo por CLI.** `vercel git connect https://github.com/cesarandreslp/gefa` falla con "Failed to connect... access to the repository if it's private". Causa: requiere que la **GitHub App de Vercel** esté instalada/autorizada en la cuenta `cesarandreslp`; instalar una GitHub App es un consentimiento OAuth de navegador (una sola vez), que el token CLI no puede ejecutar headless. Alternativa sin trabajo manual: **deploy directo por CLI** (`vercel --prod`), que no depende de la conexión Git. Pendiente de autorización del usuario para deploy a producción.
+- **Git GitHub↔Vercel — NO posible solo por CLI.** `vercel git connect https://github.com/cesarandreslp/gefa` falla con "Failed to connect... access to the repository if it's private". Causa: requiere que la **GitHub App de Vercel** esté instalada/autorizada en la cuenta `cesarandreslp`; instalar una GitHub App es un consentimiento OAuth de navegador (una sola vez), que el token CLI no puede ejecutar headless. Alternativa adoptada: deploy directo por CLI.
+
+### 6. Deploy de GEFA a producción por CLI
+**Estado:** COMPLETADO
+**Objetivo:** Publicar GEFA en producción usando Vercel CLI (sin auto-deploy de git), autorizado por el usuario.
+
+- **Problema de tamaño de upload:** los primeros `vercel --prod` fallaban con "File size limit exceeded (100 MB)" subiendo ~672MB. Diagnóstico: los directorios `docs/promt/fase *` (≈669MB de material de trabajo local, no rastreados por git pero presentes en disco) se estaban subiendo. **Hallazgo clave:** cuando existe `.vercelignore`, Vercel usa ESE archivo e ignora `.gitignore` — por eso `docs/promt/` (que sí está en `.gitignore`) igual se subía.
+- **`.vercelignore`** (nuevo): excluye `node_modules`, `.next`, `.git`, `.vercel`, `docs`, logs y `.env*`. Con esto el upload bajó al tamaño del código fuente.
+- **Deploy OK:** `vercel --prod --yes` → build en 56s. **Producción: https://gefa-black.vercel.app** (alias) / `gefa-4g2b8bkmq-cesar-lozanos-projects.vercel.app`.
+- **Verificación:** `GET /` → HTTP 200; `GET /api/v1/health` → 200 con `{"database":"healthy","message":"Database connected"}`. La BD Neon y las variables de entorno (JWT, ENCRYPTION_KEY, BLOB_READ_WRITE_TOKEN) operan correctamente en producción.
+- **Pendiente:** ajustar el `domain` de los tenants y, si se desea auto-deploy en cada push, autorizar la GitHub App de Vercel (navegador, una sola vez); mientras tanto cada publicación se hace con `vercel --prod`.
 
 ---
 
