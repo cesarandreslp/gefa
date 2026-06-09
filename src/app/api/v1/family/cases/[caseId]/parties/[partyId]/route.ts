@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_INTAKE_ROLES } from '@/lib/familyApi';
+import { FAMILY_INTAKE_ROLES, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +26,7 @@ export async function DELETE(
     }
 
     await db.caseParty.delete({ where: { id: params.partyId } });
+    await auditFamily(db, request, auth.user, 'FAMILY_PARTY_REMOVED', 'CaseParty', params.partyId, { caseId: params.caseId });
     return NextResponse.json({ message: 'Parte desvinculada del caso' });
   } catch (error) {
     console.error('Error desvinculando parte:', error);

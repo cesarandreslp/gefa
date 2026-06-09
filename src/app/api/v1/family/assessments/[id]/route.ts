@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RiskLevel } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_CONFIDENTIAL_ROLES, isValidEnum } from '@/lib/familyApi';
+import { FAMILY_CONFIDENTIAL_ROLES, isValidEnum, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +26,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     if (!assessment) {
       return NextResponse.json({ error: 'Valoración no encontrada' }, { status: 404 });
     }
+
+    await auditFamily(db, request, auth.user, 'FAMILY_ASSESSMENT_ACCESSED', 'Assessment', assessment.id, { caseId: assessment.caseId, metadata: { single: true } });
 
     return NextResponse.json(assessment);
   } catch (error) {
@@ -77,6 +79,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       data,
       include: { assessor: { select: { id: true, fullName: true } } },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_ASSESSMENT_UPDATED', 'Assessment', assessment.id, { caseId: assessment.caseId });
 
     return NextResponse.json(assessment);
   } catch (error) {

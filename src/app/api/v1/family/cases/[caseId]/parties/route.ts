@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PartyRole } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, findCaseInTenant, isValidEnum } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +91,7 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
         },
         include: { person: true },
       });
+      await auditFamily(db, request, auth.user, 'FAMILY_PARTY_ADDED', 'CaseParty', party.id, { caseId: params.caseId, metadata: { role, personId } });
       return NextResponse.json(party, { status: 201 });
     } catch (e: unknown) {
       // Violación de unique [caseId, personId, role]

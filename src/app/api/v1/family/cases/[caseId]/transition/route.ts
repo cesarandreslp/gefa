@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, auditFamily } from '@/lib/familyApi';
 import { validateFamilyTransition, availableFamilyTransitions } from '@/domain/rules/familyStateMachine';
 
 export const dynamic = 'force-dynamic';
@@ -94,6 +94,11 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
           reason: validation.isReopen ? 'REOPENED' : 'TRANSITION',
         },
       });
+    });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_CASE_STATE_CHANGED', 'Case', caseRow.id, {
+      caseId: caseRow.id,
+      metadata: { from: caseRow.state.code, to: toStateCode, reopen: validation.isReopen ?? false },
     });
 
     return NextResponse.json({

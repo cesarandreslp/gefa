@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,6 +121,8 @@ export async function POST(request: NextRequest) {
         dataConsentDate: dataConsent === true ? new Date() : null,
       },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_PERSON_CREATED', 'Person', person.id, { metadata: { isMinor: person.isMinor } });
 
     return NextResponse.json(person, { status: 201 });
   } catch (error) {

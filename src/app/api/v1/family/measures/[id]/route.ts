@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MeasureStatus } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_WRITE_ROLES, isValidEnum } from '@/lib/familyApi';
+import { FAMILY_WRITE_ROLES, isValidEnum, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +68,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       data,
       include: { issuedBy: { select: { id: true, fullName: true } } },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_MEASURE_UPDATED', 'ProtectionMeasure', measure.id, { caseId: measure.caseId, metadata: { status: measure.status } });
 
     return NextResponse.json(measure);
   } catch (error) {

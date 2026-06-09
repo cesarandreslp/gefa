@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PartyRole, ViolenceType, CaseModality } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, isValidEnum } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, isValidEnum, auditFamily } from '@/lib/familyApi';
 import { caseService } from '@/services/CaseService';
 import { LegalTermsCalculator } from '@/domain/rules/LegalTermsCalculator';
 import { CASE_TYPE_MODALITY } from '@/domain/catalogs/familyCaseTypes';
@@ -370,6 +370,8 @@ export async function POST(request: NextRequest) {
         caseParties: { include: { person: true } },
       },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_CASE_CREATED', 'Case', created.id, { caseId: created.id, metadata: { filingNumber: created.filingNumber, caseModality, parties: parties.length } });
 
     return NextResponse.json(
       {

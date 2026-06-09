@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +78,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const person = await db.person.update({ where: { id: params.id }, data });
+    await auditFamily(db, request, auth.user, 'FAMILY_PERSON_UPDATED', 'Person', person.id, {});
     return NextResponse.json(person);
   } catch (error) {
     console.error('Error actualizando persona:', error);

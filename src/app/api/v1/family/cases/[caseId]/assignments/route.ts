@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, findCaseInTenant } from '@/lib/familyApi';
+import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, findCaseInTenant, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +80,8 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
       },
       include: { user: { select: { id: true, fullName: true, role: { select: { code: true, name: true } } } } },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_TEAM_ASSIGNED', 'Assignment', assignment.id, { caseId: params.caseId, metadata: { assignedUserId: userId } });
 
     return NextResponse.json(assignment, { status: 201 });
   } catch (error) {

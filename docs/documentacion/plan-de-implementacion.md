@@ -6,6 +6,26 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 18. Fase 8 — Hardening: auditoría de acciones de familia y acceso a datos sensibles
+**Estado:** COMPLETADO
+**Objetivo:** Cumplimiento Ley 1581/2012 y Ley 1098/2006: registrar en log inmutable las acciones sobre el dominio de familia, incl. acceso a valoraciones.
+
+**Hallazgo:** el `AuditService` heredado escribe en el **prisma global**, no en la BD del tenant — contradice el principio de aislamiento del plan ("AuditLog append-only en cada tenant"). Además su tipo `AuditAction` es un union cerrado sin acciones de familia.
+**Solución — `auditFamily()` en `src/lib/familyApi.ts` (nuevo):** escribe el `ActionLog` en la **BD del tenant** (`auth.db`) con encadenado de checksum SHA-256 (previousHash → GENESIS_BLOCK), capturando IP y user-agent (`getClientIp`/`getUserAgent`). Best-effort: nunca lanza ni interrumpe el request.
+
+**Acciones auditadas (14 puntos de escritura + acceso confidencial):**
+- `Person`: `FAMILY_PERSON_CREATED`, `FAMILY_PERSON_UPDATED`.
+- `Case`: `FAMILY_CASE_CREATED` (radicación), `FAMILY_CASE_STATE_CHANGED` (transición/reapertura).
+- `CaseParty`: `FAMILY_PARTY_ADDED`, `FAMILY_PARTY_REMOVED`.
+- `ProtectionMeasure`: `FAMILY_MEASURE_ISSUED`, `FAMILY_MEASURE_UPDATED`.
+- `RestorationProcess`: `FAMILY_PARD_OPENED`, `FAMILY_PARD_UPDATED`.
+- `Hearing`: `FAMILY_HEARING_SCHEDULED`, `FAMILY_HEARING_UPDATED`.
+- `Assignment`: `FAMILY_TEAM_ASSIGNED`, `FAMILY_TEAM_REMOVED`.
+- **`Assessment` (confidencial):** `FAMILY_ASSESSMENT_CREATED`, `FAMILY_ASSESSMENT_UPDATED` y **`FAMILY_ASSESSMENT_ACCESSED`** en cada lectura (lista e individual) — deja rastro de quién consulta datos sensibles de NNA/víctimas.
+
+**Anonimización confirmada:** `GET /api/v1/family/stats` (y la pantalla) devuelven solo conteos agregados y nombres de estados/modalidades/profesionales — ninguna PII de víctimas/NNA. Los reportes agregados cumplen el requisito de anonimización (Ley 1098/2006).
+**Verificación:** `type-check` OK; `build` OK.
+
 ### 17. Fase 6 — Dashboard analítico de comisaría (estadísticas con cruce de variables)
 **Estado:** COMPLETADO
 **Objetivo:** Tablero estadístico por comisaría para política pública.

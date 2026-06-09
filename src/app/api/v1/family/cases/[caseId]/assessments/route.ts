@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssessmentType, RiskLevel } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_CONFIDENTIAL_ROLES, findCaseInTenant, isValidEnum } from '@/lib/familyApi';
+import { FAMILY_CONFIDENTIAL_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +28,9 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
       },
       orderBy: { conductedAt: 'desc' },
     });
+
+    // Acceso a datos confidenciales: queda auditado (Ley 1581/2012 + Ley 1098/2006)
+    await auditFamily(db, request, auth.user, 'FAMILY_ASSESSMENT_ACCESSED', 'Assessment', params.caseId, { caseId: params.caseId, metadata: { count: assessments.length } });
 
     return NextResponse.json({ data: assessments });
   } catch (error) {
@@ -96,6 +99,8 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
       },
       include: { assessor: { select: { id: true, fullName: true } } },
     });
+
+    await auditFamily(db, request, auth.user, 'FAMILY_ASSESSMENT_CREATED', 'Assessment', assessment.id, { caseId: params.caseId, metadata: { assessmentType, riskLevel: assessment.riskLevel } });
 
     return NextResponse.json(assessment, { status: 201 });
   } catch (error) {

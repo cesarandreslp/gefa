@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_WRITE_ROLES } from '@/lib/familyApi';
+import { FAMILY_WRITE_ROLES, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +26,7 @@ export async function DELETE(
     }
 
     await db.assignment.delete({ where: { id: params.assignmentId } });
+    await auditFamily(db, request, auth.user, 'FAMILY_TEAM_REMOVED', 'Assignment', params.assignmentId, { caseId: params.caseId });
     return NextResponse.json({ message: 'Profesional retirado del caso' });
   } catch (error) {
     console.error('Error retirando asignación:', error);

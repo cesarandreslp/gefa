@@ -9,6 +9,9 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { NextRequest } from 'next/server';
+import crypto from 'crypto';
+import { getClientIp, getUserAgent } from '@/lib/validation';
 
 /**
  * Roles con acceso de LECTURA al expediente de familia (no confidencial).
@@ -69,4 +72,64 @@ export function isValidEnum<T extends Record<string, string>>(
   value: unknown
 ): value is T[keyof T] {
   return typeof value === 'string' && Object.values(enumObj).includes(value);
+}
+
+/** Usuario autenticado mínimo necesario para auditar. */
+interface AuditUser {
+  userId: string;
+  email: string;
+  roleCode: string;
+  tenantId: string;
+}
+
+/**
+ * Registra una acción del dominio de familia en el log inmutable `ActionLog`
+ * de la BD DEL TENANT (aislamiento por tenant, Ley 1581/2012 + Ley 1098/2006),
+ * con encadenado de checksum tipo blockchain. Best-effort: nunca lanza ni
+ * interrumpe el request; si falla, solo deja traza en consola.
+ */
+export async function auditFamily(
+  db: PrismaClient,
+  request: NextRequest,
+  user: AuditUser,
+  action: string,
+  entityType: string,
+  entityId: string,
+  opts: { caseId?: string; metadata?: Record<string, unknown> } = {}
+): Promise<void> {
+  try {
+    const last = await db.actionLog.findFirst({
+      where: { tenantId: user.tenantId },
+      orderBy: { timestamp: 'desc' },
+      select: { checksum: true },
+    });
+    const previousHash = last?.checksum || 'GENESIS_BLOCK';
+    const timestamp = new Date();
+    const checksum = crypto
+      .createHash('sha256')
+      .update(JSON.stringify({ action, userId: user.userId, entityType, entityId, timestamp: timestamp.toISOString(), previousHash }))
+      .digest('hex');
+
+    await db.actionLog.create({
+      data: {
+        tenantId: user.tenantId,
+        timestamp,
+        userId: user.userId,
+        userEmail: user.email,
+        userRole: user.roleCode,
+        action,
+        entityType,
+        entityId,
+        ipAddress: getClientIp(request.headers),
+        userAgent: getUserAgent(request.headers),
+        metadata: (opts.metadata ?? undefined) as never,
+        caseId: opts.caseId,
+        checksum,
+        previousHash,
+        success: true,
+      },
+    });
+  } catch (error) {
+    console.error('[AUDIT FAMILY ERROR]', action, entityType, entityId, error);
+  }
 }
