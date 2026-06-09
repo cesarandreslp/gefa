@@ -6,6 +6,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 27. Sanear rastros de personería en el panel interno y el núcleo (post-cara pública)
+**Estado:** EN CURSO
+**Objetivo:** Aplicar el principio "GEFA es comisaría, no personería" al resto del sistema (panel interno y núcleo), no solo a la cara pública (#26). Auditoría hecha: hay un panel Ventanilla heredado (`/home/*`, bandeja PQRS) coexistiendo con el de comisaría (`/admin/*`), más tipos de personería en `CaseTypes.ts` y endpoints `general-request`/`contact`. Ejecutar por fases verificables (type-check + commit por fase), de menor a mayor riesgo, reescribiendo o retirando con reemplazo de comisaría — sin ocultar. Primer paso: verificar qué del panel Ventanilla está vivo vs muerto para retirar con seguridad.
+
 ### 26. Reconstruir la cara pública del ciudadano según el flujo REAL de comisaría de familia
 **Estado:** COMPLETADO
 **Objetivo:** Corregir el rumbo de la entrada #25. En vez de **ocultar/redirigir** el flujo ciudadano heredado de personería (PQRS/tutelas), reconstruirlo correctamente para una **comisaría de familia**. Premisa del usuario: los componentes técnicos se reutilizan, pero el **flujo de negocio** de una comisaría (denuncia de violencia → medida de protección → conciliación/audiencia → PARD → seguimiento) NO es el de una personería (PQRS/derecho de petición/tutela). Pasos: (1) revertir el código de la entrada #25 (los redirects); (2) investigar el flujo documentado de comisaría; (3) rediseñar la cara pública (radicar/consultar/seguimiento) con vocabulario de comisaría y datos reales del tenant, sobre la infraestructura heredada; (4) consolidar en un solo flujo (sin duplicar con `/comisaria-en-linea`).
