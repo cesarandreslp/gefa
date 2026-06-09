@@ -6,9 +6,35 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
-### 2. Arranque de infraestructura: git init, GitHub repo, Vercel, build
-**Estado:** EN CURSO
-**Objetivo:** Dejar el repositorio sano con git, publicarlo en GitHub, conectar Vercel y verificar que compila.
+### 2. Arranque de infraestructura: git, GitHub, Vercel, build y base de datos
+**Estado:** COMPLETADO
+**Objetivo:** Dejar el repositorio sano con git, publicarlo en GitHub, conectar Vercel, verificar que compila y provisionar la base de datos del control plane.
+
+**Repositorio y compilación:**
+- Eliminado el `.git` parcial heredado y reinicializado (`git init`). Verificado que `src/app/transparencia` ya no existía.
+- `npm install` (479 paquetes; `prisma generate` en postinstall).
+- **`npm run type-check`** falló con 4 grupos de errores; corregidos:
+  - `src/app/page.tsx` y `src/app/servicios/page.tsx`: el tipo del `ICON_MAP` de lucide-react usaba `size?: number`, incompatible con `LucideProps` (que acepta `number | string`). Cambiado a `size?: number | string`.
+  - `src/app/api/v1/peticiones-reasignacion/route.ts`: `peticion.user` posiblemente null → optional chaining (`peticion.user?.fullName ?? 'Desconocido'`).
+  - `src/app/api/v1/reasignaciones/pendientes/route.ts`: `solicitud.user` posiblemente null → optional chaining.
+- **`npm run build`** exitoso (todas las rutas `force-dynamic`).
+- Commit inicial (327 archivos) e identidad git configurada.
+
+**GitHub:** repo privado creado y push con `gh repo create gefa --private --source=. --remote=origin --push` → https://github.com/cesarandreslp/gefa
+
+**Vercel:** proyecto `gefa` creado y linkeado (`vercel link`). La conexión automática del repo GitHub falló por OAuth (pendiente de conectar desde el dashboard). Creados 2 blob stores privados (`gefa-files`, `gefa-attachments`).
+
+**Variables de entorno (Vercel, los 3 entornos):** `JWT_SECRET` y `ENCRYPTION_KEY` generados con crypto; `JWT_EXPIRATION=8h`, `NODE_ENV`, `API_VERSION=v1`.
+
+**Base de datos (control plane):**
+- Provisionada vía integración Neon de Vercel (`vercel integration add neon`) → proyecto Neon `neon-erin-book`, BD `neondb` en `us-east-1`. Inyectó automáticamente `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (directa) y demás vars `POSTGRES_*`/`PG*` en los 3 entornos. Creó `.env.local`.
+- Esquema aplicado con `prisma db push` usando la conexión directa (`.env` local con `DATABASE_URL` = unpooled) → **26 tablas** creadas.
+- Ejecutado `prisma/seed-superadmin.ts` → rol global `SUPER_ADMIN` (level 1000) + usuario `superadmin@system.local`. **El seed principal `seed.ts` NO se ejecutó** por ser de dominio personería (Ventanilla); su reescritura para familia es tarea de Fase 3.
+
+**Pendiente manual del usuario:**
+- Conectar el repo GitHub al proyecto Vercel desde el dashboard (para deploy automático).
+- Conectar los blob stores al proyecto en el dashboard para que inyecten `BLOB_READ_WRITE_TOKEN`.
+- Provisionar las BD por comisaría (tenant) desde el panel super-admin cuando se definan las entidades reales.
 
 ---
 

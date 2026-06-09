@@ -70,3 +70,4 @@ backups/
 
 # Media / Context Docs
 docs/promt/
+.env*
