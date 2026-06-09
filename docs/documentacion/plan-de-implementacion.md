@@ -6,6 +6,23 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 17. Fase 6 — Dashboard analítico de comisaría (estadísticas con cruce de variables)
+**Estado:** COMPLETADO
+**Objetivo:** Tablero estadístico por comisaría para política pública.
+
+**`GET /api/v1/family/stats` (nuevo):** agregados tenant-scoped con `groupBy` — total de casos, total de NNA, casos por modalidad, por estado (con nombre/color), **cruce por tipo de violencia** (desnormaliza el array `violenceTypes`), medidas por estado, partes por rol y carga por profesional (asignaciones por usuario, ordenado desc). Roles `FAMILY_READ_ROLES`.
+**Pantalla `admin/family/stats/page.tsx` (nueva):** tarjetas de totales + gráficos de barras simples (sin librería) por cada dimensión, con etiquetas legibles, y **exportación CSV**. Botón "Estadísticas" añadido en el encabezado del listado.
+**Verificación:** `type-check` OK; `build` OK.
+**Con esto la Fase 6 queda cubierta** (notificaciones + analítica). Pendiente futuro: reportes PDF y portal ciudadano (Fase 7).
+
+### 16. Fase 6 — Notificaciones desde el cron (vencimientos y recordatorios de audiencia)
+**Estado:** COMPLETADO
+**Objetivo:** Cablear notificaciones reales desde el cron diario.
+
+**`src/lib/familyNotifications.ts` (nuevo):** `sendVencimientoNotifications(db, tenantId)` reúne medidas vencidas/por vencer, PARD atrasados y audiencias próximas (48 h), resuelve los **profesionales asignados** a esos casos (Fase 5) y envía **un correo-resumen (digest) por profesional** con `EmailService.sendEmail` (best-effort; los fallos no abortan el job). Devuelve el número de correos enviados.
+**Cron — `/api/cron/family-vencimientos`:** tras marcar vencidas, invoca el envío de notificaciones por tenant y añade `notified` al resumen. El error de notificación se captura sin interrumpir el fan-out.
+**Verificación:** `type-check` OK. (Requiere SMTP configurado en Vercel para envío real; si falta, `sendEmail` retorna false sin romper el job.)
+
 ### 15. Fase 5 — Equipo interdisciplinario y agenda
 **Estado:** COMPLETADO
 **Objetivo:** Fase 5 del roadmap: asignación de casos de familia al equipo + agenda de audiencias.

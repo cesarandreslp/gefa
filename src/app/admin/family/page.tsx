@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Users, FileText, AlertTriangle, Calendar } from 'lucide-react';
+import { Plus, Search, Users, FileText, AlertTriangle, Calendar, BarChart3 } from 'lucide-react';
 import { CASE_MODALITY_LABELS } from '@/domain/catalogs/familyLabels';
 
 interface FamilyCaseRow {
@@ -54,6 +54,12 @@ export default function FamilyCasesPage() {
           <p style={{ color: '#6b7280', margin: '0.25rem 0 0' }}>{total} caso(s) radicado(s)</p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button
+            onClick={() => router.push('/admin/family/stats')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'white', color: '#374151', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.6rem 1.1rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            <BarChart3 size={18} /> Estadísticas
+          </button>
           <button
             onClick={() => router.push('/admin/family/agenda')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'white', color: '#374151', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.6rem 1.1rem', fontWeight: 600, cursor: 'pointer' }}

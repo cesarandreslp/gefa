@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma as mainPrisma } from '@/lib/prisma';
 import { getTenantPrisma } from '@/lib/tenantDb';
 import { markExpiredMeasures, computeVencimientos } from '@/lib/familyVencimientos';
+import { sendVencimientoNotifications } from '@/lib/familyNotifications';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -31,22 +32,30 @@ async function handler(request: NextRequest) {
       select: { id: true, sigla: true, databaseUrl: true },
     });
 
-    const summary: Array<{ tenant: string; expiredMarked: number; overdue: number; upcoming: number; pardOverdue: number; error?: string }> = [];
+    const summary: Array<{ tenant: string; expiredMarked: number; overdue: number; upcoming: number; pardOverdue: number; notified: number; error?: string }> = [];
 
     for (const t of tenants) {
       const db = t.databaseUrl ? getTenantPrisma(t.databaseUrl) : mainPrisma;
       try {
         const expiredMarked = await markExpiredMeasures(db, t.id);
         const v = await computeVencimientos(db, t.id);
+        // Notificar a los profesionales asignados (best-effort; no aborta el job)
+        let notified = 0;
+        try {
+          notified = await sendVencimientoNotifications(db, t.id);
+        } catch (notifyErr) {
+          console.error(`Error notificando vencimientos (tenant ${t.sigla}):`, notifyErr);
+        }
         summary.push({
           tenant: t.sigla,
           expiredMarked,
           overdue: v.measuresOverdue.length,
           upcoming: v.measuresUpcoming.length,
           pardOverdue: v.pardOverdue.length,
+          notified,
         });
       } catch (e) {
-        summary.push({ tenant: t.sigla, expiredMarked: 0, overdue: 0, upcoming: 0, pardOverdue: 0, error: e instanceof Error ? e.message : String(e) });
+        summary.push({ tenant: t.sigla, expiredMarked: 0, overdue: 0, upcoming: 0, pardOverdue: 0, notified: 0, error: e instanceof Error ? e.message : String(e) });
       }
     }
 
