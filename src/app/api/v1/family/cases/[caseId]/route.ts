@@ -37,6 +37,14 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
           include: { presidedBy: { select: { id: true, fullName: true } } },
           orderBy: { scheduledAt: 'asc' },
         },
+        stateHistory: {
+          include: {
+            fromState: { select: { code: true, name: true } },
+            toState: { select: { code: true, name: true, color: true } },
+            changedByUser: { select: { fullName: true } },
+          },
+          orderBy: { timestamp: 'desc' },
+        },
         _count: { select: { assessments: true } },
       },
     });

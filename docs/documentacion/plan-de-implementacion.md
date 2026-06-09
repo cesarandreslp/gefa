@@ -7,8 +7,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 ## 2026-06-09
 
 ### 12. Fase 3 — Módulo 4: workflow de estados y seguimiento (motor)
-**Estado:** EN CURSO
-**Objetivo:** Implementar las transiciones de estado del caso de familia (`RADICADO → EN_VALORACION → … → CERRADO`/`REMITIDO`) con endpoint de cambio de estado e historial, reutilizando el patrón de `CaseStateHistory`; coherencia con el avance de medidas/PARD/audiencias.
+**Estado:** COMPLETADO
+**Objetivo:** Implementar las transiciones de estado del caso de familia con validación, historial y UI, sin tocar el `StateMachineService` heredado (que usa estados de petición).
+
+**Motor — `src/domain/rules/familyStateMachine.ts` (nuevo):** matriz de transiciones del workflow de familia, estados finales (`REMITIDO`, `CERRADO`), reapertura restringida a ADMIN/DIRECTOR (a `EN_SEGUIMIENTO`/`EN_VALORACION`). `validateFamilyTransition()` valida origen/destino, permisos y comentario obligatorio (deriva `requiresComment` del catálogo de estados + fuerza comentario en reaperturas). `availableFamilyTransitions()` da los destinos para la UI. Independiente del motor heredado.
+
+**Endpoint `/api/v1/family/cases/[caseId]/transition`:**
+- `GET` — estados disponibles desde el actual según el rol (normalizado con `getBaseRoleCode`).
+- `POST` — valida la transición; en transacción actualiza `case.stateId` (set `closedAt`/`closedBy` si pasa a `CERRADO`) y registra `CaseStateHistory` (`reason: TRANSITION`/`REOPENED`). Rechaza con 422 si la transición o el comentario no son válidos. Roles `FAMILY_WRITE_ROLES`.
+
+**Expediente (`admin/family/[caseId]`):** la GET del expediente ahora incluye `stateHistory`. La pantalla añade: tarjeta **"Cambiar estado"** (select de transiciones disponibles + comentario obligatorio cuando aplica) y **línea de tiempo del historial** (de→a, comentario, autor, fecha, badge REAPERTURA).
+**Verificación:** `type-check` OK; `build` OK (endpoint y página en el manifiesto).
 
 ### 11. Fase 3 — Módulo 3b: pantallas de admin (radicación + expediente de familia)
 **Estado:** COMPLETADO
