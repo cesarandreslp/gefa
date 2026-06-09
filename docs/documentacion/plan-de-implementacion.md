@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 24. Asignar dominio al tenant demo para probar la landing de entidad en Vercel
+**Estado:** COMPLETADO
+**Objetivo:** Que el host del preview resuelva a la comisaría demo (CFBUGA) y se vea su landing de entidad, no la del producto. El usuario eligió la vía de subdominio. Como `*.vercel.app` no admite sub-subdominios (`cfbuga.gefa-black.vercel.app` no es válido), se usa un alias `*.vercel.app` de primer nivel: `gefa-cfbuga.vercel.app`. Acción de datos: fijar `Tenant.domain` del tenant demo a ese host (el alias debe añadirse luego en Vercel → Project → Domains).
+
+**Hecho:** `Tenant.domain` de CFBUGA cambiado de `cf-buga.gov.co` → `gefa-cfbuga.vercel.app` en la BD; `scripts/seed-demo-gefa.ts` actualizado para crear con ese dominio. `resolveTenantByHost` hace lookup por `domain` exacto, así que en cuanto el host `gefa-cfbuga.vercel.app` llegue a la app, resolverá a CFBUGA y mostrará su landing de entidad (con "Radicar Solicitud" / "Consultar Solicitud"). **Pendiente manual del usuario:** añadir el dominio `gefa-cfbuga.vercel.app` en Vercel → Project → Settings → Domains (no requiere DNS por ser `*.vercel.app`).
+
 ### 23. Página raíz del SaaS: landing informativa de GEFA en vez del login
 **Estado:** COMPLETADO
 **Objetivo:** En el dominio raíz del SaaS (p. ej. `gefa-black.vercel.app`), que no pertenece a ninguna comisaría, `resolveTenantByHost` devuelve null y la raíz mostraba directamente el `SuperAdminLogin`. Lo lógico es una página informativa del producto. Decisión del usuario: (a) mostrar una **landing del producto GEFA** (qué es, para comisarías de familia, características) con accesos discretos a "Acceso institucional" y "Registrar entidad"; (b) mover el login del super-admin a una ruta propia enlazada de forma discreta desde la landing. No se toca el comportamiento cuando sí hay tenant (sigue mostrando la landing de la entidad).

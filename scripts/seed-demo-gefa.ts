@@ -60,7 +60,7 @@ async function main() {
     create: {
       name: 'Comisaría de Familia de Guadalajara de Buga',
       sigla: SIGLA,
-      domain: 'cf-buga.gov.co',
+      domain: 'gefa-cfbuga.vercel.app',
       institutionalEmail: 'comisaria1@buga.gov.co',
       phone: '(+57) 602 236 0000',
       address: 'Calle 6 No. 11-40, Guadalajara de Buga, Valle del Cauca',
