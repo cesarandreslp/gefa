@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 19. Fase 7 — Portal ciudadano ("Comisaría en línea")
+**Estado:** COMPLETADO
+**Objetivo:** Portal público por tenant: (a) **radicación en línea** de una solicitud/denuncia por la ciudadanía (sin autenticación, rate-limited, tenant por host) que crea el caso en estado inicial para revisión del personal; (b) **consulta de estado** del caso por número de radicado + documento del denunciante, devolviendo solo información no sensible (estado y fechas, sin datos de víctimas/NNA/agresor). Reutiliza la resolución de tenant y el rate limit heredados.
+
+**Implementación:**
+- **`src/app/api/v1/family/public/intake/route.ts` (POST, nuevo):** radicación en línea sin auth. Rate limit `FORM_SUBMISSION`, tenant por host (`getTenantFromRequest` → `getTenantPrisma`), rechaza tenant inactivo. En una transacción crea/reusa `Person` (denunciante, con `dataConsent`) y su `Citizen` espejo (FK requerido por `Case`), crea el `Case` en estado inicial (`channel='WEB'`, `priority=40`, `metadata.origen='portal_ciudadano'`, `requiereRevision=true`), la `CaseParty` (`VICTIMA` si `esVictima`, si no `DENUNCIANTE`) y el `CaseStateHistory` inicial. Calcula `dueDate` con `LegalTermsCalculator` y la modalidad con `CASE_TYPE_MODALITY`. Devuelve el número de radicado como comprobante. Todas las entradas pasan por `sanitizeString`.
+- **`src/app/api/v1/family/public/status/route.ts` (GET, nuevo):** consulta de estado con **doble factor** (radicado + documento del denunciante). Si el host no resuelve tenant, lo infiere por la sigla del radicado. Respuesta **uniforme** ante "no existe" y "documento no coincide" (404) para no revelar la existencia de un radicado a quien no acredita ser el denunciante. Expone **solo info no sensible**: estado, tipo, asunto, fechas de radicado/vencimiento y una línea de tiempo de **estados** (nombre/color/fecha) — **sin comentarios del expediente** (podrían contener PII de víctimas/NNA/agresor). Rate limit `QUERY`.
+- **`src/app/comisaria-en-linea/page.tsx` (nuevo):** portal público (client component) con dos pestañas — *Radicar solicitud* (formulario con datos del denunciante, tipo de caso, asunto y descripción; aviso de línea de emergencia 123/155; autorización de tratamiento de datos Ley 1581/2012; comprobante con el radicado y botón de copiar) y *Consultar estado* (radicado + documento → tarjeta con estado actual y seguimiento). Pre-llena la consulta desde `?radicado=`.
+
+**Diseño de privacidad (Ley 1581/2012, Ley 1098/2006):** se creó un endpoint nuevo en vez de reutilizar `cases/public/status` (dominio de petición de Ventanilla, que expone historial y nombres). El de familia exige doble factor, oculta toda PII y solo muestra la progresión de estados. Tipos ofrecidos a la ciudadanía: VIF, MP, CAV, CF, PNNA (los de oficio como PARD los abre la autoridad). Ruta y endpoints quedan fuera del matcher de auth del middleware (solo protege `/admin` y `/super-admin`). `npm run type-check` en verde.
+
+**Con esto la Fase 7 queda cubierta.** Pendiente menor de Fase 8: visor de auditoría por caso en el panel admin y revisión final de RBAC.
+
 ### 18. Fase 8 — Hardening: auditoría de acciones de familia y acceso a datos sensibles
 **Estado:** COMPLETADO
 **Objetivo:** Cumplimiento Ley 1581/2012 y Ley 1098/2006: registrar en log inmutable las acciones sobre el dominio de familia, incl. acceso a valoraciones.
