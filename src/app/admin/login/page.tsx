@@ -15,8 +15,8 @@ export default async function AdminLoginRedirect() {
   if (token) {
     try {
       const payload = await authService.verifyToken(token.value);
-      if (['ADMIN', 'FUNCIONARIO', 'SUPERVISOR'].includes(payload.roleCode)) {
-        redirect('/admin/inbox');
+      if (['ADMIN', 'DIRECTOR', 'FUNCIONARIO', 'SUPERVISOR', 'VENTANILLA_UNICA', 'ASIGNACION_DE_CASOS'].includes(payload.roleCode)) {
+        redirect('/admin/family');
       }
     } catch {
       // Token inválido, mostrar error

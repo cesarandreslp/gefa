@@ -218,7 +218,7 @@ export default function UsersPage() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <button
-            onClick={() => router.push('/admin/inbox')}
+            onClick={() => router.push('/admin/family')}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#f3f4f6';
               e.currentTarget.style.borderColor = '#9ca3af';

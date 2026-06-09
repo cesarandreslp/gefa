@@ -14,17 +14,19 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: '📥 Bandeja',        path: '/admin/inbox' },
-  { label: '👨‍👩‍👧 Familia',       path: '/admin/family' },
-  { label: 'Expedientes',       path: '/admin/cases' },
-  { label: '📊 Supervisión',    path: '/admin/supervision',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'ASIGNACION_DE_CASOS'] },
-  { label: '📈 Métricas',       path: '/admin/metrics',      roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
-  { label: '📄 Reportes',       path: '/admin/reports',      roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
-  { label: '⚙️ SLA',            path: '/admin/sla-config',   roles: ['ADMIN', 'DIRECTOR'] },
-  { label: '🔧 Configuración',  path: '/admin/settings',     roles: ['ADMIN', 'DIRECTOR'] },
-  { label: '🏛️ Entidad',        path: '/admin/entidad',      roles: ['ADMIN', 'DIRECTOR'] },
-  { label: '📧 Notificaciones', path: '/admin/notifications',roles: ['ADMIN', 'DIRECTOR'] },
-  { label: '🔧 Sistema',        path: '/admin/system',       roles: ['ADMIN', 'DIRECTOR'] },
+  // Operación de la comisaría
+  { label: '📁 Casos de Familia', path: '/admin/family' },
+  { label: '➕ Radicar caso',     path: '/admin/family/nuevo' },
+  { label: '📅 Agenda',           path: '/admin/family/agenda' },
+  { label: '⏰ Vencimientos',     path: '/admin/family/vencimientos' },
+  { label: '📊 Estadísticas',     path: '/admin/family/stats',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
+  // Dirección y gestión
+  { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'] },
+  { label: '📄 Reportes',         path: '/admin/reports',       roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
+  { label: '🏛️ Entidad',          path: '/admin/entidad',       roles: ['ADMIN', 'DIRECTOR'] },
+  { label: '🔧 Configuración',    path: '/admin/settings',      roles: ['ADMIN', 'DIRECTOR'] },
+  { label: '📧 Notificaciones',   path: '/admin/notifications', roles: ['ADMIN', 'DIRECTOR'] },
+  { label: '⚙️ Sistema',          path: '/admin/system',        roles: ['ADMIN', 'DIRECTOR'] },
 ];
 
 export default function AdminNav({ userRole }: AdminNavProps) {

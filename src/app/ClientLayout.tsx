@@ -202,7 +202,7 @@ export default function ClientLayout({
                 <a href="/atencion-ciudadano/consultar" className="nav-link">Consultar Solicitud</a>
                 {mounted && isLoggedIn && !isDashboard && (
                   <a
-                    href="/admin/inbox"
+                    href="/admin/family"
                     className="nav-link"
                     style={{
                       backgroundColor: 'var(--color-primary)',
@@ -365,7 +365,7 @@ export default function ClientLayout({
                 {/* Mi Panel (solo cuando está logueado y fuera del dashboard) */}
                 {mounted && isLoggedIn && !isDashboard && (
                   <a
-                    href="/admin/inbox"
+                    href="/admin/family"
                     className="mobile-menu-link"
                     style={{
                       display: 'block',

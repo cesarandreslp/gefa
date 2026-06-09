@@ -6,6 +6,14 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 30. Fix: error server-side en /atencion-ciudadano/consultar (portal consolidado)
+**Estado:** PENDIENTE (pospuesto por #31)
+**Objetivo:** En el deploy de Vercel (`gefa-cfbuga.vercel.app/atencion-ciudadano/consultar`) aparece "Application error: a server-side exception has occurred" (digest 2438100093). La ruta renderiza `<ComisariaPortal initialTab="consultar"/>`. Sin accesos inseguros evidentes en el portal; falta el log de Vercel para el digest. Se retoma tras #31.
+
+### 31. Panel del administrador del tenant: menú de comisaría y login a Casos de Familia
+**Estado:** EN CURSO
+**Objetivo:** El panel `/admin` mezcla módulos de comisaría (`/admin/family/*`) con heredados de Ventanilla (inbox/cases/solicitudes), y el login cae en `/admin/inbox` (bandeja PQRS). Reorganizar `AdminNav` para mostrar el menú de comisaría (Casos de Familia, Radicar, Agenda, Vencimientos, Estadísticas + dirección: Equipo, Reportes, Entidad, Configuración…) y quitar los items de Ventanilla; y redirigir el login (admin/login + LoginModal) a `/admin/family`.
+
 ### 29. Ejecutar Fase A del refactor: unificar login y navegación en /admin
 **Estado:** COMPLETADO
 
