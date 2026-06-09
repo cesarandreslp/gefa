@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { resolveTenantByHost } from '@/lib/tenantResolver';
 import { prisma } from '@/lib/prisma';
 import { getLandingConfig } from '@/lib/landingDefaults';
-import SuperAdminLogin from './components/SuperAdminLogin';
+import GefaLanding from './components/GefaLanding';
 import {
   FileText, Scale, Users, Shield, Baby, BarChart3, Mail, Phone, MapPin, Clock,
   ClipboardList, Building2, Map, Heart, Briefcase, Gavel, Landmark, Globe,
@@ -20,13 +20,14 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number | string }>> 
 };
 
 export default async function HomePage() {
-  // Si no hay tenant (ej: localhost sin DEFAULT_TENANT_SIGLA), mostrar login de Super Admin
+  // Sin tenant asociado al host (dominio raíz del SaaS), mostrar la landing
+  // informativa del producto GEFA. El acceso al control plane queda en /acceso.
   const headersList = headers();
   const host = headersList.get('x-tenant-domain') || headersList.get('host');
   const tenant = await resolveTenantByHost(host);
-  
+
   if (!tenant) {
-    return <SuperAdminLogin />;
+    return <GefaLanding />;
   }
 
   // Cargar configuración de la entidad desde TenantSettings

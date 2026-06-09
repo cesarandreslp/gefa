@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 23. Página raíz del SaaS: landing informativa de GEFA en vez del login
+**Estado:** COMPLETADO
+**Objetivo:** En el dominio raíz del SaaS (p. ej. `gefa-black.vercel.app`), que no pertenece a ninguna comisaría, `resolveTenantByHost` devuelve null y la raíz mostraba directamente el `SuperAdminLogin`. Lo lógico es una página informativa del producto. Decisión del usuario: (a) mostrar una **landing del producto GEFA** (qué es, para comisarías de familia, características) con accesos discretos a "Acceso institucional" y "Registrar entidad"; (b) mover el login del super-admin a una ruta propia enlazada de forma discreta desde la landing. No se toca el comportamiento cuando sí hay tenant (sigue mostrando la landing de la entidad).
+
+**Implementación:**
+- **`src/app/components/GefaLanding.tsx` (nuevo):** landing del producto (server component, estilos inline + lucide-react) — barra superior con "Acceso institucional", hero, 6 características (expediente digital, medidas de protección, PARD, equipo interdisciplinario, notificaciones/analítica, trazabilidad/auditoría), bloque de marco normativo (Leyes 1098/2006, 294/1996, 1257/2008, 2126/2021, 1581/2012) y footer. CTAs: "Registrar entidad" → `/registro-entidad`, "Acceso institucional" → `/acceso`.
+- **`src/app/acceso/page.tsx` (nuevo):** ruta propia que renderiza el `SuperAdminLogin` (el login del control plane sale de la raíz). El flujo de login no cambia (POST `/api/v1/auth/login`, redirige a `/super-admin`).
+- **`src/app/page.tsx`:** el fallback `if (!tenant)` ahora devuelve `<GefaLanding />` en lugar de `<SuperAdminLogin />`.
+
+**Verificación:** `npm run type-check` en verde. Nota operativa: para ver en el preview de Vercel la *landing de entidad* (no la del producto), el dominio debe resolver a un tenant — configurar `DEFAULT_TENANT_SIGLA` o registrar el dominio/subdominio en el `Tenant` (p. ej. `cfbuga.gefa-black.vercel.app`).
+
 ### 22. Rebranding de UI: reemplazar referencias a "Ventanilla Única" por GEFA
 **Estado:** COMPLETADO
 **Objetivo:** El producto ya es GEFA (gestión de comisarías de familia), pero quedan textos fijos heredados que dicen "Ventanilla Única" / "Sistema de Ventanilla Única" en etiquetas visibles (títulos, metadatos, encabezados, mensajes de UI). Cambiar esas referencias de marca a GEFA. NO tocar el rol funcional `VENTANILLA_UNICA` (recepción/mostrador) ni identificadores de código que romperían RBAC/seed; solo el texto de marca visible al usuario.
