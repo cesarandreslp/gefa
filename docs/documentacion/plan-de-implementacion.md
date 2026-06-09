@@ -19,6 +19,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Siguiente:** Fase C (retiro de `general-request`/`contact`, limpieza de `CaseTypes.ts` y textos/correos) y Fase B (migración del enum `DocumentType`).
 
 **Fase C.1 (hecha):** retirados los endpoints muertos `cases/general-request` y `api/v1/contact` (sin llamadas vivas) y el script `test-general-request.js`. `npm run type-check` en verde.
+
+**Fase C.2 (hecha):** eliminado `src/domain/types/CaseTypes.ts` (enums de personería DERECHO_PETICION/TUTELA/QUEJA/PQRS + ROLE_PERMISSIONS/LEGAL_TERMS). Era importado solo por `CaseService`, y solo como tipos (nadie usaba los valores). `CaseService` se desacopló: `caseTypeCode`/`stateCode`→`string`, `priority`→`number` (los codes ya son dinámicos de la BD). Type-check en verde.
+
+**Fase C.3 (hecha):** saneado el aviso de escalamiento al ciudadano en `EmailService` — fuera "proceso disciplinario (Art. 115 Ley 1952/2019)" y "derecho de petición (Ley 1712/2014)"; ahora lenguaje de comisaría con reserva por protección de datos sensibles (Ley 1581/2012 + Ley 1098/2006). Se conservan los códigos de razón para no romper el flujo.
 **Objetivo:** Ejecutar la Fase A del `PLAN_REFACTOR_COMISARIA.md` (aprobado; sin tenants en producción). Unificar el login en el panel de comisaría `/admin/*`: `LoginModal` y enlaces internos dejan de apuntar a `/home` (Ventanilla) y van a `/admin/inbox`; las rutas `/home/*` se redirigen a su equivalente en `/admin` (compatibilidad) para luego retirarse.
 
 ### 28. Preparar el plan de la fase mayor: migración de enums + unificación de login

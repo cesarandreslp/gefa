@@ -709,21 +709,21 @@ export class EmailService {
     escalationReason?: string,
   ): Promise<boolean> {
     const REASON_LABELS: Record<string, string> = {
-      'PROCESO_DISCIPLINARIO': 'proceso disciplinario — reserva de la etapa de instrucción (Art. 115 Ley 1952/2019)',
-      'ANALISIS_PRUEBAS': 'análisis de pruebas — recaudo y valoración de material probatorio',
-      'COMPETENCIA_EXTERNA': 'competencia externa — traslado a autoridad competente para su definición',
+      'PROCESO_DISCIPLINARIO': 'actuación bajo reserva por protección de datos sensibles de la familia',
+      'ANALISIS_PRUEBAS': 'valoración del equipo interdisciplinario (psicología, trabajo social y jurídica)',
+      'COMPETENCIA_EXTERNA': 'traslado a la autoridad competente para su definición',
     };
     const razonTexto = escalationReason ? (REASON_LABELS[escalationReason] || escalationReason) : null;
     const bodyTexto =
-      `Le informamos que su solicitud ha sido remitida a la etapa de Escalamiento. ` +
-      `De acuerdo con la normativa vigente sobre el derecho de petición y la protección de datos (Ley 1712 de 2014), ` +
-      `se le informa que esta etapa del proceso se encuentra bajo reserva administrativa` +
+      `Le informamos que su caso se encuentra en gestión interna ante la comisaría de familia. ` +
+      `Conforme a la protección de datos personales y de la familia (Ley 1581 de 2012 y Ley 1098 de 2006), ` +
+      `esta etapa del proceso se maneja bajo reserva` +
       (razonTexto ? ` debido a ${razonTexto}` : '') +
-      `. Una vez se produzca una decisión de fondo o se levante la reserva por parte de la dependencia competente, ` +
+      `. Una vez se adopte una decisión de fondo o se levante la reserva, ` +
       `usted será notificado a través de este mismo medio.<br><br>` +
-      `<strong>Estado actual:</strong> En trámite interno.`;
+      `<strong>Estado actual:</strong> En gestión interna.`;
 
-    const subject = `Respuesta a su solicitud ${filingNumber} - Trámite Interno`;
+    const subject = `Estado de su caso ${filingNumber} - Gestión interna`;
     const baseUrl = await this.getBaseUrlForTenant(tenantId);
     const fechaHora = new Date().toLocaleDateString('es-CO', {
       year: 'numeric', month: 'long', day: 'numeric',

@@ -22,12 +22,11 @@ import { PrismaClient } from '@prisma/client';
 import type { Channel } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { LegalTermsCalculator } from '@/domain/rules/LegalTermsCalculator';
-import { CaseTypeCode, CaseStateCode, PriorityLevel } from '@/domain/types/CaseTypes';
 
 export interface CreateCaseInput {
   tenantId: string;
   citizenId: string;
-  caseTypeCode: CaseTypeCode;
+  caseTypeCode: string;
   subject: string;
   description: string;
   folios?: number; // Número de hojas que ocupa la descripción
@@ -83,7 +82,7 @@ export class CaseService {
     }
 
     // 2. Obtener estado inicial "Radicado"
-    const initialState = await this.getStateByCode('RADICADO' as CaseStateCode, client);
+    const initialState = await this.getStateByCode('RADICADO', client);
     if (!initialState) {
       throw new Error('Estado inicial RADICADO no encontrado en base de datos');
     }
@@ -223,7 +222,7 @@ export class CaseService {
     });
   }
 
-  async getStateByCode(code: CaseStateCode, db?: PrismaClient) {
+  async getStateByCode(code: string, db?: PrismaClient) {
     return await (db || prisma).caseState.findUnique({
       where: { code },
     });
@@ -337,9 +336,9 @@ export class CaseService {
     tenantId: string;
     page?: number;
     limit?: number;
-    typeCode?: CaseTypeCode;
-    stateCode?: CaseStateCode;
-    priority?: PriorityLevel;
+    typeCode?: string;
+    stateCode?: string;
+    priority?: number;
     channel?: string;
   }) {
     const page = params.page || 1;
