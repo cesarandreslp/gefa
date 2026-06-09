@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 32. Tablero de inicio del panel + retiro de páginas heredadas (inbox/cases/solicitudes)
+**Estado:** COMPLETADO
+
+**Hecho:**
+- **Tablero** (`/admin/page.tsx`, antes vacío): client component que consume `family/stats` y `family/vencimientos`. Muestra KPIs (casos, NNA, medidas vigentes, alertas), casos por estado (barras), por tipo de situación (modalidad) y panel de "requiere atención" (vencimientos). Accesos rápidos a Radicar/Agenda/Vencimientos.
+- `AdminNav`: añadido "🏠 Tablero" como primer item con `exact` (para no quedar siempre activo).
+- **Login → `/admin`** (Tablero) en `admin/login` y `LoginModal` (antes `/admin/family`).
+- **Retiradas** las páginas heredadas `/admin/inbox/*` y `/admin/solicitudes/*` (PQRS), con redirects en `next.config.js` → `/admin/family`. Sin imports cruzados; type-check en verde.
+- **`/admin/cases` NO se retira**: el expediente de familia (`/admin/family/[caseId]`) aún no replica la gestión documental que tiene `cases/[id]` (UploadDocumentForm). Queda pendiente portar la subida de documentos a Familia antes de retirar `cases`.
+**Objetivo:** Puntos 3 y 4 de la propuesta del panel admin. (3) Crear un **Tablero de inicio** de la comisaría (resumen: casos por estado/modalidad, vencimientos próximos, medidas vigentes, audiencias) y que el login caiga ahí. (4) Retirar/redirigir las páginas heredadas de Ventanilla (`/admin/inbox`, `/admin/cases`, `/admin/solicitudes`) hacia el módulo de comisaría, como se hizo con `/home`.
+
 ### 30. Fix: error server-side en /atencion-ciudadano/consultar (portal consolidado)
 **Estado:** PENDIENTE (pospuesto por #31)
 **Objetivo:** En el deploy de Vercel (`gefa-cfbuga.vercel.app/atencion-ciudadano/consultar`) aparece "Application error: a server-side exception has occurred" (digest 2438100093). La ruta renderiza `<ComisariaPortal initialTab="consultar"/>`. Sin accesos inseguros evidentes en el portal; falta el log de Vercel para el digest. Se retoma tras #31.

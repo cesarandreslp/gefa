@@ -44,8 +44,12 @@ const nextConfig = {
       { source: '/home/registro', destination: '/admin/usuarios', permanent: false },
       { source: '/home/configuracion-entidad', destination: '/admin/entidad', permanent: false },
       { source: '/home/editor-landing', destination: '/admin/settings', permanent: false },
-      { source: '/home', destination: '/admin/inbox', permanent: false },
-      { source: '/home/:path*', destination: '/admin/inbox', permanent: false },
+      { source: '/home', destination: '/admin/family', permanent: false },
+      { source: '/home/:path*', destination: '/admin/family', permanent: false },
+      // Páginas heredadas de Ventanilla en /admin (PQRS) → módulo de comisaría
+      { source: '/admin/inbox/:path*', destination: '/admin/family', permanent: false },
+      { source: '/admin/inbox', destination: '/admin/family', permanent: false },
+      { source: '/admin/solicitudes/:path*', destination: '/admin/family', permanent: false },
     ];
   },
 

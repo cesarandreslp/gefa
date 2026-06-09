@@ -107,7 +107,7 @@ export default function LoginModal({
         router.push('/super-admin');
       } else {
         // Panel unificado de la comisaría
-        router.push('/admin/family');
+        router.push('/admin');
       }
       setIsLoginModalOpen(false);
     } catch {
@@ -158,7 +158,7 @@ export default function LoginModal({
         router.push('/super-admin');
       } else {
         // Panel unificado de la comisaría
-        router.push('/admin/family');
+        router.push('/admin');
         router.refresh();
       }
     } catch (error) {

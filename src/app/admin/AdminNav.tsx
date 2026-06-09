@@ -11,9 +11,11 @@ interface NavItem {
   label: string;
   path: string;
   roles?: string[];
+  exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { label: '🏠 Tablero',          path: '/admin', exact: true },
   // Operación de la comisaría
   { label: '📁 Casos de Familia', path: '/admin/family' },
   { label: '➕ Radicar caso',     path: '/admin/family/nuevo' },
@@ -34,10 +36,11 @@ export default function AdminNav({ userRole }: AdminNavProps) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
+  const isActive = (path: string, exact?: boolean) =>
+    exact ? pathname === path : (pathname === path || pathname?.startsWith(path + '/'));
 
-  const getStyle = (path: string): React.CSSProperties => {
-    const active = isActive(path);
+  const getStyle = (path: string, exact?: boolean): React.CSSProperties => {
+    const active = isActive(path, exact);
     const hover = hovered === path;
 
     if (active) {
@@ -113,8 +116,8 @@ export default function AdminNav({ userRole }: AdminNavProps) {
             onClick={() => router.push(item.path)}
             onMouseEnter={() => setHovered(item.path)}
             onMouseLeave={() => setHovered(null)}
-            style={getStyle(item.path)}
-            aria-current={isActive(item.path) ? 'page' : undefined}
+            style={getStyle(item.path, item.exact)}
+            aria-current={isActive(item.path, item.exact) ? 'page' : undefined}
           >
             {item.label}
           </button>
