@@ -12,16 +12,16 @@ interface UploadDocumentFormProps {
   caseId: string;
 }
 
-// Catálogo visible (comisaría de familia). Los `value` se conservan porque son
-// el enum DocumentType del schema (cambiarlos exige migración multitenant); solo
-// se ajustan las etiquetas al dominio de comisaría.
+// Catálogo de tipos de documento del expediente (comisaría de familia).
+// Los `value` corresponden al enum DocumentType del schema.
 const DOCUMENT_TYPES = [
-  { value: 'PETITION', label: 'Denuncia o solicitud inicial' },
-  { value: 'SUPPORTING_DOC', label: 'Documento soporte' },
-  { value: 'OFFICIAL_RESPONSE', label: 'Auto, resolución o acta' },
-  { value: 'INTERNAL_MEMO', label: 'Concepto o valoración del equipo' },
-  { value: 'EVIDENCE', label: 'Evidencia' },
-  { value: 'NOTIFICATION', label: 'Notificación o citación' },
+  { value: 'DENUNCIA', label: 'Denuncia o solicitud inicial' },
+  { value: 'ACTA', label: 'Acta de audiencia o conciliación' },
+  { value: 'AUTO', label: 'Auto o resolución (medida, PARD)' },
+  { value: 'VALORACION', label: 'Valoración del equipo interdisciplinario' },
+  { value: 'OFICIO', label: 'Oficio' },
+  { value: 'CITACION', label: 'Citación o notificación' },
+  { value: 'EVIDENCE', label: 'Evidencia o soporte' },
   { value: 'OTHER', label: 'Otro' },
 ];
 

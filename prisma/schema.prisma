@@ -544,13 +544,21 @@ model Document {
 }
 
 enum DocumentType {
-  PETITION          // Petición inicial del ciudadano
+  // Heredados (se conservan por compatibilidad de datos; ya no se ofrecen en UI)
+  PETITION          // (legacy) Petición inicial del ciudadano
   SUPPORTING_DOC    // Documento soporte
-  OFFICIAL_RESPONSE // Respuesta oficial
-  INTERNAL_MEMO     // Memorando interno
+  OFFICIAL_RESPONSE // (legacy) Respuesta oficial
+  INTERNAL_MEMO     // (legacy) Memorando interno
   EVIDENCE          // Evidencia
   NOTIFICATION      // Notificación oficial
   OTHER             // Otros
+  // Comisaría de familia
+  DENUNCIA          // Denuncia o solicitud inicial
+  ACTA              // Acta de audiencia o conciliación
+  AUTO              // Auto o resolución (medida de protección, PARD)
+  VALORACION        // Valoración del equipo interdisciplinario
+  OFICIO            // Oficio
+  CITACION          // Citación o notificación a las partes
 }
 
 // ============================================================================

@@ -23,6 +23,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Fase C.2 (hecha):** eliminado `src/domain/types/CaseTypes.ts` (enums de personería DERECHO_PETICION/TUTELA/QUEJA/PQRS + ROLE_PERMISSIONS/LEGAL_TERMS). Era importado solo por `CaseService`, y solo como tipos (nadie usaba los valores). `CaseService` se desacopló: `caseTypeCode`/`stateCode`→`string`, `priority`→`number` (los codes ya son dinámicos de la BD). Type-check en verde.
 
 **Fase C.3 (hecha):** saneado el aviso de escalamiento al ciudadano en `EmailService` — fuera "proceso disciplinario (Art. 115 Ley 1952/2019)" y "derecho de petición (Ley 1712/2014)"; ahora lenguaje de comisaría con reserva por protección de datos sensibles (Ley 1581/2012 + Ley 1098/2006). Se conservan los códigos de razón para no romper el flujo.
+
+**Fase B (hecha):** migración **aditiva** del enum `DocumentType` en el schema — añadidos `DENUNCIA`, `ACTA`, `AUTO`, `VALORACION`, `OFICIO`, `CITACION` conservando los valores heredados (compatibilidad). Aplicado a la BD demo con `prisma db push` (aditivo, sin pérdida de datos; en producción real se usaría el fan-out `migrate-tenant-dbs.js`). `UploadDocumentForm` ahora ofrece los tipos de comisaría. La contracción (retiro de los valores legacy) queda diferida y opcional. Type-check en verde.
+
+**Con esto el refactor del plan (Fases A, B, C) queda ejecutado.** El sistema quedó con un solo panel (comisaría `/admin/*`), sin panel ni endpoints ni tipos de personería, y con catálogo de documentos de comisaría. Sin tenants en producción, el riesgo fue mínimo.
 **Objetivo:** Ejecutar la Fase A del `PLAN_REFACTOR_COMISARIA.md` (aprobado; sin tenants en producción). Unificar el login en el panel de comisaría `/admin/*`: `LoginModal` y enlaces internos dejan de apuntar a `/home` (Ventanilla) y van a `/admin/inbox`; las rutas `/home/*` se redirigen a su equivalente en `/admin` (compatibilidad) para luego retirarse.
 
 ### 28. Preparar el plan de la fase mayor: migración de enums + unificación de login
