@@ -1,0 +1,622 @@
+/* ============================================================================
+   SISTEMA DE DISEÑO - VENTANILLA ÚNICA PERSONERÍA MUNICIPAL
+   ============================================================================ */
+
+:root {
+  /* Colores institucionales */
+  --color-primary: #003d7a;        /* Azul institucional oscuro */
+  --color-primary-light: #0056b3;  /* Azul institucional claro */
+  --color-primary-dark: #002855;   /* Azul institucional muy oscuro */
+  --color-secondary: #28a745;      /* Verde éxito */
+  --color-accent: #ffc107;         /* Amarillo/dorado acento */
+  --color-danger: #dc3545;         /* Rojo alertas */
+  
+  /* Grises */
+  --color-gray-50: #f8f9fa;
+  --color-gray-100: #e9ecef;
+  --color-gray-200: #dee2e6;
+  --color-gray-300: #ced4da;
+  --color-gray-400: #adb5bd;
+  --color-gray-500: #6c757d;
+  --color-gray-600: #495057;
+  --color-gray-700: #343a40;
+  --color-gray-800: #212529;
+  --color-gray-900: #0d0d0d;
+  
+  /* Colores semánticos */
+  --color-text: #212529;
+  --color-text-light: #6c757d;
+  --color-background: #ffffff;
+  --color-background-alt: #f8f9fa;
+  --color-border: #dee2e6;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  /* Bordes */
+  --border-radius: 0.375rem;
+  --border-radius-lg: 0.5rem;
+  --border-radius-xl: 0.75rem;
+  
+  /* Transiciones */
+  --transition: all 0.2s ease-in-out;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: default !important;
+}
+
+/* Forzar cursor normal en toda la aplicación */
+* {
+  cursor: inherit;
+}
+
+/* Tipografía */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--spacing-md);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+p {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Enlaces */
+a {
+  color: var(--color-primary);
+}
+
+/* Navegación principal */
+.nav-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  opacity: 0.7;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+/* Botón de login en header */
+.btn-login {
+  background-color: white;
+  color: var(--color-primary);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  border: 2px solid white;
+  display: inline-block;
+}
+
+.btn-login:hover {
+  background-color: transparent;
+  color: white;
+  border-color: white;
+}
+
+a:hover {
+  color: var(--color-primary-light);
+  text-decoration: underline;
+}
+
+/* Estilos de enfoque para accesibilidad WCAG 2.1 AA */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Clase de utilidad para ocultar contenido visualmente */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Estilos para asegurar que estados de error sean claros más allá del color */
+[aria-invalid="true"] {
+  border-color: #d32f2f !important;
+  border-width: 2px !important;
+}
+
+/* Indicador visual adicional para campos requeridos con error */
+[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ============================================================================
+   ESTILOS RESPONSIVOS - MOBILE FIRST
+   ============================================================================ */
+
+/* Animaciones para menú móvil */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Estilos del menú móvil */
+.mobile-menu-link:hover {
+  background-color: #f3f4f6;
+}
+
+.mobile-menu-link:active {
+  background-color: #e5e7eb;
+}
+
+/* Responsividad del header */
+@media (max-width: 768px) {
+  /* Ocultar navegación de escritorio en móvil */
+  .desktop-nav {
+    display: none !important;
+  }
+  
+  /* Reducir el logo principal flotante para que no rebase la línea del menú */
+  .main-logo-container {
+    top: 42px !important;
+    left: 0.5rem !important;
+  }
+  
+  .main-logo-img {
+    width: 140px !important;
+    height: auto !important;
+  }
+  
+  /* Mostrar botón hamburguesa en móvil */
+  .mobile-menu-button {
+    display: block !important;
+  }
+  
+  /* Ajustar header en móvil */
+  header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Barra superior gobierno - MEJORADA para móvil */
+  .gov-top-bar {
+    padding: 0.5rem 0 !important;
+  }
+  
+  .gov-top-container {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .gov-top-container > span {
+    font-size: 0.813rem !important;
+    font-weight: 600;
+  }
+  
+  .gov-contact-info {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    align-items: flex-start !important;
+  }
+  
+  .gov-contact-link {
+    font-size: 0.75rem !important;
+  }
+  
+  .contact-text {
+    word-break: break-all;
+    line-height: 1.3;
+  }
+  
+  .gov-phone {
+    font-size: 0.75rem !important;
+  }
+  
+  header > div:first-child a,
+  header > div:first-child span {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Navegación principal - ajustes móvil */
+  nav {
+    padding: 0.75rem 0 !important;
+  }
+  
+  nav .container {
+    padding: 0 0.5rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Logo y título más pequeños en móvil */
+  nav .container > div:first-child {
+    gap: 0.5rem !important;
+  }
+  
+  nav .container > div:first-child > div:first-child {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.2rem !important;
+  }
+  
+  nav .container > div:first-child h1 {
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  nav .container > div:first-child p {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Contenedor principal con padding móvil REDUCIDO */
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    max-width: 100% !important;
+  }
+  
+  /* Navegación con menos padding */
+  nav .container {
+    padding: 0 0.5rem !important;
+  }
+  
+  /* Reducir márgenes y padding internos en móvil */
+  main {
+    padding: 0 !important;
+  }
+  
+  section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* Ajustar padding de divs con padding grande inline */
+  [style*="padding: var(--spacing-2xl)"],
+  [style*="padding: var(--spacing-3xl)"] {
+    padding: var(--spacing-md) !important;
+  }
+  
+  /* Tipografía responsiva */
+  h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); }
+  h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
+  h3 { font-size: clamp(1.25rem, 3.5vw, 1.75rem); }
+  h4 { font-size: clamp(1.125rem, 3vw, 1.5rem); }
+  h5 { font-size: clamp(1rem, 2.5vw, 1.25rem); }
+  
+  /* Formularios móviles - touch friendly */
+  input,
+  textarea,
+  select {
+    min-height: 40px !important;
+    font-size: 16px !important; /* Prevenir zoom en iOS */
+  }
+  
+  /* Botones compactos para celular a petición del usuario */
+  button,
+  .btn,
+  a.btn {
+    min-height: 36px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  footer {
+    padding: 2rem 0 1rem 0 !important;
+    margin-top: 2rem !important;
+  }
+  
+  /* Footer responsive ultracompacto */
+  footer .container > div:first-child {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.5rem 1rem !important;
+  }
+  
+  footer .container > div:first-child > div:nth-child(1),
+  footer .container > div:first-child > div:nth-child(4) {
+    grid-column: span 2;
+  }
+  
+  footer h3, footer h4 {
+    font-size: 1.125rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  footer p,
+  footer li,
+  footer a {
+    font-size: 0.9rem !important;
+  }
+
+  /* ======== PORTAL PÚBLICO RESPONSIVO ======== */
+
+  /* Hero sections — reducir font-size para títulos grandes inline */
+  [style*="fontSize: '3rem'"],
+  [style*="fontSize:'3rem'"] {
+    font-size: 1.75rem !important;
+  }
+
+  [style*="fontSize: '1.25rem'"],
+  [style*="fontSize:'1.25rem'"] {
+    font-size: 1rem !important;
+  }
+
+  /* Solicitud form — section headers que usan justify-content: space-between */
+  [style*="justifyContent: 'space-between'"],
+  [style*="justify-content: space-between"] {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Formulario principal — padding reducido en pantallas chicas */
+  form[style] {
+    padding: var(--spacing-md) !important;
+  }
+
+  /* Contenedores con maxWidth de 800-900px no necesario en mobile */
+  [style*="maxWidth: '900px'"],
+  [style*="maxWidth: '800px'"],
+  [style*="max-width: 900px"],
+  [style*="max-width: 800px"] {
+    max-width: 100% !important;
+    padding-left: var(--spacing-sm) !important;
+    padding-right: var(--spacing-sm) !important;
+  }
+
+  /* Consultar page — search box y results */
+  [style*="maxWidth: '600px'"] {
+    max-width: 100% !important;
+  }
+
+  /* Inline grids que usan minmax con valores grandes */
+  [style*="minmax(350px"],
+  [style*="minmax(300px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tablas responsivas — scroll horizontal */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  thead, tbody, tr {
+    display: table;
+    width: 100%;
+  }
+
+  /* ======== DASHBOARD INTERNO RESPONSIVO ======== */
+  
+  [style*="gridTemplateColumns: 'repeat(4, 1fr)'"],
+  [style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  }
+
+  [style*="gridTemplateColumns: userRole?.code === 'ADMIN' ? '1fr' : '2fr 1fr'"],
+  [style*="'2fr 1fr'"],
+  [style*="grid-template-columns: 2fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [style*="padding: '1.5rem 2rem'"],
+  [style*="padding: 1.5rem 2rem"] {
+    padding: 1rem !important;
+  }
+
+  /* ======== MODAL DE DETALLES RESPONSIVO ======== */
+  .detail-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .detail-modal-panel {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 95vh !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .detail-modal-panel * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  .detail-modal-panel span,
+  .detail-modal-panel p,
+  .detail-modal-panel h2,
+  .detail-modal-panel h3,
+  .detail-modal-panel h4,
+  .detail-modal-panel label,
+  .detail-modal-panel a {
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  .detail-modal-header {
+    padding: 1rem !important;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+  }
+
+  .detail-modal-title {
+    font-size: 1.15rem !important;
+  }
+
+  .detail-modal-body {
+    padding: 1rem !important;
+  }
+
+  .detail-info-row {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .detail-citizen-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .detail-modal-footer {
+    padding: 1rem !important;
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    z-index: 10;
+  }
+
+  .detail-modal-footer > div {
+    flex-wrap: wrap !important;
+  }
+
+  .detail-modal-footer button {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+/* Tablets y pantallas medianas */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+  
+  nav .nav-link {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 375px) {
+  .mobile-menu {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  nav .container > div:first-child h1 {
+    font-size: 0.875rem !important;
+  }
+  
+  nav .container > div:first-child p {
+    font-size: 0.688rem !important;
+  }
+}
+
+/* =========================================
+   UTILITY CLASSES (Responsive Toggles)
+   ========================================= */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: grid !important;
+  }
+  .personero-mobile-kpis {
+    grid-column: 1 / -1 !important;
+  }
+  
+  .mobile-menu-link {
+    padding-left: 2.5rem !important;
+  }
+}

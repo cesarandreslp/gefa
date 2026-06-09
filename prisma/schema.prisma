@@ -1,0 +1,1167 @@
+// ============================================================================
+// SCHEMA DE PRISMA - VENTANILLA ÚNICA PERSONERÍA MUNICIPAL
+// ============================================================================
+// Personería Municipal de Guadalajara de Buga, Valle del Cauca, Colombia
+// 
+// Este schema define el modelo de datos completo del sistema de Ventanilla
+// Única, cumpliendo con toda la normativa colombiana aplicable.
+//
+// Normativa aplicada:
+// - Ley 1755/2015: Derecho de Petición
+// - Ley 1437/2011: CPACA
+// - Ley 1581/2012: Protección de Datos Personales
+// - Ley 1712/2014: Transparencia
+//
+// Fecha: Enero 8, 2026
+// Versión: 1.0
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// MÓDULO: MULTI-ENTIDAD (TENANT)
+// ============================================================================
+
+/// Entidad o Institución propietaria de la información (Multi-Tenant)
+model Tenant {
+  id                  String   @id @default(uuid())
+
+  // Identificación
+  name                String   // Ej: "Personería Municipal de Guadalajara de Buga"
+  sigla               String   @unique // Ej: "PMBUGA"
+  domain              String?  @unique // Ej: "personeria-buga.gov.co"
+
+  // Contacto y Branding
+  logoUrl             String?
+  faviconUrl          String?
+  primaryColor        String?  // Formato HEX Ej: "#1D4ED8"
+  secondaryColor      String?  // Formato HEX Ej: "#9333EA"
+  institutionalEmail  String?
+  phone               String?
+  address             String?
+
+  // Estado
+  isActive            Boolean  @default(true)
+
+  // Base de datos independiente por tenant
+  databaseUrl         String?  // Connection string (pooled) de la BD propia del tenant
+  databaseUrlDirect   String?  // Connection string directo (sin pooler, para migraciones)
+  neonProjectId       String?  // ID del proyecto en Neon para gestión via API
+
+  // Auditoría
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Tipo de institución (colores automáticos)
+  institutionTypeId   String?
+  institutionType     InstitutionType? @relation(fields: [institutionTypeId], references: [id])
+
+  // Relaciones 1:N
+  users               User[]
+  citizens            Citizen[]
+  cases               Case[]
+  roles               Role[]
+  positions           Position[]
+  caseTypes           CaseType[]
+  assignments         Assignment[]
+  stateHistories      CaseStateHistory[]
+  settings            TenantSettings?
+  documents           Document[]
+  actionLogs          ActionLog[]
+  notifications       Notification[]
+
+  @@index([sigla])
+  @@index([isActive])
+  @@map("tenants")
+}
+
+/// Tipos de institución con colores institucionales predefinidos
+model InstitutionType {
+  id             String   @id @default(uuid())
+  name           String   @unique // Alcaldía, Personería, Contraloría, Hospital, Otra
+  primaryColor   String   // Formato HEX
+  secondaryColor String   // Formato HEX
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relaciones
+  tenants        Tenant[]
+  
+  @@map("institution_types")
+}
+
+// ============================================================================
+// MÓDULO: CONFIGURACIÓN POR ENTIDAD (MULTI-TENANT)
+// ============================================================================
+
+/// Configuración específica y parámetros operativos de cada Entidad (Tenant)
+model TenantSettings {
+  id                    String   @id @default(uuid())
+  
+  // Relación 1:1 con Tenant
+  tenantId              String   @unique
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Información General y de Contacto
+  address               String?  // Sede Electrónica / Dirección Principal
+  businessHours         String?  // Horario de atención
+  phone                 String?  // Conmutador
+  mobilePhone           String?  // Teléfono móvil (desactivable)
+  tollFreePhone         String?  // Línea de atención gratuita (desactivable)
+  anticorruptionPhone   String?  // Línea Anticorrupción (desactivable)
+  fax                   String?  // Fax (desactivable)
+  institutionalEmail    String?  // Correo de contacto principal
+  judicialNoticesEmail  String?  // Notificaciones Judiciales (desactivable)
+  
+  // Redes Sociales (desactivables)
+  facebook              String?  // URL de Facebook
+  twitter               String?  // URL de X (Twitter)
+  youtube               String?  // URL de Youtube
+  instagram             String?  // URL de Instagram
+  
+  // Branding
+  logoUrl               String?
+  primaryColor          String?
+  secondaryColor        String?
+  
+  // Correo institucional SMTP por tenant
+  smtpUser              String?  // Cuenta Gmail (o servidor SMTP) de la entidad
+  smtpPass              String?  // Contraseña de aplicación Gmail
+  smtpFromName          String?  // Nombre que aparece en los correos enviados
+
+  // Integración IA por tenant
+  groqApiKey            String?  // API key de GROQ exclusiva para esta entidad
+
+  // Extensibilidad futura sin necesidad de alterar esquema SQL a cada iteración
+  metadata              Json?    // Documento JSON para propiedades no restrictivas
+  
+  // Auditoría
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  @@map("tenant_settings")
+}
+
+// ============================================================================
+// MÓDULO: CIUDADANOS
+// ============================================================================
+
+/// Ciudadano que interactúa con la Personería
+/// Cumple con Ley 1581/2012 (Protección de Datos)
+model Citizen {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // Identificación
+  documentType     String // CC, CE, TI, PEP, etc.
+  documentNumber   String
+  
+  // Datos personales
+  firstName        String
+  secondName       String?
+  firstLastName    String
+  secondLastName   String?
+  
+  // Contacto (opcional para facilitar notificaciones)
+  email            String?
+  phone            String?
+  address          String?
+  neighborhood     String?
+  city             String
+  department       String
+  
+  // Priorización constitucional
+  isPriorityGroup  Boolean @default(false)
+  priorityReason   String? // NNA, ADULTO_MAYOR, DISCAPACIDAD, VICTIMA, etc.
+  
+  // Protección de datos
+  dataConsent      Boolean @default(false) // Autorización Ley 1581/2012
+  dataConsentDate  DateTime?
+  
+  // Petición anónima
+  isAnonymous      Boolean @default(false)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  cases Case[]
+  
+  @@unique([documentNumber, tenantId])
+  @@index([documentNumber])
+  @@index([email])
+  @@map("citizens")
+}
+
+// ============================================================================
+// MÓDULO: CASOS
+// ============================================================================
+
+/// Caso o trámite radicado en la Personería
+model Case {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // Radicación
+  filingNumber   String   @unique // PER-2026-00001 (secuencial)
+  filedAt        DateTime @default(now())
+  
+  // Relaciones principales
+  citizenId      String
+  citizen        Citizen  @relation(fields: [citizenId], references: [id])
+  
+  caseTypeId     String
+  caseType       CaseType @relation(fields: [caseTypeId], references: [id])
+  
+  stateId        String
+  state          CaseState @relation(fields: [stateId], references: [id])
+  
+  // Canal de entrada
+  channel        Channel  @default(WEB)
+  
+  // Contenido
+  subject        String   // Asunto breve
+  description    String   @db.Text // Descripción completa
+  folios         Int?     // Número de hojas que ocupa la descripción en formato carta
+  
+  // Priorización
+  priority       Int      @default(40) // 0-100
+  priorityReason String?  @db.Text
+  
+  // Términos legales
+  legalTermDays  Int      // Días hábiles según tipo y Ley 1755/2015
+  dueDate        DateTime // Fecha de vencimiento calculada
+  dueDateSuspendedAt DateTime? // Si se suspendió el término
+  dueDateResumedAt   DateTime? // Si se reanudó el término
+  slaStatus      SLAStatus @default(ON_TIME) // FASE 3 MÓDULO 4: Estado del SLA
+  
+  // Seguimiento
+  respondedAt    DateTime? // Fecha en que el funcionario envía la respuesta
+  isOverdue      Boolean  @default(false) // ¿Está vencido?
+  closedAt       DateTime?
+  closedBy       String?  // userId
+  closureReason  String?  @db.Text
+  
+  // Remisiones
+  referredTo     String?  // Entidad a la que se remite
+  referredAt     DateTime?
+  referralReason String?  @db.Text
+  
+  // Metadatos flexibles (JSON para datos específicos por tipo)
+  metadata       Json?
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  assignments    Assignment[]
+  documents      Document[]
+  stateHistory   CaseStateHistory[]
+  actionLogs     ActionLog[]
+  notifications  Notification[]
+  assignmentHistory CaseAssignmentHistory[] @relation("assignmentHistory")
+  
+  @@index([filingNumber])
+  @@index([citizenId])
+  @@index([caseTypeId])
+  @@index([stateId])
+  @@index([dueDate])
+  @@index([filedAt])
+  @@index([isOverdue])
+  @@map("cases")
+}
+
+/// Tipos de casos que maneja la Personería
+model CaseType {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Identificación
+  code               String  @unique // DP, TUT, QD, VIC, PQRS_P, etc.
+  name               String
+  description        String  @db.Text
+  
+  // Configuración de términos legales
+  defaultLegalTermDays Int // Días hábiles según normativa
+  legalReference     String // Ley aplicable
+  
+  // Configuración de flujo
+  allowedStateIds    String[] // Array de stateIds permitidos
+  requiresSupervisorApproval Boolean @default(false)
+  requiresSignature  Boolean @default(true)
+  
+  // Estado
+  isActive Boolean @default(true)
+  
+  // Orden de visualización
+  displayOrder Int @default(0)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  cases Case[]
+  slaConfig CaseSLAConfig?
+  
+  @@index([code])
+  @@index([isActive])
+  @@map("case_types")
+}
+
+/// Estados por los que puede pasar un caso
+model CaseState {
+  id String @id @default(uuid())
+  
+  // Identificación
+  code        String  @unique // RADICADO, ASIGNADO, EN_GESTION, etc.
+  name        String
+  description String  @db.Text
+  
+  // Características del estado
+  isInitial   Boolean @default(false) // ¿Es estado inicial?
+  isFinal     Boolean @default(false) // ¿Es estado terminal?
+  requiresComment Boolean @default(false) // ¿Requiere comentario al cambiar?
+  
+  // Visualización
+  color       String  @default("#3B82F6") // Para UI futura
+  icon        String? // Nombre de icono para UI futura
+  displayOrder Int    @default(0)
+  
+  // Estado
+  isActive Boolean @default(true)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  cases Case[]
+  historyAsFromState CaseStateHistory[] @relation("fromState")
+  historyAsToState CaseStateHistory[] @relation("toState")
+  
+  @@index([code])
+  @@index([isActive])
+  @@map("case_states")
+}
+
+/// Historial de cambios de estado de un caso
+/// INMUTABLE - Solo inserción, nunca actualización o eliminación
+model CaseStateHistory {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Relaciones
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id])
+  
+  fromStateId String?   // null si es el estado inicial
+  fromState   CaseState? @relation("fromState", fields: [fromStateId], references: [id])
+  
+  toStateId   String
+  toState     CaseState  @relation("toState", fields: [toStateId], references: [id])
+  
+  // Responsable del cambio (opcional para cambios del sistema)
+  changedBy   String?   // userId - null para acciones automáticas del sistema
+  changedByUser User?   @relation(fields: [changedBy], references: [id])
+  
+  // Detalles
+  comment     String?   @db.Text
+  reason      String?   // NORMAL, RETURNED, ESCALATED, etc.
+  isInternal  Boolean   @default(false) // true = solo visible para funcionarios, nunca al ciudadano
+
+  // Expiración para casos rechazados (10 días para respuesta ciudadana)
+  expiresAt   DateTime? // Solo para RECHAZADO_POR_IMPROCEDENCIA
+
+  // Token de acceso para entidad externa (cuando soloEntidad=true)
+  externalToken     String?   @unique // UUID para que la entidad acceda al portal
+  externalTokenUsed Boolean   @default(false) // true = ya respondió
+
+  // Auditoría (INMUTABLE)
+  timestamp   DateTime  @default(now())
+  
+  @@index([caseId])
+  @@index([timestamp])
+  @@map("case_state_history")
+}
+
+// ============================================================================
+// MÓDULO: ASIGNACIONES
+// ============================================================================
+
+/// Asignación de caso a funcionario
+model Assignment {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Relaciones
+  caseId     String
+  case       Case   @relation(fields: [caseId], references: [id])
+  
+  userId     String
+  user       User   @relation(fields: [userId], references: [id])
+  
+  assignedBy String // userId de quien asigna
+  assignedByUser User @relation("assignedBy", fields: [assignedBy], references: [id])
+  
+  // Fechas
+  assignedAt DateTime @default(now())
+  acceptedAt DateTime? // Cuando el funcionario acepta (opcional)
+  completedAt DateTime?
+  
+  // Estado
+  status     AssignmentStatus @default(PENDING)
+  
+  // Reasignación
+  isFinalAssignment Boolean @default(false) // True si es una asignación aprobada por el personero (no se puede reasignar)
+  
+  // Carga de trabajo (cálculo automático)
+  workload   Int @default(1) // Factor de carga
+  
+  // Notas
+  notes      String? @db.Text
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([caseId])
+  @@index([userId])
+  @@index([assignedAt])
+  @@index([status])
+  @@map("assignments")
+}
+
+enum AssignmentStatus {
+  PENDING      // Asignado pero no aceptado
+  ACCEPTED     // Aceptado por el funcionario
+  IN_PROGRESS  // En gestión activa
+  COMPLETED    // Completado
+  REASSIGNED   // Reasignado a otro
+}
+
+/// FASE 3 MÓDULO 4: Estado del SLA
+enum SLAStatus {
+  ON_TIME   // Dentro del plazo (>50% tiempo restante)
+  WARNING   // Próximo a vencer (25-50% tiempo restante)
+  OVERDUE   // Vencido
+}
+
+// ============================================================================
+// MÓDULO: DOCUMENTOS
+// ============================================================================
+
+/// Documentos asociados a casos
+model Document {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  
+  // Relación
+  caseId   String
+  case     Case   @relation(fields: [caseId], references: [id])
+  
+  // Archivo
+  fileName    String
+  originalName String
+  fileUrl     String   // Ruta o URL del archivo
+  mimeType    String
+  fileSize    Int      // Bytes
+  
+  // Hash para integridad
+  fileHash    String   // SHA-256 del archivo
+  
+  // Clasificación
+  documentType DocumentType
+  description  String?  @db.Text
+  
+  // Metadatos
+  isOfficial   Boolean @default(false) // ¿Es documento oficial de respuesta?
+  isSigned     Boolean @default(false) // ¿Tiene firma electrónica?
+  isInternal   Boolean @default(false) // true = solo visible para funcionarios, nunca al ciudadano
+  signedBy     String? // userId de quien firma
+  signedAt     DateTime?
+  
+  // Subido por
+  uploadedBy   String  // userId o citizenId
+  uploadedByType String // USER o CITIZEN
+  
+  // Auditoría
+  uploadedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([caseId])
+  @@index([documentType])
+  @@index([uploadedAt])
+  @@map("documents")
+}
+
+enum DocumentType {
+  PETITION          // Petición inicial del ciudadano
+  SUPPORTING_DOC    // Documento soporte
+  OFFICIAL_RESPONSE // Respuesta oficial
+  INTERNAL_MEMO     // Memorando interno
+  EVIDENCE          // Evidencia
+  NOTIFICATION      // Notificación oficial
+  OTHER             // Otros
+}
+
+// ============================================================================
+// MÓDULO: USUARIOS Y ROLES
+// ============================================================================
+
+/// Usuario del sistema (funcionario)
+model User {
+  id String @id @default(uuid())
+  
+  // Tenant (Opcional SOLO para SUPER_ADMIN)
+  tenantId     String?
+  tenant       Tenant?   @relation(fields: [tenantId], references: [id])
+
+  // Autenticación
+  email        String
+  passwordHash String  // bcrypt hash
+  
+  // Datos personales
+  fullName     String
+  
+  // Identificación
+  documentType   String
+  documentNumber String
+  
+  // Configuración laboral
+  roleId       String?
+  role         Role?    @relation(fields: [roleId], references: [id])
+  
+  department   String? // Área de la Personería
+  position     String? // Cargo
+  
+  // Tipo de usuario y especialidad (para asignación inteligente de IA)
+  userType     String? // Tipo/especialidad del funcionario (ej: "Delegatura DDHH y Medio Ambiente", "Director Administrativo")
+  userTypeDescription String? @db.Text // Descripción detallada de competencias para asignación IA
+  
+  // Límites y configuración
+  maxCaseLoad  Int     @default(50) // Máximo de casos activos
+  
+  // Estado
+  isActive     Boolean @default(true)
+  
+  // Seguridad
+  lastLoginAt  DateTime?
+  lastLoginIP  String?
+  failedLoginAttempts Int @default(0)
+  lockedUntil  DateTime? // Bloqueo temporal por intentos fallidos
+  passwordChangedAt DateTime @default(now())
+  mustChangePassword Boolean @default(true)
+  
+  // Tokens de sesión
+  refreshToken String? @db.Text
+  refreshTokenExpiresAt DateTime?
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  assignments  Assignment[]
+  assignmentsGiven Assignment[] @relation("assignedBy")
+  stateChanges CaseStateHistory[]
+  actionLogs   ActionLog[]
+  previousAssignments CaseAssignmentHistory[] @relation("previousAssignee")
+  newAssignments CaseAssignmentHistory[] @relation("newAssignee")
+  assignmentsHistory CaseAssignmentHistory[] @relation("assignedByHistory")
+  reports      Report[]
+  systemSettings SystemSetting[]
+
+  // Relación recursiva para conectar Auxiliares con el Oficial que los creó
+  supervisorId String?
+  supervisor   User?   @relation("UserToSupervisor", fields: [supervisorId], references: [id])
+  auxiliaries  User[]  @relation("UserToSupervisor")
+  
+  @@unique([email, tenantId])
+  @@unique([documentNumber, tenantId])
+  @@index([email])
+  @@index([documentNumber])
+  @@index([roleId])
+  @@index([isActive])
+  @@index([supervisorId])
+  @@map("users")
+}
+
+/// Roles de usuario con permisos
+model Role {
+  id String @id @default(uuid())
+  
+  // Tenant (Opcional SOLO para SUPER_ADMIN)
+  tenantId    String?
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id])
+
+  // Identificación
+  code        String  // ADMIN, DIRECTOR, FUNCIONARIO, etc.
+  name        String
+  description String  @db.Text
+
+  // Jerarquía
+  level       Int     @default(0) // Nivel jerárquico (100=máximo)
+
+  // Permisos (array de strings)
+  permissions String[] // ["cases:read:all", "cases:create", etc.]
+
+  // Capacidades especiales
+  canApprove  Boolean @default(false)
+  canReassign Boolean @default(false)
+  canSign     Boolean @default(false)
+
+  // Estado
+  isActive Boolean @default(true)
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  users User[]
+
+  @@unique([code, tenantId])
+  @@index([code])
+  @@index([isActive])
+  @@map("roles")
+}
+
+/// Cargos/Posiciones laborales (separado de roles del sistema)
+/// Los roles son fijos (ADMIN, PERSONERO, FUNCIONARIO, etc.)
+/// Los cargos son dinámicos (Delegatura DDHH, Secretaria, etc.)
+model Position {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId  String?
+  tenant    Tenant? @relation(fields: [tenantId], references: [id])
+  
+  name        String
+  description String? @db.Text // Descripción opcional para contexto de la IA. El nombre del cargo es lo principal.
+  roleCode    String  // Código del rol al que pertenece
+  isActive    Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([name, tenantId])
+  @@index([tenantId])
+  @@index([roleCode])
+  @@index([isActive])
+  @@map("positions")
+}
+
+// ============================================================================
+// MÓDULO: AUDITORÍA
+// ============================================================================
+
+/// Log de auditoría - INMUTABLE
+/// Registra TODAS las acciones en el sistema
+model ActionLog {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  
+  // Timestamp exacto
+  timestamp DateTime @default(now())
+  
+  // Usuario que ejecuta la acción (null para acciones de ciudadanos o del sistema)
+  userId    String?
+  user      User?  @relation(fields: [userId], references: [id])
+  userEmail String // Redundancia para registro histórico
+  userRole  String // Rol en el momento de la acción
+  
+  // Acción
+  action     String // CREATE, UPDATE, DELETE, READ, LOGIN, etc.
+  entityType String // Case, Document, User, etc.
+  entityId   String // ID de la entidad afectada
+  
+  // Contexto
+  ipAddress  String
+  userAgent  String  @db.Text
+  sessionId  String?
+  
+  // Datos (JSON para flexibilidad)
+  before     Json?   // Estado anterior
+  after      Json?   // Estado nuevo
+  metadata   Json?   // Datos adicionales
+  
+  // Resultado
+  success    Boolean @default(true)
+  errorMessage String? @db.Text
+  
+  // Integridad encadenada tipo blockchain
+  checksum     String
+  previousHash String?
+  
+  // Caso relacionado (si aplica)
+  caseId     String?
+  case       Case?   @relation(fields: [caseId], references: [id])
+  
+  @@index([timestamp])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([caseId])
+  @@map("action_logs")
+}
+
+// ============================================================================
+// MÓDULO: NOTIFICACIONES
+// ============================================================================
+
+/// Notificaciones enviadas a ciudadanos o funcionarios
+model Notification {
+  id String @id @default(uuid())
+  
+  // Tenant
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  
+  // Destinatario
+  recipientType String // CITIZEN, USER
+  recipientId   String // citizenId o userId
+  recipientEmail String?
+  recipientPhone String?
+  
+  // Caso relacionado
+  caseId    String?
+  case      Case?   @relation(fields: [caseId], references: [id])
+  
+  // Contenido
+  type      NotificationType
+  subject   String
+  body      String  @db.Text
+  
+  // Canal
+  channel   NotificationChannel
+  
+  // Estado
+  status    NotificationStatus @default(PENDING)
+  sentAt    DateTime?
+  deliveredAt DateTime?
+  readAt    DateTime?
+  failedAt  DateTime?
+  errorMessage String? @db.Text
+  
+  // Reintentos
+  attempts  Int @default(0)
+  maxAttempts Int @default(3)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([recipientId])
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  CASE_FILED         // Caso radicado
+  CASE_ASSIGNED      // Caso asignado
+  CASE_STATE_CHANGED // Cambio de estado
+  CASE_RESPONSE      // Respuesta disponible
+  CASE_OVERDUE       // Caso vencido
+  INFORMATION_REQUIRED // Solicitud de información adicional
+  GENERIC            // Notificación genérica
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING    // Pendiente de envío
+  SENT       // Enviada
+  DELIVERED  // Entregada
+  READ       // Leída
+  FAILED     // Falló
+}
+
+// ============================================================================
+// MÓDULO: CONFIGURACIÓN
+// ============================================================================
+
+/// Configuración general del sistema
+model SystemConfig {
+  id String @id @default(uuid())
+  
+  // Clave única
+  key   String @unique
+  
+  // Valor (flexible)
+  value String @db.Text
+  
+  // Metadatos
+  description String? @db.Text
+  dataType    String  @default("string") // string, number, boolean, json
+  
+  // Categoría
+  category String @default("general")
+  
+  // ¿Es sensible?
+  isSensitive Boolean @default(false)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String? // userId
+  
+  @@index([key])
+  @@index([category])
+  @@map("system_config")
+}
+
+/// Días festivos y no hábiles (para cálculo de términos)
+model NonBusinessDay {
+  id String @id @default(uuid())
+  
+  // Fecha
+  date DateTime @unique @db.Date
+  
+  // Descripción
+  name String // "Año Nuevo", "Día del Trabajo", etc.
+  
+  // Tipo
+  type HolidayType
+  
+  // Ámbito
+  isNational Boolean @default(true)
+  isLocal    Boolean @default(false)
+  
+  // Activo
+  isActive Boolean @default(true)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([date])
+  @@index([isActive])
+  @@map("non_business_days")
+}
+
+enum HolidayType {
+  NATIONAL_HOLIDAY  // Festivo nacional
+  LOCAL_HOLIDAY     // Festivo local
+  SPECIAL_CLOSURE   // Cierre especial
+}
+
+enum Channel {
+  WEB          // Portal web
+  PRESENCIAL   // Ventanilla física
+  EMAIL        // Correo electrónico
+  PHONE        // Teléfono
+  VERBAL       // Verbal (registrado por funcionario)
+}
+
+// ============================================================================
+// MÓDULO: REPORTES (Preparado para fase posterior)
+// ============================================================================
+
+/// Templates de reportes predefinidos
+model ReportTemplate {
+  id String @id @default(uuid())
+  
+  // Identificación
+  code        String @unique
+  name        String
+  description String @db.Text
+  
+  // Configuración
+  query       String @db.Text // Query SQL o lógica
+  parameters  Json? // Parámetros configurables
+  
+  // Visualización
+  chartType   String? // line, bar, pie, table
+  
+  // Permisos
+  requiredPermissions String[]
+  
+  // Estado
+  isActive Boolean @default(true)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([code])
+  @@map("report_templates")
+}
+
+// ============================================================================
+// FASE 3 - MÓDULO 2: HISTORIAL DE ASIGNACIONES
+// ============================================================================
+
+/// Historial completo de asignaciones y reasignaciones de expedientes
+/// Cumple con Ley 1712/2014: Trazabilidad completa
+model CaseAssignmentHistory {
+  id String @id @default(uuid())
+  
+  // Relaciones
+  caseId              String
+  case                Case   @relation("assignmentHistory", fields: [caseId], references: [id])
+  
+  // Asignaciones
+  previousAssigneeId  String?
+  previousAssignee    User?  @relation("previousAssignee", fields: [previousAssigneeId], references: [id])
+  
+  newAssigneeId       String
+  newAssignee         User   @relation("newAssignee", fields: [newAssigneeId], references: [id])
+  
+  assignedByUserId    String
+  assignedByUser      User   @relation("assignedByHistory", fields: [assignedByUserId], references: [id])
+  
+  // Justificación
+  reason              String @db.Text
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  
+  @@index([caseId])
+  @@index([newAssigneeId])
+  @@index([createdAt])
+  @@map("case_assignment_history")
+}
+
+// ============================================================================
+// FASE 3 - MÓDULO 4: CONFIGURACIÓN DE SLA
+// ============================================================================
+
+/// Configuración de SLA por tipo de caso
+model CaseSLAConfig {
+  id String @id @default(uuid())
+  
+  // Relación con tipo de caso
+  caseTypeId String   @unique
+  caseType   CaseType @relation(fields: [caseTypeId], references: [id])
+  
+  // Configuración de días hábiles
+  slaDays    Int // Días hábiles para resolución
+  
+  // Descripción opcional
+  description String? @db.Text
+  
+  // Estado
+  isActive   Boolean @default(true)
+  
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([caseTypeId])
+  @@index([isActive])
+  @@map("case_sla_config")
+}
+
+// ============================================================================
+// FASE 4 - MÓDULO 2: REPORTES INSTITUCIONALES
+// ============================================================================
+
+/// Reportes institucionales generados
+model Report {
+  id String @id @default(uuid())
+  
+  // Tipo de reporte
+  reportType String // MONTHLY_MANAGEMENT, SLA_COMPLIANCE, WORKLOAD, QUALITY, HISTORICAL
+  
+  // Período cubierto
+  periodFrom DateTime
+  periodTo   DateTime
+  
+  // Generado por
+  generatedByUserId String
+  generatedBy       User   @relation(fields: [generatedByUserId], references: [id])
+  
+  // Metadata
+  title       String
+  description String? @db.Text
+  
+  // Archivos generados
+  pdfPath     String? // Ruta del PDF generado
+  csvPath     String? // Ruta del CSV generado
+  
+  // Hash para integridad
+  reportHash  String  // SHA-256 del contenido
+  
+  // Datos del reporte (JSON)
+  data        Json    // Métricas completas del reporte
+  
+  // Auditoría
+  generatedAt DateTime @default(now())
+  downloadCount Int    @default(0)
+  lastDownloadAt DateTime?
+  
+  @@index([reportType])
+  @@index([generatedByUserId])
+  @@index([generatedAt])
+  @@map("reports")
+}
+
+// ============================================================================
+// FASE 5 - MÓDULO 1: PARAMETRIZACIÓN INSTITUCIONAL
+// ============================================================================
+
+/// Configuración de parámetros del sistema
+/// Permite parametrizar valores institucionales sin hardcodeo
+model SystemSetting {
+  id String @id @default(uuid())
+  
+  // Clave única del setting
+  key         SettingKey @unique
+  
+  // Valor (JSON para flexibilidad)
+  value       Json
+  
+  // Descripción
+  description String?    @db.Text
+  
+  // Auditoría
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id])
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  
+  @@index([key])
+  @@map("system_settings")
+}
+
+/// Tipos de settings disponibles
+enum SettingKey {
+  HOLIDAYS                  // Array de fechas festivas
+  BUSINESS_HOURS           // Objeto: { start: "08:00", end: "17:00" }
+  ATTENTION_DAYS           // Array: ["MON", "TUE", "WED", "THU", "FRI"]
+  CASE_TYPES_CONFIG        // Array de configuraciones adicionales por tipo
+  LEGAL_TEXTS              // Objeto con textos legales por sección
+  NOTIFICATION_FROM_EMAIL  // String: email institucional
+  NOTIFICATION_FROM_NAME   // String: nombre institucional
+  INSTITUTION_NAME         // String: nombre de la institución
+  INSTITUTION_ADDRESS      // String: dirección física
+  INSTITUTION_PHONE        // String: teléfono de contacto
+  MAX_CASE_LOAD            // Number: carga máxima por funcionario
+  SLA_WARNING_THRESHOLD    // Number: % de tiempo para warning (ej: 50)
+  AUTO_ASSIGNMENT_ENABLED  // Boolean: asignación automática activa
+  SYSTEM_DEGRADED_MODE     // Boolean: sistema en modo degradado (solo lectura)
+}
+
+// ============================================================================
+
+/// Directorio de correos institucionales para comunicaciones con dependencias y entidades
+model EmailDirectory {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  label     String?  @db.VarChar(200) // Etiqueta descriptiva opcional
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("email_directory")
+}
+
+// ============================================================================
+
+/// Opciones dinámicas para listas desplegables del sistema
+model DropdownOption {
+  id        String   @id @default(uuid())
+  category  String   @db.VarChar(50)  // ej: 'RESPONSABLE', 'EPS', 'ASUNTO', etc.
+  value     String   @db.VarChar(150)
+  createdAt DateTime @default(now())
+
+  @@unique([category, value])
+  @@index([category])
+  @@map("dropdown_options")
+}
+
+// ============================================================================
+// MÓDULO: REGISTRO DE ATENCIONES
+// ============================================================================
+
+/// Registro de atenciones presenciales del Auxiliar de Atención al Usuario
+model AttendanceRecord {
+  id              String   @id @default(uuid())
+  tenantId        String?  // tenant al que pertenece el registro
+  fecha           String?  // FECHA (formato YYYY-MM-DD)
+  nombreCompleto  String?  @db.VarChar(300)
+  tipoDocumento   String?  @db.VarChar(50)
+  numeroDocumento String?  @db.VarChar(50)
+  edad            String?  @db.VarChar(10)
+  telefono        String?  @db.VarChar(30)
+  genero          String?  @db.VarChar(50)
+  discapacidad    String?  @db.VarChar(100)
+  etnia           String?  @db.VarChar(100)
+  escolaridad     String?  @db.VarChar(100)
+  barrio          String?  @db.VarChar(200)
+  delegatura      String?  @db.VarChar(200)
+  asunto          String?  @db.Text
+  descripcion     String?  @db.Text
+  eps             String?  @db.VarChar(200)
+  responsableCaso String?  @db.VarChar(300)
+  createdBy       String?  // userId del auxiliar que creó el registro
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([fecha])
+  @@index([createdBy])
+  @@map("attendance_records")
+}
+
+// ============================================================================
+// MÓDULO: ENRUTAMIENTO DE TOKENS EXTERNOS (BD GLOBAL)
+// ============================================================================
+
+/// Índice global que mapea cada token de entidad externa a la BD del tenant que lo emitió.
+/// Permite resolver la BD correcta sin depender del subdominio del request.
+model ExternalTokenRoute {
+  token       String   @id
+  tenantId    String
+  databaseUrl String
+  caseId      String?  // para vincular auditoría sin query adicional
+  createdAt   DateTime @default(now())
+
+  // Credenciales de acceso — establecidas en el primer acceso de la entidad
+  credentialEmail        String?
+  credentialCedula       String?
+  credentialPasswordHash String?
+  credentialsSetAt       DateTime?
+
+  @@map("external_token_routes")
+}

@@ -1,0 +1,24 @@
+=== CHECKLIST MULTI-TENANT ===
+
+1. Existe tabla Entidad (tenants): SI
+2. Tablas con tenantId: TODAS OK
+   - assignments
+   - case_state_history
+   - case_types
+   - cases
+   - citizens
+   - roles
+   - users
+3. Tenants en BD:
+   - PMBUGA = Personería Municipal de Guadalajara de Buga
+4. Datos por tenant:
+   OK users: total=19 con_tenant=19 sin_tenant=0
+   OK citizens: total=14 con_tenant=14 sin_tenant=0
+   OK cases: total=40 con_tenant=40 sin_tenant=0
+   OK roles: total=7 con_tenant=7 sin_tenant=0
+   OK assignments: total=75 con_tenant=75 sin_tenant=0
+   OK case_state_history: total=61 con_tenant=61 sin_tenant=0
+   OK case_types: total=5 con_tenant=5 sin_tenant=0
+5. Compilacion: tsc --noEmit = 0 errores
+
+=== RESULTADO: TODO OK ===
