@@ -112,96 +112,127 @@ export async function POST(request: NextRequest) {
       return t;
     });
 
-    // Step 2: Create tenant-specific data in the tenant's own DB (or global as fallback)
+    // Step 2: Provision tenant-specific data in the tenant's own DB (or global as fallback).
+    // INVARIANTE: todo tenant creado debe tener su usuario ADMIN. Por eso el aprovisionamiento
+    // completo (roles + tipos + ADMIN + IA) corre dentro de UNA transacción interactiva.
+    // Si cualquier paso falla, la transacción revierte TODO y además se elimina el registro
+    // global del Paso 1, de modo que nunca quede una entidad a medio crear ni sin administrador.
     const db = databaseUrl ? getTenantPrisma(databaseUrl) : prisma;
+    const iaPasswordHash = await bcrypt.hash(`ia-internal-${tenant.id}`, 10);
 
-    // When using a dedicated tenant DB, first create a Tenant replica so FK constraints are satisfied
-    if (databaseUrl) {
-      await db.tenant.create({
-        data: {
-          id: tenant.id,
-          name, sigla, domain,
-          primaryColor: institutionType.primaryColor,
-          secondaryColor: institutionType.secondaryColor,
-          logoUrl,
-          faviconUrl: faviconUrl || null,
-          institutionalEmail,
-          phone,
-          address,
-          isActive: true,
-          databaseUrl,
-          databaseUrlDirect: databaseUrlDirect || null,
-        } as any
-      });
+    let adminUser;
+    try {
+      adminUser = await db.$transaction(async (tx) => {
+        // When using a dedicated tenant DB, first create a Tenant replica so FK constraints are satisfied
+        if (databaseUrl) {
+          await tx.tenant.create({
+            data: {
+              id: tenant.id,
+              name, sigla, domain,
+              primaryColor: institutionType.primaryColor,
+              secondaryColor: institutionType.secondaryColor,
+              logoUrl,
+              faviconUrl: faviconUrl || null,
+              institutionalEmail,
+              phone,
+              address,
+              isActive: true,
+              databaseUrl,
+              databaseUrlDirect: databaseUrlDirect || null,
+            } as any
+          });
+        }
+
+        // Create 6 standard roles in tenant DB
+        const adminRole = await tx.role.create({
+          data: { tenantId: tenant.id, code: 'ADMIN', name: 'Administrador', description: 'Gestión técnica del sistema. NO opera casos.', level: 100, isActive: true }
+        });
+        const iaRoleRecord = await tx.role.create({
+          data: { tenantId: tenant.id, code: 'ASIGNACION_DE_CASOS', name: 'Asignación de Casos (IA)', description: 'Agente de IA que distribuye automáticamente los casos entre funcionarios.', level: 90, isActive: true }
+        });
+        await tx.role.create({
+          data: { tenantId: tenant.id, code: 'DIRECTOR', name: 'Director', description: 'Máxima autoridad institucional. Atiende casos críticos y es fallback de la IA.', level: 100, isActive: true }
+        });
+        await tx.role.create({
+          data: { tenantId: tenant.id, code: 'FUNCIONARIO', name: 'Funcionario', description: 'Personal técnico o profesional. La IA le asigna casos según su especialidad.', level: 85, isActive: true }
+        });
+        await tx.role.create({
+          data: { tenantId: tenant.id, code: 'VENTANILLA_UNICA', name: 'Ventanilla Única', description: 'Recibe, radica y tramita solicitudes ciudadanas en el mostrador.', level: 80, isActive: true }
+        });
+        await tx.role.create({
+          data: { tenantId: tenant.id, code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', description: 'Atención directa al ciudadano. Solo lectura de casos y ciudadanos.', level: 75, isActive: true }
+        });
+
+        // Create 5 base case types in tenant DB
+        const baseCaseTypes = [
+          { code: 'DP', name: 'Derecho de Petición', description: 'Solicitud de información o documentos', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: true, displayOrder: 1 },
+          { code: 'Q',  name: 'Queja', description: 'Queja sobre funcionarios o servicios', defaultLegalTermDays: 15, legalReference: 'Código Contencioso Administrativo', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 2 },
+          { code: 'SG', name: 'Solicitud General', description: 'Solicitudes generales de la ciudadanía', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: false, displayOrder: 3 },
+          { code: 'DH', name: 'Derechos Humanos', description: 'Casos de vulneración de derechos humanos', defaultLegalTermDays: 15, legalReference: 'Ley 24 de 1992', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 4 },
+          { code: 'MA', name: 'Medio Ambiente', description: 'Denuncias ambientales', defaultLegalTermDays: 15, legalReference: 'Ley 99 de 1993', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 5 },
+        ];
+        for (const ct of baseCaseTypes) {
+          await tx.caseType.create({
+            data: { ...ct, code: `${ct.code}_${sigla.toUpperCase()}`, tenantId: tenant.id, isActive: true },
+          });
+        }
+
+        // Create admin user in tenant DB (OBLIGATORIO — define la invariante de esta operación)
+        const createdAdmin = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            email: adminEmail,
+            passwordHash,
+            fullName: 'Administrador Principal',
+            documentType: 'CC',
+            documentNumber: `ADMIN-${sigla}`,
+            roleId: adminRole.id,
+            mustChangePassword: true,
+            isActive: true
+          }
+        });
+
+        // Create IA user in tenant DB
+        await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            email: `ia.asignacion@${sigla.toLowerCase()}.sistema.interno`,
+            passwordHash: iaPasswordHash,
+            fullName: 'Agente IA - Asignación Automática',
+            documentType: 'SISTEMA',
+            documentNumber: `IA-${sigla.toUpperCase()}`,
+            roleId: iaRoleRecord.id,
+            department: 'Sistema',
+            position: 'Inteligencia Artificial',
+            isActive: true,
+            mustChangePassword: false,
+            maxCaseLoad: 999999,
+          }
+        });
+
+        return createdAdmin;
+      }, { timeout: 20000 });
+    } catch (provisionError: any) {
+      // El aprovisionamiento falló: la transacción ya revirtió la BD del tenant.
+      // Revertimos también el registro global del Paso 1 para no dejar un tenant sin admin.
+      await prisma.tenantSettings.deleteMany({ where: { tenantId: tenant.id } }).catch(() => {});
+      await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
+      console.error('Error aprovisionando tenant (rollback aplicado, no se creó ningún registro):', provisionError);
+      return NextResponse.json(
+        { success: false, error: 'No se pudo aprovisionar la entidad y su administrador. No se creó ningún registro.', details: provisionError?.message || String(provisionError) },
+        { status: 500 }
+      );
     }
 
-    // Create 6 standard roles in tenant DB
-    const adminRole = await db.role.create({
-      data: { tenantId: tenant.id, code: 'ADMIN', name: 'Administrador', description: 'Gestión técnica del sistema. NO opera casos.', level: 100, isActive: true }
-    });
-    const iaRoleRecord = await db.role.create({
-      data: { tenantId: tenant.id, code: 'ASIGNACION_DE_CASOS', name: 'Asignación de Casos (IA)', description: 'Agente de IA que distribuye automáticamente los casos entre funcionarios.', level: 90, isActive: true }
-    });
-    await db.role.create({
-      data: { tenantId: tenant.id, code: 'DIRECTOR', name: 'Director', description: 'Máxima autoridad institucional. Atiende casos críticos y es fallback de la IA.', level: 100, isActive: true }
-    });
-    await db.role.create({
-      data: { tenantId: tenant.id, code: 'FUNCIONARIO', name: 'Funcionario', description: 'Personal técnico o profesional. La IA le asigna casos según su especialidad.', level: 85, isActive: true }
-    });
-    await db.role.create({
-      data: { tenantId: tenant.id, code: 'VENTANILLA_UNICA', name: 'Ventanilla Única', description: 'Recibe, radica y tramita solicitudes ciudadanas en el mostrador.', level: 80, isActive: true }
-    });
-    await db.role.create({
-      data: { tenantId: tenant.id, code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', description: 'Atención directa al ciudadano. Solo lectura de casos y ciudadanos.', level: 75, isActive: true }
-    });
-
-    // Create 5 base case types in tenant DB
-    const baseCaseTypes = [
-      { code: 'DP', name: 'Derecho de Petición', description: 'Solicitud de información o documentos', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: true, displayOrder: 1 },
-      { code: 'Q',  name: 'Queja', description: 'Queja sobre funcionarios o servicios', defaultLegalTermDays: 15, legalReference: 'Código Contencioso Administrativo', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 2 },
-      { code: 'SG', name: 'Solicitud General', description: 'Solicitudes generales de la ciudadanía', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: false, displayOrder: 3 },
-      { code: 'DH', name: 'Derechos Humanos', description: 'Casos de vulneración de derechos humanos', defaultLegalTermDays: 15, legalReference: 'Ley 24 de 1992', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 4 },
-      { code: 'MA', name: 'Medio Ambiente', description: 'Denuncias ambientales', defaultLegalTermDays: 15, legalReference: 'Ley 99 de 1993', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 5 },
-    ];
-    await Promise.all(baseCaseTypes.map(ct =>
-      db.caseType.create({
-        data: { ...ct, code: `${ct.code}_${sigla.toUpperCase()}`, tenantId: tenant.id, isActive: true },
-      })
-    ));
-
-    // Create admin user in tenant DB
-    const adminUser = await db.user.create({
-      data: {
-        tenantId: tenant.id,
-        email: adminEmail,
-        passwordHash,
-        fullName: 'Administrador Principal',
-        documentType: 'CC',
-        documentNumber: `ADMIN-${sigla}`,
-        roleId: adminRole.id,
-        mustChangePassword: true,
-        isActive: true
-      }
-    });
-
-    // Create IA user in tenant DB
-    const iaPasswordHash = await bcrypt.hash(`ia-internal-${tenant.id}`, 10);
-    await db.user.create({
-      data: {
-        tenantId: tenant.id,
-        email: `ia.asignacion@${sigla.toLowerCase()}.sistema.interno`,
-        passwordHash: iaPasswordHash,
-        fullName: 'Agente IA - Asignación Automática',
-        documentType: 'SISTEMA',
-        documentNumber: `IA-${sigla.toUpperCase()}`,
-        roleId: iaRoleRecord.id,
-        department: 'Sistema',
-        position: 'Inteligencia Artificial',
-        isActive: true,
-        mustChangePassword: false,
-        maxCaseLoad: 999999,
-      }
-    });
+    // Salvaguarda de la invariante: si por cualquier razón no quedó el ADMIN, revertir todo.
+    if (!adminUser) {
+      await prisma.tenantSettings.deleteMany({ where: { tenantId: tenant.id } }).catch(() => {});
+      await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
+      return NextResponse.json(
+        { success: false, error: 'No se pudo crear el administrador del tenant. Operación revertida.' },
+        { status: 500 }
+      );
+    }
 
     const ipAddress = getClientIp(request.headers);
     const userAgent = getUserAgent(request.headers);

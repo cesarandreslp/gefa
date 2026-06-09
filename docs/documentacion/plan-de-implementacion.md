@@ -6,6 +6,22 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 3. Garantizar un usuario ADMIN del tenant por cada tenant creado
+**Estado:** COMPLETADO
+**Objetivo:** Igual que existe el panel super-admin para el administrador del SaaS, cada tenant (comisaría) debe tener su propio usuario ADMIN al ser creado, para que pueda administrar su entidad.
+
+**Hallazgo:** El flujo ya creaba un ADMIN por tenant — verificado de extremo a extremo contra la BD real:
+- `POST /api/v1/super-admin/tenants` genera `admin@{sigla}.gov.co` + contraseña temporal, crea el rol `ADMIN` (level 100) y el usuario admin con `mustChangePassword: true`, y devuelve las credenciales.
+- El panel super-admin (`src/app/super-admin/page.tsx`, modal de éxito) **muestra las credenciales** (email + contraseña temporal) al crear la entidad.
+- El login (`src/app/api/v1/auth/login/route.ts`) enruta `SUPER_ADMIN → /super-admin` y el resto (incluido `ADMIN`) `→ /admin/home`, que es el panel completo del tenant (`src/app/admin/*`: usuarios, cargos, casos, settings, métricas, etc.).
+- Test contra la BD: tenant + ADMIN creados, rol correcto, hash de contraseña válido (login posible).
+
+**Mejora aplicada (endurecimiento de la invariante):** El Paso 2 del POST (roles + tipos + usuario ADMIN + usuario IA en la BD del tenant) **no era transaccional** — si la creación del admin fallaba tras crear los roles, podía quedar un tenant **sin administrador**.
+- **`src/app/api/v1/super-admin/tenants/route.ts`**: Todo el aprovisionamiento del Paso 2 se envolvió en una transacción interactiva (`db.$transaction`, timeout 20 s). El `Promise.all` de tipos de caso se cambió a bucle secuencial dentro de la transacción. Si la transacción falla, se revierte y además se elimina el registro global del Paso 1 (`tenantSettings` + `tenant`) → nunca queda una entidad a medio crear ni sin admin. Se añadió una salvaguarda extra: si `adminUser` resultara nulo, se revierte igual. El `iaPasswordHash` se calcula antes de la transacción para no alargarla con bcrypt.
+- Verificado: transacciones interactivas con rollback funcionan sobre la conexión Neon pooled; probado el path de éxito (tenant + admin OK) y el de fallo (rollback total, sin huérfanos).
+
+---
+
 ### 2. Arranque de infraestructura: git, GitHub, Vercel, build y base de datos
 **Estado:** COMPLETADO
 **Objetivo:** Dejar el repositorio sano con git, publicarlo en GitHub, conectar Vercel, verificar que compila y provisionar la base de datos del control plane.
