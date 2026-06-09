@@ -9,6 +9,12 @@ import {
   HEARING_TYPE_LABELS, PARD_STAGE_LABELS,
   ASSESSMENT_TYPE_LABELS, RISK_LEVEL_LABELS,
 } from '@/domain/catalogs/familyLabels';
+import {
+  AddMeasureForm, MeasureStatusControl,
+  AddHearingForm, HearingOutcomeControl,
+  AddPardForm, PardStageControl,
+  AddAssessmentForm,
+} from './ExpedienteActions';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Expediente {
@@ -96,6 +102,8 @@ export default function ExpedienteFamiliaPage() {
   if (loading) return <p style={{ color: '#6b7280' }}>Cargando expediente…</p>;
   if (!data) return <p style={{ color: '#6b7280' }}>No se encontró el expediente.</p>;
 
+  const nnaParties = data.caseParties.filter((p) => p.person?.isMinor || p.role === 'NNA');
+
   return (
     <div style={{ maxWidth: '950px' }}>
       <button onClick={() => router.push('/admin/family')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', marginBottom: '1rem' }}>
@@ -176,7 +184,10 @@ export default function ExpedienteFamiliaPage() {
 
       {/* Medidas de protección */}
       <div style={card}>
-        <h2 style={h2}>Medidas de protección ({data.protectionMeasures.length})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <h2 style={{ ...h2, margin: 0 }}>Medidas de protección ({data.protectionMeasures.length})</h2>
+          <AddMeasureForm caseId={data.id} onDone={load} />
+        </div>
         {data.protectionMeasures.length === 0 ? <p style={empty}>Sin medidas impuestas.</p> : (
           <div style={{ display: 'grid', gap: '0.6rem' }}>
             {data.protectionMeasures.map((m) => (
@@ -186,7 +197,8 @@ export default function ExpedienteFamiliaPage() {
                   <span style={pill(m.status === 'VIGENTE' ? '#059669' : m.status === 'INCUMPLIDA' ? '#dc2626' : '#6b7280')}>{MEASURE_STATUS_LABELS[m.status] ?? m.status}</span>
                 </div>
                 <p style={{ margin: '0.4rem 0 0', fontSize: '0.88rem', color: '#374151' }}>{m.description}</p>
-                <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{m.legalBasis} · {new Date(m.issuedAt).toLocaleDateString('es-CO')}</div>
+                <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{m.legalBasis} · {new Date(m.issuedAt).toLocaleDateString('es-CO')}{m.expiresAt ? ` · vence ${new Date(m.expiresAt).toLocaleDateString('es-CO')}` : ''}</div>
+                <MeasureStatusControl measure={m} onDone={load} />
               </div>
             ))}
           </div>
@@ -195,7 +207,10 @@ export default function ExpedienteFamiliaPage() {
 
       {/* PARD */}
       <div style={card}>
-        <h2 style={h2}>Restablecimiento de derechos / PARD ({data.restorationProcesses.length})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <h2 style={{ ...h2, margin: 0 }}>Restablecimiento de derechos / PARD ({data.restorationProcesses.length})</h2>
+          <AddPardForm caseId={data.id} nnaParties={nnaParties} onDone={load} />
+        </div>
         {data.restorationProcesses.length === 0 ? <p style={empty}>Sin procesos PARD.</p> : (
           <div style={{ display: 'grid', gap: '0.6rem' }}>
             {data.restorationProcesses.map((r) => (
@@ -205,6 +220,7 @@ export default function ExpedienteFamiliaPage() {
                   <span style={pill('#7c3aed')}>{PARD_STAGE_LABELS[r.stage] ?? r.stage}</span>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{r.legalBasis} · abierto {new Date(r.openedAt).toLocaleDateString('es-CO')}</div>
+                <PardStageControl process={r} onDone={load} />
               </div>
             ))}
           </div>
@@ -213,16 +229,23 @@ export default function ExpedienteFamiliaPage() {
 
       {/* Audiencias */}
       <div style={card}>
-        <h2 style={h2}>Audiencias ({data.hearings.length})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <h2 style={{ ...h2, margin: 0 }}>Audiencias ({data.hearings.length})</h2>
+          <AddHearingForm caseId={data.id} onDone={load} />
+        </div>
         {data.hearings.length === 0 ? <p style={empty}>Sin audiencias programadas.</p> : (
           <div style={{ display: 'grid', gap: '0.6rem' }}>
             {data.hearings.map((hg) => (
-              <div key={hg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.6rem 0.85rem' }}>
-                <div>
-                  <b>{HEARING_TYPE_LABELS[hg.hearingType] ?? hg.hearingType}</b>
-                  <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{new Date(hg.scheduledAt).toLocaleString('es-CO')}</span>
+              <div key={hg.id} style={{ border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.6rem 0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <b>{HEARING_TYPE_LABELS[hg.hearingType] ?? hg.hearingType}</b>
+                    <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{new Date(hg.scheduledAt).toLocaleString('es-CO')}</span>
+                  </div>
+                  <span style={pill(hg.wasHeld ? '#059669' : '#f59e0b')}>{hg.wasHeld ? 'Celebrada' : 'Programada'}</span>
                 </div>
-                <span style={pill(hg.wasHeld ? '#059669' : '#f59e0b')}>{hg.wasHeld ? 'Celebrada' : 'Programada'}</span>
+                {hg.outcome && <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', color: '#374151' }}>{hg.outcome}</p>}
+                <HearingOutcomeControl hearing={hg} onDone={load} />
               </div>
             ))}
           </div>
@@ -231,9 +254,12 @@ export default function ExpedienteFamiliaPage() {
 
       {/* Valoraciones (confidencial) */}
       <div style={{ ...card, borderColor: '#fde68a', background: '#fffbeb' }}>
-        <h2 style={{ ...h2, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <Lock size={16} /> Valoraciones — confidencial
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <h2 style={{ ...h2, margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Lock size={16} /> Valoraciones — confidencial
+          </h2>
+          {!assessmentsDenied && <AddAssessmentForm caseId={data.id} parties={data.caseParties} onDone={load} />}
+        </div>
         {assessmentsDenied ? (
           <p style={{ ...empty, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#92400e' }}>
             <ShieldAlert size={16} /> Su rol no tiene acceso a las valoraciones de este expediente.

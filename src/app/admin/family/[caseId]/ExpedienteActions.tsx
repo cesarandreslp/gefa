@@ -1,0 +1,316 @@
+'use client';
+
+import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import {
+  PROTECTION_MEASURE_TYPE_LABELS, MEASURE_STATUS_LABELS,
+  HEARING_TYPE_LABELS, ASSESSMENT_TYPE_LABELS, RISK_LEVEL_LABELS,
+  PARD_STAGE_LABELS,
+} from '@/domain/catalogs/familyLabels';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const label: React.CSSProperties = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#374151', marginBottom: '0.2rem' };
+const input: React.CSSProperties = { width: '100%', padding: '0.45rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.88rem' };
+const formBox: React.CSSProperties = { border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '1rem', marginBottom: '0.85rem', background: '#f8fafc' };
+const primaryBtn: React.CSSProperties = { background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', borderRadius: '8px', padding: '0.45rem 1rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' };
+const ghostBtn: React.CSSProperties = { background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.45rem 0.9rem', cursor: 'pointer', fontSize: '0.85rem' };
+
+function ErrorBox({ msg }: { msg: string | null }) {
+  if (!msg) return null;
+  return <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: '8px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', fontSize: '0.82rem' }}>{msg}</div>;
+}
+
+function ToggleButton({ open, onClick, label: text }: { open: boolean; onClick: () => void; label: string }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.35rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+      {open ? <X size={14} /> : <Plus size={14} />} {open ? 'Cerrar' : text}
+    </button>
+  );
+}
+
+async function post(url: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return { ok: false, error: d.error || 'Error al guardar' }; }
+    return { ok: true };
+  } catch { return { ok: false, error: 'Error de conexión' }; }
+}
+
+async function patch(url: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return { ok: false, error: d.error || 'Error al guardar' }; }
+    return { ok: true };
+  } catch { return { ok: false, error: 'Error de conexión' }; }
+}
+
+// ── Emitir medida de protección ──────────────────────────────────────────────
+export function AddMeasureForm({ caseId, onDone }: { caseId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [measureType, setMeasureType] = useState('PROHIBICION_APROXIMACION');
+  const [description, setDescription] = useState('');
+  const [legalBasis, setLegalBasis] = useState('Art. 17 Ley 294/1996');
+  const [expiresAt, setExpiresAt] = useState('');
+
+  const submit = async () => {
+    setError(null);
+    if (!description.trim()) { setError('La descripción es obligatoria.'); return; }
+    setSaving(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/measures`, {
+      measureType, description: description.trim(), legalBasis: legalBasis.trim(), expiresAt: expiresAt || undefined,
+    });
+    setSaving(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false); setDescription(''); setExpiresAt('');
+    onDone();
+  };
+
+  if (!open) return <ToggleButton open={false} onClick={() => setOpen(true)} label="Emitir medida" />;
+  return (
+    <div style={formBox}>
+      <ErrorBox msg={error} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+        <div>
+          <label style={label}>Tipo de medida</label>
+          <select value={measureType} onChange={(e) => setMeasureType(e.target.value)} style={input}>
+            {Object.entries(PROTECTION_MEASURE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={label}>Vence (opcional)</label>
+          <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} style={input} />
+        </div>
+      </div>
+      <div style={{ marginTop: '0.6rem' }}>
+        <label style={label}>Fundamento legal</label>
+        <input value={legalBasis} onChange={(e) => setLegalBasis(e.target.value)} style={input} />
+      </div>
+      <div style={{ marginTop: '0.6rem' }}>
+        <label style={label}>Descripción *</label>
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...input, minHeight: '70px', resize: 'vertical' }} />
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+        <button onClick={submit} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando…' : 'Emitir'}</button>
+        <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Cambiar estado de una medida ─────────────────────────────────────────────
+export function MeasureStatusControl({ measure, onDone }: { measure: any; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const apply = async (patchBody: Record<string, unknown>) => {
+    setBusy(true);
+    await patch(`/api/v1/family/measures/${measure.id}`, patchBody);
+    setBusy(false);
+    onDone();
+  };
+  if (measure.status !== 'VIGENTE') return null;
+  return (
+    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+      <button disabled={busy} onClick={() => apply({ status: 'INCUMPLIDA' })} style={{ ...ghostBtn, color: '#b45309', borderColor: '#fcd34d', fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}>Marcar incumplida</button>
+      <button disabled={busy} onClick={() => apply({ status: 'CUMPLIDA' })} style={{ ...ghostBtn, color: '#047857', borderColor: '#6ee7b7', fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}>Marcar cumplida</button>
+      <button disabled={busy} onClick={() => apply({ status: 'REVOCADA' })} style={{ ...ghostBtn, color: '#b91c1c', borderColor: '#fca5a5', fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}>Revocar</button>
+    </div>
+  );
+}
+
+// ── Programar audiencia ──────────────────────────────────────────────────────
+export function AddHearingForm({ caseId, onDone }: { caseId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hearingType, setHearingType] = useState('CONCILIACION');
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [location, setLocation] = useState('');
+
+  const submit = async () => {
+    setError(null);
+    if (!scheduledAt) { setError('La fecha y hora son obligatorias.'); return; }
+    setSaving(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/hearings`, { hearingType, scheduledAt, location: location.trim() || undefined });
+    setSaving(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false); setScheduledAt(''); setLocation('');
+    onDone();
+  };
+
+  if (!open) return <ToggleButton open={false} onClick={() => setOpen(true)} label="Programar audiencia" />;
+  return (
+    <div style={formBox}>
+      <ErrorBox msg={error} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+        <div>
+          <label style={label}>Tipo</label>
+          <select value={hearingType} onChange={(e) => setHearingType(e.target.value)} style={input}>
+            {Object.entries(HEARING_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={label}>Fecha y hora *</label>
+          <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} style={input} />
+        </div>
+      </div>
+      <div style={{ marginTop: '0.6rem' }}>
+        <label style={label}>Lugar (opcional)</label>
+        <input value={location} onChange={(e) => setLocation(e.target.value)} style={input} placeholder="Sala de audiencias, virtual, etc." />
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+        <button onClick={submit} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando…' : 'Programar'}</button>
+        <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Registrar realización de audiencia ───────────────────────────────────────
+export function HearingOutcomeControl({ hearing, onDone }: { hearing: any; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState('');
+  const [minutes, setMinutes] = useState('');
+  if (hearing.wasHeld) return null;
+  const submit = async () => {
+    setBusy(true);
+    await patch(`/api/v1/family/hearings/${hearing.id}`, { wasHeld: true, outcome: outcome.trim() || undefined, minutes: minutes.trim() || undefined });
+    setBusy(false); setOpen(false);
+    onDone();
+  };
+  if (!open) return <button onClick={() => setOpen(true)} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', marginTop: '0.4rem' }}>Registrar realización</button>;
+  return (
+    <div style={{ marginTop: '0.5rem' }}>
+      <textarea value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Resultado / decisión" style={{ ...input, minHeight: '50px', marginBottom: '0.4rem' }} />
+      <textarea value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="Acta (opcional)" style={{ ...input, minHeight: '50px', marginBottom: '0.4rem' }} />
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button onClick={submit} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.6 : 1 }}>Guardar</button>
+        <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Abrir PARD ───────────────────────────────────────────────────────────────
+export function AddPardForm({ caseId, nnaParties, onDone }: { caseId: string; nnaParties: any[]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [childId, setChildId] = useState(nnaParties[0]?.person?.id ?? '');
+
+  const submit = async () => {
+    setError(null);
+    if (!childId) { setError('Seleccione el NNA.'); return; }
+    setSaving(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/restoration`, { childId });
+    setSaving(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false);
+    onDone();
+  };
+
+  if (!open) {
+    if (nnaParties.length === 0) return null;
+    return <ToggleButton open={false} onClick={() => setOpen(true)} label="Abrir PARD" />;
+  }
+  return (
+    <div style={formBox}>
+      <ErrorBox msg={error} />
+      <label style={label}>NNA objeto del proceso *</label>
+      <select value={childId} onChange={(e) => setChildId(e.target.value)} style={input}>
+        <option value="">Seleccionar…</option>
+        {nnaParties.map((p) => <option key={p.person.id} value={p.person.id}>{p.person.firstName} {p.person.firstLastName}</option>)}
+      </select>
+      <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: '0.35rem' }}>Base legal: Arts. 99 y 100 Ley 1098/2006</div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+        <button onClick={submit} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>{saving ? 'Abriendo…' : 'Abrir PARD'}</button>
+        <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Avanzar etapa PARD ───────────────────────────────────────────────────────
+export function PardStageControl({ process, onDone }: { process: any; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const order = ['APERTURA', 'DEFINICION_MEDIDAS', 'SEGUIMIENTO', 'CIERRE'];
+  const idx = order.indexOf(process.stage);
+  const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : null;
+  if (!next) return null;
+  const advance = async () => {
+    setBusy(true);
+    await patch(`/api/v1/family/restoration/${process.id}`, { stage: next });
+    setBusy(false);
+    onDone();
+  };
+  return (
+    <button onClick={advance} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', marginTop: '0.4rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>
+      Avanzar a: {PARD_STAGE_LABELS[next]}
+    </button>
+  );
+}
+
+// ── Registrar valoración (confidencial) ──────────────────────────────────────
+export function AddAssessmentForm({ caseId, parties, onDone }: { caseId: string; parties: any[]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [assessmentType, setAssessmentType] = useState('PSICOLOGICA');
+  const [riskLevel, setRiskLevel] = useState('BAJO');
+  const [findings, setFindings] = useState('');
+  const [assessedPersonId, setAssessedPersonId] = useState('');
+
+  const submit = async () => {
+    setError(null);
+    if (!findings.trim()) { setError('Los hallazgos son obligatorios.'); return; }
+    setSaving(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/assessments`, {
+      assessmentType, riskLevel, findings: findings.trim(), assessedPersonId: assessedPersonId || undefined,
+    });
+    setSaving(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false); setFindings('');
+    onDone();
+  };
+
+  if (!open) return <ToggleButton open={false} onClick={() => setOpen(true)} label="Registrar valoración" />;
+  return (
+    <div style={{ ...formBox, borderColor: '#fcd34d', background: 'white' }}>
+      <ErrorBox msg={error} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
+        <div>
+          <label style={label}>Tipo</label>
+          <select value={assessmentType} onChange={(e) => setAssessmentType(e.target.value)} style={input}>
+            {Object.entries(ASSESSMENT_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={label}>Nivel de riesgo</label>
+          <select value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} style={input}>
+            {Object.entries(RISK_LEVEL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={label}>Persona valorada</label>
+          <select value={assessedPersonId} onChange={(e) => setAssessedPersonId(e.target.value)} style={input}>
+            <option value="">— No especificar —</option>
+            {parties.map((p) => <option key={p.person.id} value={p.person.id}>{p.person.firstName} {p.person.firstLastName}</option>)}
+          </select>
+        </div>
+      </div>
+      <div style={{ marginTop: '0.6rem' }}>
+        <label style={label}>Hallazgos *</label>
+        <textarea value={findings} onChange={(e) => setFindings(e.target.value)} style={{ ...input, minHeight: '80px', resize: 'vertical' }} />
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+        <button onClick={submit} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando…' : 'Registrar'}</button>
+        <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+      </div>
+      <div style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.5rem' }}>🔒 Información confidencial — acceso restringido.</div>
+    </div>
+  );
+}
+
+export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;

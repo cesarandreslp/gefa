@@ -6,6 +6,23 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 13. Fase 4 — Medidas de protección, PARD y audiencias: acciones en el expediente
+**Estado:** COMPLETADO
+**Objetivo:** Según el roadmap de `plan-plataforma-gestion-familiar.md`, la Fase 4 es el corazón legal de la comisaría. Las APIs ya existían (Módulo 2) pero el expediente solo mostraba datos; se cablearon las acciones operativas desde la UI.
+
+**Componentes — `src/app/admin/family/[caseId]/ExpedienteActions.tsx` (nuevo):** formularios cliente colapsables que consumen los endpoints `/api/v1/family/*`:
+- `AddMeasureForm` — emite medida (tipo, fundamento legal, vencimiento, descripción) → `POST .../measures`.
+- `MeasureStatusControl` — sobre medidas VIGENTE: marcar incumplida/cumplida/revocar → `PATCH /measures/[id]`.
+- `AddHearingForm` — programa audiencia (tipo, fecha/hora, lugar) → `POST .../hearings`.
+- `HearingOutcomeControl` — registra realización (resultado + acta) → `PATCH /hearings/[id]`.
+- `AddPardForm` — abre PARD seleccionando un NNA vinculado → `POST .../restoration` (oculto si no hay NNA en el caso).
+- `PardStageControl` — avanza etapa APERTURA→…→CIERRE → `PATCH /restoration/[id]`.
+- `AddAssessmentForm` — registra valoración (tipo, riesgo, persona, hallazgos) → `POST .../assessments`; solo visible si el rol tiene acceso confidencial.
+
+**Expediente (`admin/family/[caseId]/page.tsx`):** cada sección (medidas, PARD, audiencias, valoraciones) tiene ahora su botón de acción en el encabezado y controles por ítem; tras cada acción se recarga el expediente. Se derivan `nnaParties` para el PARD. La sección de valoraciones solo muestra el formulario cuando el endpoint confidencial no devolvió 403.
+**Verificación:** `type-check` OK; `build` OK.
+**Pendiente Fase 4 (siguiente):** alertas de vencimiento de medidas y términos PARD (Vercel Cron) y dashboard de vencimientos.
+
 ### 12. Fase 3 — Módulo 4: workflow de estados y seguimiento (motor)
 **Estado:** COMPLETADO
 **Objetivo:** Implementar las transiciones de estado del caso de familia con validación, historial y UI, sin tocar el `StateMachineService` heredado (que usa estados de petición).
