@@ -7,17 +7,24 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 ## 2026-06-09
 
 ### 4. Paso 2 del plan — Limpiar módulos de personería
-**Estado:** EN CURSO
+**Estado:** COMPLETADO
 **Objetivo:** Retirar de forma controlada los módulos específicos de personería (transparencia, textos legales, folios, defaults de landing/transparencia) según la sección 1 de `MIGRACION-PENDIENTE.md`, verificando el build tras cada borrado para mantenerlo verde.
 
-**Bloque 1 — Transparencia (Ley 1712) + calculadora de folios — COMPLETADO.** Build y type-check verdes tras los borrados.
+**Bloque 1 — Transparencia (Ley 1712) + calculadora de folios.** Build y type-check verdes tras los borrados.
 - Eliminados: `src/app/api/public/transparency/route.ts`, `src/app/admin/transparencia/page.tsx`, `src/lib/transparencyDefaults.ts`, `src/lib/foliosCalculator.ts` (este último sin importadores).
-- `src/app/api/v1/mi-entidad/route.ts`: removido el import y uso de `getTransparencyConfig` (GET ya no expone `transparencyConfig`; PATCH ya no persiste `transparencyConfig` en metadata). Se conserva `getLandingConfig` (el landing se rehace en bloque aparte).
+- `src/app/api/v1/mi-entidad/route.ts`: removido el import y uso de `getTransparencyConfig` (GET ya no expone `transparencyConfig`; PATCH ya no persiste `transparencyConfig`). Se conserva `getLandingConfig`.
 - `src/app/admin/AdminNav.tsx`: quitada la entrada de menú "🔍 Transparencia".
 - `src/app/home/page.tsx`: quitado el botón "Índice de Transparencia" y el import ahora-no-usado de `Eye`.
-- Nota: el *campo* `folios` del modelo `Case` NO se tocó (pertenece al dominio, se aborda en Fase 3). Los enlaces a `/transparencia` en `ClientLayout.tsx`/`landingDefaults.ts` pertenecen al landing público y se resuelven en el bloque de "Rehacer landing".
+- Nota: el *campo* `folios` del modelo `Case` NO se tocó (pertenece al dominio, Fase 3).
 
-**Bloque 2 — legal-texts + landing: PENDIENTE** (siguiente).
+**Bloque 2 — Rehacer landing para GEFA + decisión sobre legal-texts.** Build y type-check verdes.
+- **`src/lib/landingDefaults.ts`**: reemplazado el `MASTER_SERVICE_CATALOG` (que mezclaba servicios de Personería/Alcaldía/Contraloría/Hospital) por un catálogo de **comisaría de familia**: denuncia de violencia intrafamiliar, medidas de protección, restablecimiento de derechos (PARD), conciliación familiar (custodia/alimentos/visitas), protección de NNA, atención psicosocial y orientación jurídica, más los 3 servicios comunes (radicar, consultar, atención). `SERVICE_CATEGORIES` ahora es `['Comunes', 'Comisaría de Familia']`. Se eliminó el servicio que enlazaba a `/transparencia` (ruta borrada). Se conservaron interfaces, `AVAILABLE_ICONS`, `ICON_LABELS` y `getLandingConfig` (los consumidores `editor-landing`, `admin/entidad`, `servicios`, `page` siguen compilando).
+- **`src/app/page.tsx`**: el hero ya no antepone "Ventanilla Única"; usa directamente el nombre de la entidad (ej. "Comisaría de Familia de Buga"). Fallback de `rawName` cambiado a 'Comisaría de Familia'.
+- **`src/app/la-entidad/page.tsx`**: reescrito el contenido (antes 100% personería) — hero, ¿qué es?, misión, visión, 8 funciones y marco legal (Art. 42 CP, Leyes 294/1996, 575/2000, 1098/2006, 1257/2008, 2126/2021). Íconos añadidos: `Baby`, `Handshake`, `HeartHandshake`.
+- **`src/app/ClientLayout.tsx`**: reemplazados los 3 enlaces muertos a `/transparencia` (nav desktop, menú móvil, footer) por enlaces a `/la-entidad` ("La Comisaría"); texto del footer actualizado al propósito de comisaría de familia.
+- **`src/app/servicios/page.tsx`**: sin cambios de contenido (es data-driven desde `landingConfig`).
+- **Decisión legal-texts:** **se conserva** `src/app/api/public/legal-texts/route.ts` + `LEGAL_TEXTS` en `SystemSettingsService` + `LegalTextsSection` en `admin/settings`. Son genéricos (política de privacidad, términos, nota de transparencia) y aplican a GEFA: las comisarías son entidades públicas sujetas a Ley 1712 (transparencia) y la política de privacidad es requerida por Ley 1581 (habeas data). Las menciones de "Ley 1712/transparencia" restantes en servicios (Audit, PublicStats, Report, Supervision) son de cumplimiento y se mantienen.
+- **Evaluación `peticiones-reasignacion`/`reasignaciones`:** **se conservan**. Es un flujo genérico de gestión de casos (el director aprueba reasignar un caso a otro funcionario/profesional), aplicable a comisarías de familia. No es específico de personería.
 
 ---
 

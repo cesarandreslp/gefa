@@ -197,7 +197,7 @@ export default function ClientLayout({
               {/* Navegación principal (solo escritorio) */}
               <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'center', whiteSpace: 'nowrap' }}>
                 <a href="/" className="nav-link">Inicio</a>
-                <a href="/transparencia" className="nav-link">Transparencia y acceso a la información pública</a>
+                <a href="/la-entidad" className="nav-link">La Comisaría</a>
                 <a href="/atencion-ciudadano" className="nav-link">Atención y Servicios a la Ciudadanía</a>
                 <a href="/atencion-ciudadano/consultar" className="nav-link">Consultar Solicitud</a>
                 {mounted && isLoggedIn && !isDashboard && (
@@ -311,8 +311,8 @@ export default function ClientLayout({
                   >
                     🏠 Inicio
                   </a>
-                  <a 
-                    href="/transparencia" 
+                  <a
+                    href="/la-entidad"
                     className="mobile-menu-link"
                     style={{
                       display: 'block',
@@ -325,7 +325,7 @@ export default function ClientLayout({
                     }}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    🔍 Transparencia y acceso a la información pública
+                    🏛️ La Comisaría
                   </a>
                   <a 
                     href="/atencion-ciudadano" 
@@ -429,7 +429,7 @@ export default function ClientLayout({
                 </h3>
                 <p style={{ fontSize: '0.875rem', lineHeight: '1.6', opacity: 0.9 }}>
                   Portal Único del Estado Colombiano.<br/>
-                  Garantizando la transparencia y los derechos de los ciudadanos en {city}.
+                  Protección integral de la familia y prevención de la violencia intrafamiliar en {city}.
                 </p>
               </div>
               
@@ -439,8 +439,8 @@ export default function ClientLayout({
                 </h4>
                 <ul style={{ listStyle: 'none', padding: 0 }}>
                   <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                    <a href="/transparencia" style={{ color: 'white', opacity: 0.9, fontSize: '0.875rem' }}>
-                      Transparencia y acceso a la información pública
+                    <a href="/la-entidad" style={{ color: 'white', opacity: 0.9, fontSize: '0.875rem' }}>
+                      La Comisaría
                     </a>
                   </li>
                   <li style={{ marginBottom: 'var(--spacing-sm)' }}>

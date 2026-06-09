@@ -41,12 +41,12 @@ export default async function HomePage() {
   });
 
   const institutionTypeName = tenantWithType?.institutionType?.name;
-  const rawName = tenant.name || 'Entidad Institucional';
-  // Formato: "Ventanilla Única [Institución] de [Ciudad]"
+  const rawName = tenant.name || 'Comisaría de Familia';
+  // Formato: "[Tipo de institución] de [Ciudad]" (ej: "Comisaría de Familia de Buga")
   const institutionLabel = (institutionTypeName && !rawName.toLowerCase().includes(institutionTypeName.toLowerCase()))
     ? `${institutionTypeName} de ${rawName}`
     : rawName;
-  const entityName = `Ventanilla Única ${institutionLabel}`;
+  const entityName = institutionLabel;
   const entityAddress = settings?.address || tenant.address || 'Dirección no configurada';
   const entityPhone = settings?.phone || tenant.phone || 'No configurado';
   const entityEmail = settings?.institutionalEmail || tenant.institutionalEmail || 'No configurado';

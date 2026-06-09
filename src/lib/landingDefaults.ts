@@ -63,225 +63,90 @@ export const ICON_LABELS: Record<string, string> = {
 };
 
 /**
- * Catálogo maestro de servicios.
- * Unión de todos los servicios de: Personería, Alcaldía, Contraloría, Hospital y genéricos.
+ * Catálogo maestro de servicios para comisarías de familia (GEFA).
+ * El admin del tenant activa los que ofrezca su comisaría desde el Editor de Landing Page.
  * TODOS comienzan con enabled: false.
  */
 export const MASTER_SERVICE_CATALOG: LandingService[] = [
   // ── COMUNES (todas las entidades) ──────────────────────
   {
-    id: 'pqrs',
-    title: 'PQRS',
-    description: 'Radique peticiones, quejas, reclamos y sugerencias ante la entidad.',
-    icon: 'FileText', linkUrl: '/atencion-ciudadano/solicitud', linkText: 'Radicar PQRS',
+    id: 'radicar-solicitud',
+    title: 'Radicar Solicitud',
+    description: 'Presente una solicitud, denuncia o petición ante la comisaría de familia.',
+    icon: 'FileText', linkUrl: '/atencion-ciudadano/solicitud', linkText: 'Radicar Solicitud',
     enabled: false, category: 'Comunes',
   },
   {
-    id: 'consulta-solicitudes',
-    title: 'Consulta de Solicitudes',
-    description: 'Consulte el estado de sus trámites y solicitudes en línea.',
+    id: 'consultar-caso',
+    title: 'Consultar mi Caso',
+    description: 'Consulte el estado de su caso o solicitud con su número de radicado.',
     icon: 'Search', linkUrl: '/atencion-ciudadano/consultar', linkText: 'Consultar',
     enabled: false, category: 'Comunes',
   },
   {
     id: 'atencion-ciudadano',
-    title: 'Atención al Ciudadano',
-    description: 'Información sobre canales de atención, horarios y puntos de servicio.',
+    title: 'Atención a la Ciudadanía',
+    description: 'Canales de atención, horarios y puntos de servicio de la comisaría.',
     icon: 'Users', linkUrl: '/atencion-ciudadano/contacto', linkText: 'Contactar',
     enabled: false, category: 'Comunes',
   },
-  {
-    id: 'transparencia',
-    title: 'Transparencia y Rendición de Cuentas',
-    description: 'Consulta estadísticas, informes de gestión y rendición de cuentas.',
-    icon: 'BarChart3', linkUrl: '/transparencia', linkText: 'Ver datos',
-    enabled: false, category: 'Comunes',
-  },
 
-  // ── PERSONERÍA MUNICIPAL ───────────────────────────────
+  // ── COMISARÍA DE FAMILIA ───────────────────────────────
   {
-    id: 'derecho-peticion',
-    title: 'Derecho de Petición',
-    description: 'Presenta tus solicitudes, quejas o reclamos ante las entidades públicas del municipio. Término de respuesta: 15 días hábiles (Ley 1755/2015).',
-    icon: 'FileText', linkUrl: '/atencion-ciudadano/solicitud', linkText: 'Radicar Petición',
-    enabled: false, category: 'Personería',
+    id: 'violencia-intrafamiliar',
+    title: 'Denuncia de Violencia Intrafamiliar',
+    description: 'Reporte hechos de violencia física, psicológica, sexual o económica dentro de la familia. Atención prioritaria y confidencial (Ley 294/1996, Ley 1257/2008).',
+    icon: 'Shield', linkUrl: '/atencion-ciudadano/solicitud', linkText: 'Presentar denuncia',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'tutela',
-    title: 'Acciones de Tutela',
-    description: 'Protección inmediata de derechos fundamentales cuando son vulnerados o amenazados. Término: 10 días hábiles (Art. 86 CP, Decreto 2591/1991).',
-    icon: 'Scale', linkUrl: '/servicios#tutela', linkText: 'Más información',
-    enabled: false, category: 'Personería',
+    id: 'medida-proteccion',
+    title: 'Medidas de Protección',
+    description: 'Solicite medidas de protección para la víctima y su grupo familiar frente a situaciones de violencia (Ley 575/2000, Decreto 4799/2011).',
+    icon: 'Scale', linkUrl: '/servicios#medida-proteccion', linkText: 'Más información',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'disciplinario',
-    title: 'Quejas Disciplinarias',
-    description: 'Atendemos quejas y denuncias contra servidores públicos municipales por presuntas faltas disciplinarias (Ley 1952/2019).',
-    icon: 'Shield', linkUrl: '/servicios#disciplinario', linkText: 'Ver detalles',
-    enabled: false, category: 'Personería',
+    id: 'restablecimiento-derechos',
+    title: 'Restablecimiento de Derechos (PARD)',
+    description: 'Proceso administrativo para restablecer los derechos de niños, niñas y adolescentes amenazados o vulnerados (Ley 1098/2006).',
+    icon: 'Baby', linkUrl: '/servicios#restablecimiento-derechos', linkText: 'Conocer el proceso',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'victimas',
-    title: 'Atención a Víctimas del Conflicto Armado',
-    description: 'Orientación, asesoría y acompañamiento a víctimas del conflicto armado. Acceso a la oferta institucional (Ley 1448/2011).',
-    icon: 'Heart', linkUrl: '/servicios#victimas', linkText: 'Conocer más',
-    enabled: false, category: 'Personería',
+    id: 'conciliacion-familiar',
+    title: 'Conciliación en Asuntos de Familia',
+    description: 'Custodia y cuidado personal, cuota de alimentos y regulación de visitas mediante conciliación.',
+    icon: 'Handshake', linkUrl: '/servicios#conciliacion-familiar', linkText: 'Solicitar conciliación',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'nna',
-    title: 'Defensa de Niños, Niñas y Adolescentes',
-    description: 'Protección de los derechos de niños, niñas y adolescentes en el municipio (Ley 1098/2006).',
-    icon: 'Baby', linkUrl: '/servicios#nna', linkText: 'Información',
-    enabled: false, category: 'Personería',
+    id: 'proteccion-nna',
+    title: 'Protección de Niños, Niñas y Adolescentes',
+    description: 'Acompañamiento y protección integral de los derechos de la niñez y la adolescencia (Ley 1098/2006).',
+    icon: 'Heart', linkUrl: '/servicios#proteccion-nna', linkText: 'Información',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'ddhh',
-    title: 'Promoción de Derechos Humanos',
-    description: 'Jornadas de capacitación, talleres y actividades de divulgación sobre derechos humanos.',
-    icon: 'BookOpen', linkUrl: '/servicios#ddhh', linkText: 'Conocer más',
-    enabled: false, category: 'Personería',
+    id: 'atencion-psicosocial',
+    title: 'Atención Psicosocial',
+    description: 'Valoración y acompañamiento del equipo interdisciplinario (psicología y trabajo social) a las familias.',
+    icon: 'Stethoscope', linkUrl: '/servicios#atencion-psicosocial', linkText: 'Conocer más',
+    enabled: false, category: 'Comisaría de Familia',
   },
   {
-    id: 'control-preventivo',
-    title: 'Control Preventivo y Veeduría',
-    description: 'Vigilancia preventiva sobre contratos públicos, manejo de recursos y gestión administrativa municipal (Ley 136/1994).',
-    icon: 'Eye', linkUrl: '/servicios#control-preventivo', linkText: 'Ver detalles',
-    enabled: false, category: 'Personería',
-  },
-
-  // ── ALCALDÍA MUNICIPAL ─────────────────────────────────
-  {
-    id: 'tramites',
-    title: 'Trámites y Servicios',
-    description: 'Consulte y realice los trámites disponibles de la administración municipal.',
-    icon: 'ClipboardList', linkUrl: '/servicios#tramites', linkText: 'Ver trámites',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'licencias',
-    title: 'Licencias y Permisos',
-    description: 'Solicite licencias de construcción, permisos de funcionamiento y más.',
-    icon: 'Shield', linkUrl: '/servicios#licencias', linkText: 'Solicitar',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'servicios-publicos',
-    title: 'Servicios Públicos',
-    description: 'Información sobre acueducto, alcantarillado, aseo y alumbrado público.',
-    icon: 'Droplets', linkUrl: '/servicios#servicios-publicos', linkText: 'Consultar',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'planeacion',
-    title: 'Planeación y Ordenamiento Territorial',
-    description: 'Plan de ordenamiento territorial, estratificación y desarrollo urbano.',
-    icon: 'Map', linkUrl: '/servicios#planeacion', linkText: 'Ver más',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'hacienda',
-    title: 'Hacienda e Impuestos',
-    description: 'Información sobre predial, industria y comercio, y demás obligaciones tributarias municipales.',
-    icon: 'DollarSign', linkUrl: '/servicios#hacienda', linkText: 'Consultar',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'salud-bienestar',
-    title: 'Salud Pública y Bienestar Social',
-    description: 'Programas de salud pública, bienestar social y atención a población vulnerable.',
-    icon: 'Heart', linkUrl: '/servicios#salud-bienestar', linkText: 'Ver programas',
-    enabled: false, category: 'Alcaldía',
-  },
-  {
-    id: 'educacion-cultura',
-    title: 'Educación y Cultura',
-    description: 'Programas educativos, culturales y deportivos del municipio.',
-    icon: 'GraduationCap', linkUrl: '/servicios#educacion', linkText: 'Información',
-    enabled: false, category: 'Alcaldía',
-  },
-
-  // ── CONTRALORÍA ────────────────────────────────────────
-  {
-    id: 'denuncias-fiscales',
-    title: 'Denuncias Fiscales',
-    description: 'Presente denuncias sobre el uso indebido de recursos públicos en su municipio.',
-    icon: 'AlertTriangle', linkUrl: '/atencion-ciudadano/solicitud', linkText: 'Presentar denuncia',
-    enabled: false, category: 'Contraloría',
-  },
-  {
-    id: 'auditorias',
-    title: 'Auditorías y Resultados',
-    description: 'Consulte el estado y resultados de las auditorías realizadas a entidades públicas.',
-    icon: 'Search', linkUrl: '/servicios#auditorias', linkText: 'Consultar',
-    enabled: false, category: 'Contraloría',
-  },
-  {
-    id: 'responsabilidad-fiscal',
-    title: 'Responsabilidad Fiscal',
-    description: 'Procesos de responsabilidad fiscal para proteger el patrimonio público.',
-    icon: 'Gavel', linkUrl: '/servicios#responsabilidad-fiscal', linkText: 'Más información',
-    enabled: false, category: 'Contraloría',
-  },
-  {
-    id: 'control-fiscal',
-    title: 'Control Fiscal Participativo',
-    description: 'Mecanismos de participación ciudadana en el control fiscal.',
-    icon: 'Users', linkUrl: '/servicios#participacion', linkText: 'Participar',
-    enabled: false, category: 'Contraloría',
-  },
-  {
-    id: 'jurisdiccion-coactiva',
-    title: 'Jurisdicción Coactiva',
-    description: 'Cobro de obligaciones fiscales a favor del patrimonio público.',
-    icon: 'Landmark', linkUrl: '/servicios#coactiva', linkText: 'Información',
-    enabled: false, category: 'Contraloría',
-  },
-
-  // ── HOSPITAL / ESE ─────────────────────────────────────
-  {
-    id: 'servicios-salud',
-    title: 'Servicios de Salud',
-    description: 'Consulta, urgencias, hospitalización, especialidades y programas de prevención disponibles.',
-    icon: 'Stethoscope', linkUrl: '/servicios#salud', linkText: 'Ver servicios',
-    enabled: false, category: 'Hospital',
-  },
-  {
-    id: 'citas-medicas',
-    title: 'Citas Médicas y Autorizaciones',
-    description: 'Información sobre asignación de citas, autorizaciones y referencia de pacientes.',
-    icon: 'ClipboardList', linkUrl: '/servicios#citas', linkText: 'Consultar',
-    enabled: false, category: 'Hospital',
-  },
-  {
-    id: 'derechos-paciente',
-    title: 'Derechos y Deberes del Paciente',
-    description: 'Conozca sus derechos y deberes como usuario de los servicios de salud.',
-    icon: 'BookOpen', linkUrl: '/servicios#derechos', linkText: 'Conocer más',
-    enabled: false, category: 'Hospital',
-  },
-  {
-    id: 'prevencion',
-    title: 'Programas de Prevención y Promoción',
-    description: 'Vacunación, salud pública, prevención de enfermedades y promoción del bienestar.',
-    icon: 'Shield', linkUrl: '/servicios#prevencion', linkText: 'Información',
-    enabled: false, category: 'Hospital',
-  },
-  {
-    id: 'participacion-salud',
-    title: 'Participación Social en Salud',
-    description: 'Mecanismos de participación ciudadana en la gestión de los servicios de salud.',
-    icon: 'Handshake', linkUrl: '/servicios#participacion-salud', linkText: 'Participar',
-    enabled: false, category: 'Hospital',
+    id: 'orientacion-juridica',
+    title: 'Orientación Jurídica a la Familia',
+    description: 'Asesoría sobre derechos de familia y las rutas de atención disponibles ante la comisaría.',
+    icon: 'BookOpen', linkUrl: '/servicios#orientacion-juridica', linkText: 'Conocer más',
+    enabled: false, category: 'Comisaría de Familia',
   },
 ];
 
 // Categorías disponibles para el editor (agrupación visual)
 export const SERVICE_CATEGORIES = [
   'Comunes',
-  'Personería',
-  'Alcaldía',
-  'Contraloría',
-  'Hospital',
+  'Comisaría de Familia',
 ] as const;
 
 /**
