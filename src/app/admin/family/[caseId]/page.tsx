@@ -13,7 +13,7 @@ import {
   AddMeasureForm, MeasureStatusControl,
   AddHearingForm, HearingOutcomeControl,
   AddPardForm, PardStageControl,
-  AddAssessmentForm,
+  AddAssessmentForm, TeamSection,
 } from './ExpedienteActions';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -181,6 +181,9 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
       </div>
+
+      {/* Equipo asignado */}
+      <TeamSection caseId={data.id} canEdit={true} />
 
       {/* Medidas de protección */}
       <div style={card}>

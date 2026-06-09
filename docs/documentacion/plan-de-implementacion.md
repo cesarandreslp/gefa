@@ -6,6 +6,21 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 15. Fase 5 — Equipo interdisciplinario y agenda
+**Estado:** COMPLETADO
+**Objetivo:** Fase 5 del roadmap: asignación de casos de familia al equipo + agenda de audiencias.
+
+**Asignación al equipo (reutiliza el modelo `Assignment`):**
+- `GET/POST /api/v1/family/cases/[caseId]/assignments` — lista/asigna profesionales (valida usuario activo del tenant, 409 si ya asignado, `status: ACCEPTED`, `assignedBy` = usuario actual). `DELETE .../[assignmentId]` retira al profesional. Roles `FAMILY_WRITE_ROLES` para modificar, `FAMILY_READ_ROLES` para ver.
+- UI: componente autónomo `TeamSection` en `ExpedienteActions.tsx` (lista miembros + alta con dropdown de `GET /api/v1/users` + retiro), insertado en el expediente tras las Partes.
+
+**Agenda de audiencias:**
+- `GET /api/v1/family/agenda?from&to&mine` — audiencias del tenant en rango (por defecto próximos 30 días), opción `mine=true` (las que preside el usuario), con caso y quien preside.
+- Pantalla `admin/family/agenda/page.tsx` — vista agrupada por día, hora destacada, estado (programada/celebrada), enlace al expediente, filtro "solo las que presido". Botón "Agenda" añadido en el encabezado del listado.
+
+**Verificación:** `type-check` OK; `build` OK (endpoints y páginas en el manifiesto).
+**Nota:** con la asignación al equipo ya hay destinatarios para notificaciones de vencimiento/recordatorio (Fase 6).
+
 ### 14. Fase 4 — Alertas de vencimiento (cron) y dashboard de vencimientos
 **Estado:** COMPLETADO
 **Objetivo:** Cerrar la Fase 4 con el control de términos: job (Vercel Cron) + dashboard por comisaría + pantalla de vencimientos.

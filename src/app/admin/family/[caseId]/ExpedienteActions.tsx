@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, X, UserPlus, Trash2 } from 'lucide-react';
 import {
   PROTECTION_MEASURE_TYPE_LABELS, MEASURE_STATUS_LABELS,
   HEARING_TYPE_LABELS, ASSESSMENT_TYPE_LABELS, RISK_LEVEL_LABELS,
@@ -309,6 +309,105 @@ export function AddAssessmentForm({ caseId, parties, onDone }: { caseId: string;
         <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
       </div>
       <div style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.5rem' }}>🔒 Información confidencial — acceso restringido.</div>
+    </div>
+  );
+}
+
+// ── Equipo asignado al caso ──────────────────────────────────────────────────
+export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: boolean }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/assignments`);
+      if (res.ok) setAssignments((await res.json()).data ?? []);
+    } catch { /* noop */ }
+  }, [caseId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const loadUsers = async () => {
+    if (users.length > 0) return;
+    try {
+      const res = await fetch('/api/v1/users');
+      if (res.ok) {
+        const all = await res.json();
+        setUsers((all as any[]).filter((u) => u.isActive));
+      }
+    } catch { /* noop */ }
+  };
+
+  const assign = async () => {
+    if (!userId) return;
+    setError(null); setBusy(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/assignments`, { userId });
+    setBusy(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setUserId(''); setOpen(false);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    setBusy(true);
+    try { await fetch(`/api/v1/family/cases/${caseId}/assignments/${id}`, { method: 'DELETE' }); } catch { /* noop */ }
+    setBusy(false);
+    load();
+  };
+
+  const assignedIds = new Set(assignments.map((a) => a.user?.id));
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0 }}>Equipo asignado ({assignments.length})</h2>
+        {canEdit && (
+          <ToggleButton open={open} onClick={() => { setOpen(!open); loadUsers(); }} label="Asignar profesional" />
+        )}
+      </div>
+
+      {open && canEdit && (
+        <div style={formBox}>
+          <ErrorBox msg={error} />
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <label style={label}>Profesional</label>
+              <select value={userId} onChange={(e) => setUserId(e.target.value)} style={input}>
+                <option value="">Seleccionar…</option>
+                {users.filter((u) => !assignedIds.has(u.id)).map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}{u.role?.name ? ` — ${u.role.name}` : ''}</option>
+                ))}
+              </select>
+            </div>
+            <button onClick={assign} disabled={!userId || busy} style={{ ...primaryBtn, opacity: !userId || busy ? 0.6 : 1 }}>
+              <UserPlus size={14} style={{ verticalAlign: '-2px', marginRight: '0.3rem' }} />Asignar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {assignments.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin profesionales asignados.</p> : (
+        <div style={{ display: 'grid', gap: '0.5rem' }}>
+          {assignments.map((a) => (
+            <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
+              <div>
+                <b>{a.user?.fullName}</b>
+                {a.user?.role?.name && <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{a.user.role.name}</span>}
+              </div>
+              {canEdit && (
+                <button onClick={() => remove(a.id)} disabled={busy} title="Retirar" style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}>
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
