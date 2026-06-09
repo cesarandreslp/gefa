@@ -6,6 +6,32 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 9. Fase 3 — Módulo 2: APIs de dominio familiar
+**Estado:** EN CURSO
+**Objetivo:** Crear los endpoints REST del dominio de comisaría de familia sobre los modelos del Módulo 1 (`Person`, `CaseParty`, `ProtectionMeasure`, `RestorationProcess`, `Hearing`, `Assessment`), usando `getPrismaForTenant` y `protectAPIRoute`. Hardening de acceso para `Assessment` (confidencial) y expedientes con NNA.
+
+### 8. Fase 3 — Módulo 1b: seed de tipos de caso de comisaría de familia
+**Estado:** COMPLETADO
+**Objetivo:** Reescribir el catálogo de tipos de caso (personería → comisaría de familia) con términos y referencias normativas correctas, y unificar las 3 fuentes que estaban divergentes.
+
+**Catálogo canónico nuevo — `src/domain/catalogs/familyCaseTypes.ts`:** fuente única de verdad. 7 tipos de caso de comisaría de familia, con días hábiles y base legal:
+- `VIF` Violencia Intrafamiliar (10 d — Ley 294/1996, 575/2000, 1257/2008)
+- `MP` Medida de Protección (10 d — Art. 17 Ley 294/1996)
+- `PARD` Restablecimiento de Derechos NNA (80 d ≈ 4 meses — Arts. 99-100 Ley 1098/2006)
+- `CAV` Custodia, Alimentos y Visitas (30 d — Art. 111 Ley 1098/2006, Ley 640/2001)
+- `PNNA` Protección a NNA (10 d — Ley 1098/2006)
+- `CF` Conciliación Familiar (30 d — Ley 640/2001, Ley 2126/2021)
+- `OJ` Orientación Jurídica (5 d — Decreto 4840/2007, Ley 2126/2021)
+- Exporta también `CASE_TYPE_MODALITY` (code → enum `CaseModality`) para preselección en el front.
+
+**Unificación de las 3 fuentes divergentes** (antes cada una repetía DP/Q/SG…):
+- `src/app/api/v1/super-admin/tenants/route.ts`: provisioning multitenant usa `FAMILY_CASE_TYPES` (camino real de creación de cada comisaría). Códigos sufijados con `_SIGLA`.
+- `src/app/api/v1/registro-entidad/route.ts`: auto-registro usa el mismo catálogo (eliminada la definición local).
+- `prisma/seed.ts`: catálogo de tipos de caso ahora importa `FAMILY_CASE_TYPES`.
+
+**Seed ejecutable nuevo — `prisma/seed-family.ts`:** idempotente (upsert), aplica el catálogo a todos los tenants de la BD apuntada por `DATABASE_URL` (o uno solo por sigla vía argv). Script `db:seed:family` en `package.json`. Verificado contra el control plane (reporta correctamente "no hay tenants" — los tipos viven en la BD de cada comisaría).
+**Verificación:** `npm run type-check` OK.
+
 ### 7. Paso 4 / Fase 3 — Módulo 1: modelos de dominio de familia (schema)
 **Estado:** COMPLETADO
 **Objetivo:** Iniciar la reescritura del dominio (petición → familia) de forma ADITIVA y no destructiva.

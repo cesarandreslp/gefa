@@ -17,6 +17,7 @@
     "db:migrate:prod": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed.ts",
+    "db:seed:family": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed-family.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

@@ -4,6 +4,7 @@ import { protectAPIRoute } from '@/lib/auth';
 import { auditService } from '@/services/AuditService';
 import { getClientIp, getUserAgent } from '@/lib/validation';
 import { getTenantPrisma } from '@/lib/tenantDb';
+import { FAMILY_CASE_TYPES } from '@/domain/catalogs/familyCaseTypes';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -163,15 +164,8 @@ export async function POST(request: NextRequest) {
           data: { tenantId: tenant.id, code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', description: 'Atención directa al ciudadano. Solo lectura de casos y ciudadanos.', level: 75, isActive: true }
         });
 
-        // Create 5 base case types in tenant DB
-        const baseCaseTypes = [
-          { code: 'DP', name: 'Derecho de Petición', description: 'Solicitud de información o documentos', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: true, displayOrder: 1 },
-          { code: 'Q',  name: 'Queja', description: 'Queja sobre funcionarios o servicios', defaultLegalTermDays: 15, legalReference: 'Código Contencioso Administrativo', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 2 },
-          { code: 'SG', name: 'Solicitud General', description: 'Solicitudes generales de la ciudadanía', defaultLegalTermDays: 15, legalReference: 'Ley 1755 de 2015', requiresSupervisorApproval: false, requiresSignature: false, displayOrder: 3 },
-          { code: 'DH', name: 'Derechos Humanos', description: 'Casos de vulneración de derechos humanos', defaultLegalTermDays: 15, legalReference: 'Ley 24 de 1992', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 4 },
-          { code: 'MA', name: 'Medio Ambiente', description: 'Denuncias ambientales', defaultLegalTermDays: 15, legalReference: 'Ley 99 de 1993', requiresSupervisorApproval: true, requiresSignature: true, displayOrder: 5 },
-        ];
-        for (const ct of baseCaseTypes) {
+        // Create base case types (catálogo de comisaría de familia) in tenant DB
+        for (const ct of FAMILY_CASE_TYPES) {
           await tx.caseType.create({
             data: { ...ct, code: `${ct.code}_${sigla.toUpperCase()}`, tenantId: tenant.id, isActive: true },
           });

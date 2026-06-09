@@ -5,6 +5,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { FAMILY_CASE_TYPES } from '../src/domain/catalogs/familyCaseTypes';
 
 const prisma = new PrismaClient();
 
@@ -192,71 +193,13 @@ async function main() {
   // Obtener IDs de roles
   const adminRole = await prisma.role.findFirst({ where: { code: 'ADMIN', tenantId: defaultTenant.id } });
 
-  // 4. Seed de tipos de caso
+  // 4. Seed de tipos de caso (catálogo canónico de comisaría de familia)
   console.log('\n📋 4. Seeding tipos de caso...');
-  const caseTypes = [
-    {
-      code: 'DP',
-      name: 'Derecho de Petición',
-      description: 'Solicitud de información o documentos',
-      defaultLegalTermDays: 15,
-      legalReference: 'Ley 1755 de 2015',
-      requiresSupervisorApproval: false,
-      requiresSignature: true,
-      isActive: true,
-      displayOrder: 1,
-    },
-    {
-      code: 'Q',
-      name: 'Queja',
-      description: 'Queja sobre funcionarios o servicios',
-      defaultLegalTermDays: 15,
-      legalReference: 'Código Contencioso Administrativo',
-      requiresSupervisorApproval: true,
-      requiresSignature: true,
-      isActive: true,
-      displayOrder: 2,
-    },
-    {
-      code: 'SG',
-      name: 'Solicitud General',
-      description: 'Solicitudes generales de la ciudadanía',
-      defaultLegalTermDays: 15,
-      legalReference: 'Ley 1755 de 2015',
-      requiresSupervisorApproval: false,
-      requiresSignature: false,
-      isActive: true,
-      displayOrder: 3,
-    },
-    {
-      code: 'DH',
-      name: 'Derechos Humanos',
-      description: 'Casos de vulneración de derechos humanos',
-      defaultLegalTermDays: 15,
-      legalReference: 'Ley 24 de 1992',
-      requiresSupervisorApproval: true,
-      requiresSignature: true,
-      isActive: true,
-      displayOrder: 4,
-    },
-    {
-      code: 'MA',
-      name: 'Medio Ambiente',
-      description: 'Denuncias ambientales',
-      defaultLegalTermDays: 15,
-      legalReference: 'Ley 99 de 1993',
-      requiresSupervisorApproval: true,
-      requiresSignature: true,
-      isActive: true,
-      displayOrder: 5,
-    },
-  ];
-
-  for (const caseType of caseTypes) {
+  for (const caseType of FAMILY_CASE_TYPES) {
     const result = await prisma.caseType.upsert({
       where: { code: caseType.code },
       update: { defaultLegalTermDays: caseType.defaultLegalTermDays },
-      create: { ...caseType, tenantId: defaultTenant.id },
+      create: { ...caseType, isActive: true, tenantId: defaultTenant.id },
     });
     console.log(`   ✅ ${result.code} - ${result.name}`);
   }

@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { auditService } from '@/services/AuditService';
+import { FAMILY_CASE_TYPES as CASE_TYPES_BASE } from '@/domain/catalogs/familyCaseTypes';
 
 const SALT_ROUNDS = 10;
 
@@ -99,39 +100,8 @@ const ROLES_BASE = [
   },
 ];
 
-// Tipos de caso base
-const CASE_TYPES_BASE = [
-  {
-    code: 'DP',
-    name: 'Derecho de Petición',
-    description: 'Solicitud de información o documentos',
-    defaultLegalTermDays: 15,
-    legalReference: 'Ley 1755 de 2015',
-    requiresSupervisorApproval: false,
-    requiresSignature: true,
-    displayOrder: 1,
-  },
-  {
-    code: 'Q',
-    name: 'Queja',
-    description: 'Queja sobre funcionarios o servicios',
-    defaultLegalTermDays: 15,
-    legalReference: 'Código Contencioso Administrativo',
-    requiresSupervisorApproval: true,
-    requiresSignature: true,
-    displayOrder: 2,
-  },
-  {
-    code: 'SG',
-    name: 'Solicitud General',
-    description: 'Solicitudes generales de la ciudadanía',
-    defaultLegalTermDays: 15,
-    legalReference: 'Ley 1755 de 2015',
-    requiresSupervisorApproval: false,
-    requiresSignature: false,
-    displayOrder: 3,
-  },
-];
+// Tipos de caso base: catálogo canónico de comisaría de familia
+// (importado arriba como CASE_TYPES_BASE desde @/domain/catalogs/familyCaseTypes)
 
 export async function POST(request: NextRequest) {
   try {
