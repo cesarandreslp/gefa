@@ -6,6 +6,14 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 62. Configurar env vars de Fase 2 en Vercel (NEON_API_KEY, NEON_ORG_ID, NEON_PROJECT_REGION) + deploy
+**Estado:** COMPLETADO
+**Objetivo:** El provisioning automático (entrada 61) está verificado en local pero en producción necesita las env vars nuevas en Vercel. Agregarlas vía CLI y desplegar.
+**Hallazgo:** en Vercel NO estaba `NEON_API_KEY` (solo había vars de la integración Neon Auth: `NEON_AUTH_BASE_URL`, `NEON_PROJECT_ID`, `VITE_NEON_AUTH_URL`). O sea, faltaban LAS TRES, no solo org/region.
+**Hecho:** agregadas a Production vía `vercel env add`: `NEON_API_KEY` (leída de `.env`, sin exponerla), `NEON_ORG_ID=org-fragrant-hat-12076614`, `NEON_PROJECT_REGION=aws-us-east-1`. Deploy a producción con `vercel --prod` (deployment `gefa-jrtj8t1wn`, READY, aliased a `*.ossgefa.lat`).
+**Verificación:** post-deploy, apex `ossgefa.lat` redirige a landing (OK) y `buga.ossgefa.lat` sirve el portal del tenant (título "Alcaldía de Guadalajara de Buga") → el deploy no rompió nada. Las 3 env vars confirmadas en Production por `vercel env ls`.
+**Pendiente de prueba (no bloqueante):** el alta auto END-TO-END por HTTP en prod (login SUPER_ADMIN + `POST /super-admin/tenants` sin databaseUrl → crea proyecto Neon real) NO se probó porque crea recursos reales facturables y requiere credenciales de SUPER_ADMIN + limpieza posterior. El `NeonService` SÍ está verificado contra Neon real (entrada 61, test de integración directo). Queda ofrecer esa prueba viva al usuario.
+
 ### 61. Fase 2 — Provisioning automático de BD Neon por tenant en el alta
 **Estado:** COMPLETADO
 **Objetivo:** Hoy `POST /super-admin/tenants` recibe `databaseUrl`/`databaseUrlDirect` en el body (la BD Neon se crea a mano) y no corre migraciones ni siembra el catálogo per-tenant. Automatizar el alta: al crear una Alcaldía, el sistema crea su propia BD en Neon vía API, le aplica el esquema, y siembra roles/estados/tipos/instrumentos/admin. Modelo = BD dedicada por tenant (aislamiento fuerte para datos de NNA/víctimas, alineado con CLAUDE.md). Requiere `NEON_API_KEY` (ya disponible). Fase 1 (routing por subdominio) ya cerrada (entradas 50-52).
