@@ -18,7 +18,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - `src/app/admin/comisarias/page.tsx` — indicador "X de Y comisarías contratadas en uso", botón "Crear" deshabilitado al alcanzar el cupo. Ajustado al nuevo shape del GET.
 - `src/app/admin/usuarios/page.tsx` — `loadComisarias` ajustado al nuevo shape (`data.comisarias`).
 **Decisión de diseño:** el cupo limita las comisarías **ACTIVAS** (desactivar una libera un cupo; reactivar lo vuelve a consumir). `null`/vacío = sin límite (compat. con tenants existentes).
-**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. Runtime tras redeploy pendiente.
+**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. **Runtime en prod (admin@buga.gov.co):** con cupo=3 y 3 activas, GET devuelve `maxComisarias=3/activeCount=3`; crear CF4 → **409** con el mensaje de cupo; tras ampliar a 4, crear CF4 → **201**. Limpieza aplicada (CF4 borrada, cupo BUGA restaurado a null). Cupo confirmado end-to-end.
 
 ### 54. Auditar/endurecer a la Secretaría de Gobierno: SOLO estadística y reportes agregados
 **Estado:** COMPLETADO
