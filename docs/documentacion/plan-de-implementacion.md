@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 45. Fase C5 — Revisión y aprobación del pre-informe por el comisario (DIRECTOR)
+**Estado:** COMPLETADO
+**Objetivo:** Dar peso procesal al pre-informe consolidado mediante un flujo de estados BORRADOR → EN_REVISIÓN → APROBADO con firma exclusiva del `DIRECTOR`. Mientras es borrador la IA/equipo no tiene peso procesal; al aprobarlo la autoridad, adquiere validez (principio rector). Bloquear edición/regeneración tras la aprobación.
+**Hecho:**
+- Schema: enum `PreInformeEstado` (BORRADOR/EN_REVISION/APROBADO). `Case` += `preInformeEstado`, `preInformeEnviadoAt`, `preInformeAprobadoPorUserId`→`User` (rel. `CasePreInformeAprobadoPor`), `preInformeAprobadoAt`, `preInformeNotaRevision`. `db push` aplicado.
+- RBAC: `FAMILY_REPORT_APPROVER_ROLES = ['DIRECTOR']` en `familyApi`.
+- API estados: `POST /api/v1/family/cases/[caseId]/pre-informe/estado` con `accion`: `enviar` (BORRADOR→EN_REVISION, equipo `FAMILY_CONFIDENTIAL_ROLES`), `aprobar` (EN_REVISION→APROBADO, revalida DIRECTOR, firma con `aprobadoPor`/`aprobadoAt`) y `devolver` (EN_REVISION→BORRADOR, DIRECTOR, requiere nota). Audita `FAMILY_CASE_REPORT_SUBMITTED/APPROVED/RETURNED` con la nota en metadata.
+- Guardas: la generación (POST pre-informe) fija `BORRADOR` y limpia la aprobación, y se bloquea si está APROBADO; la edición (PATCH) se bloquea en EN_REVISION y APROBADO (HTTP 409).
+- Exposición: el GET confidencial de valoraciones devuelve el estado completo del pre-informe (`estado`, `enviadoAt`, `aprobadoPor`, `aprobadoAt`, `notaRevision`) y un flag `canApprove` (rol DIRECTOR, vía `getBaseRoleCode`).
+- UI: `ConsolidatedReportSection` rehecha con badge de estado y flujo: en BORRADOR el equipo edita/regenera/"Enviar a revisión"; en EN_REVISION solo el comisario ve "Aprobar y firmar" / "Devolver a borrador" (con nota), el resto ve aviso de bloqueo; en APROBADO queda en firme (sin edición) mostrando quién y cuándo aprobó. Etiquetas de auditoría añadidas. type-check verde.
+- Principio rector cumplido de punta a punta: IA y equipo producen borradores; la validez procesal la otorga la firma del DIRECTOR.
+- Archivos: `prisma/schema.prisma`, `src/lib/familyApi.ts`, `src/app/api/v1/family/cases/[caseId]/pre-informe/route.ts` (guardas), `.../pre-informe/estado/route.ts` (nuevo), `.../assessments/route.ts` (estado+canApprove), `src/app/admin/family/[caseId]/page.tsx`, `.../ExpedienteActions.tsx`.
+
 ### 44. Corregir numeración de la Entrevista (Módulo 2) y fijar el ítem 10
 **Estado:** COMPLETADO
 **Objetivo:** El usuario preguntó cómo confirmar el ítem 10 de la entrevista. Se halló en la propia Guía (sección "Respuestas de alta alarma", que enumera las 14 preguntas) — no hace falta el Excel. Al reconciliar, se detectó que la transcripción previa tenía la numeración corrida.

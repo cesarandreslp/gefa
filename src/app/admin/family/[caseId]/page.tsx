@@ -53,7 +53,8 @@ export default function ExpedienteFamiliaPage() {
   const [data, setData] = useState<Expediente | null>(null);
   const [loading, setLoading] = useState(true);
   const [assessments, setAssessments] = useState<any[] | null>(null);
-  const [preInforme, setPreInforme] = useState<{ texto?: string | null; generadoAt?: string | null } | null>(null);
+  const [preInforme, setPreInforme] = useState<any | null>(null);
+  const [canApprove, setCanApprove] = useState(false);
   const [assessmentsDenied, setAssessmentsDenied] = useState(false);
   const [transitions, setTransitions] = useState<AvailableTransition[]>([]);
   const [toState, setToState] = useState('');
@@ -72,7 +73,7 @@ export default function ExpedienteFamiliaPage() {
 
       const aRes = await fetch(`/api/v1/family/cases/${caseId}/assessments`);
       if (aRes.status === 403) setAssessmentsDenied(true);
-      else if (aRes.ok) { const aJson = await aRes.json(); setAssessments(aJson.data ?? []); setPreInforme(aJson.preInforme ?? null); }
+      else if (aRes.ok) { const aJson = await aRes.json(); setAssessments(aJson.data ?? []); setPreInforme(aJson.preInforme ?? null); setCanApprove(!!aJson.canApprove); }
     } catch (e) {
       console.error('Error cargando expediente:', e);
     } finally {
@@ -304,7 +305,7 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
         {!assessmentsDenied && assessments && assessments.length > 0 && (
-          <ConsolidatedReportSection caseId={data.id} assessments={assessments} preInforme={preInforme} onDone={load} />
+          <ConsolidatedReportSection caseId={data.id} assessments={assessments} preInforme={preInforme} canApprove={canApprove} onDone={load} />
         )}
       </div>
 

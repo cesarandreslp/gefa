@@ -65,6 +65,13 @@ export const FAMILY_DECLARATION_AUTHOR_ROLES = ['DIRECTOR'];
 export const FAMILY_EVIDENCE_VALUATION_ROLES = ['DIRECTOR'];
 
 /**
+ * Roles que pueden REVISAR, APROBAR/FIRMAR o DEVOLVER el pre-informe consolidado
+ * del caso (Fase C5). Mismo principio rector: la IA y el equipo producen borradores;
+ * la validez procesal la otorga la autoridad — el Comisario (DIRECTOR).
+ */
+export const FAMILY_REPORT_APPROVER_ROLES = ['DIRECTOR'];
+
+/**
  * Roles con acceso al VISOR DE AUDITORÍA (trazabilidad del expediente).
  * Es una herramienta de control interno: expone IPs y quién accedió a datos
  * confidenciales. Se limita a la dirección/administración, no al funcionario

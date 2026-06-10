@@ -288,6 +288,15 @@ model Case {
   preInformeConsolidado String?   @db.Text
   preInformeGeneradoAt  DateTime?
 
+  // Revisión y aprobación del pre-informe por la autoridad (Fase C5). El flujo
+  // BORRADOR → EN_REVISION → APROBADO da peso procesal: solo el DIRECTOR aprueba/firma.
+  preInformeEstado       PreInformeEstado?
+  preInformeEnviadoAt    DateTime?
+  preInformeAprobadoPorUserId String?
+  preInformeAprobadoPor       User?     @relation("CasePreInformeAprobadoPor", fields: [preInformeAprobadoPorUserId], references: [id])
+  preInformeAprobadoAt        DateTime?
+  preInformeNotaRevision      String?   @db.Text
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -321,6 +330,13 @@ model Case {
   @@index([filedAt])
   @@index([isOverdue])
   @@map("cases")
+}
+
+/// Estado de revisión/aprobación del pre-informe consolidado del caso (Fase C5).
+enum PreInformeEstado {
+  BORRADOR    // generado/editable por el equipo; sin peso procesal
+  EN_REVISION // enviado a la autoridad para su revisión
+  APROBADO    // aprobado y firmado por el DIRECTOR; adquiere validez
 }
 
 /// Tipos de casos que maneja la Personería
@@ -672,6 +688,7 @@ model User {
   managedRestorations  RestorationProcess[]
   tomadasDeclaraciones Declaracion[] @relation("DeclaracionTomadaPor")
   valoradasPruebas     Document[]    @relation("PruebaValoradaPor")
+  aprobadosPreInformes Case[]        @relation("CasePreInformeAprobadoPor")
 
   // Relación recursiva para conectar Auxiliares con el Oficial que los creó
   supervisorId String?

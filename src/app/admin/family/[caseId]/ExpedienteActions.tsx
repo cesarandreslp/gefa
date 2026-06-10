@@ -498,14 +498,26 @@ export function InstrumentReportControl({ assessment, onDone }: { assessment: an
   );
 }
 
-export function ConsolidatedReportSection({ caseId, assessments, preInforme, onDone }: { caseId: string; assessments: any[]; preInforme?: { texto?: string | null; generadoAt?: string | null } | null; onDone: () => void }) {
+const PREINFORME_ESTADO_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  BORRADOR: { label: 'Borrador', bg: '#f3f4f6', fg: '#4b5563' },
+  EN_REVISION: { label: 'En revisión de la autoridad', bg: '#fef3c7', fg: '#92400e' },
+  APROBADO: { label: 'Aprobado (en firme)', bg: '#dcfce7', fg: '#166534' },
+};
+
+export function ConsolidatedReportSection({ caseId, assessments, preInforme, canApprove, onDone }: { caseId: string; assessments: any[]; preInforme?: any | null; canApprove?: boolean; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(preInforme?.texto ?? '');
+  const [nota, setNota] = useState('');
+  const [showNota, setShowNota] = useState<null | 'aprobar' | 'devolver'>(null);
 
   const conInstrumento = assessments.filter((a) => a.instrumento).length;
   const tiene = !!preInforme?.texto;
+  const estado: string = preInforme?.estado ?? 'BORRADOR';
+  const esBorrador = estado === 'BORRADOR';
+  const enRevision = estado === 'EN_REVISION';
+  const aprobado = estado === 'APROBADO';
 
   useEffect(() => { setText(preInforme?.texto ?? ''); }, [preInforme?.texto]);
 
@@ -526,23 +538,43 @@ export function ConsolidatedReportSection({ caseId, assessments, preInforme, onD
       setEditing(false); onDone();
     } catch { setError('Error de conexión.'); } finally { setBusy(false); }
   };
+  const transition = async (accion: 'enviar' | 'aprobar' | 'devolver') => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/pre-informe/estado`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion, nota: nota.trim() || undefined }) });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'No se pudo actualizar el estado.'); return; }
+      setShowNota(null); setNota(''); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
 
   if (conInstrumento === 0) return null;
 
+  const badge = PREINFORME_ESTADO_BADGE[estado] ?? PREINFORME_ESTADO_BADGE.BORRADOR;
+
   return (
-    <div style={{ marginTop: '0.85rem', border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+    <div style={{ marginTop: '0.85rem', border: `1px solid ${aprobado ? '#bbf7d0' : '#ddd6fe'}`, background: aprobado ? '#f0fdf4' : '#faf5ff', borderRadius: '10px', padding: '0.85rem 1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '0.82rem', color: '#6d28d9', fontWeight: 700 }}>
+        <div style={{ fontSize: '0.82rem', color: aprobado ? '#166534' : '#6d28d9', fontWeight: 700 }}>
           🧩 Pre-informe consolidado del caso (IA)
         </div>
-        <div style={{ fontSize: '0.74rem', color: '#7c3aed' }}>
-          {conInstrumento} instrumento{conInstrumento === 1 ? '' : 's'} diligenciado{conInstrumento === 1 ? '' : 's'}
-          {preInforme?.generadoAt && <> · generado {new Date(preInforme.generadoAt).toLocaleDateString('es-CO')}</>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {tiene && <span style={{ background: badge.bg, color: badge.fg, borderRadius: '999px', padding: '0.1rem 0.55rem', fontSize: '0.72rem', fontWeight: 700 }}>{badge.label}</span>}
+          <span style={{ fontSize: '0.74rem', color: '#7c3aed' }}>
+            {conInstrumento} instrumento{conInstrumento === 1 ? '' : 's'}
+            {preInforme?.generadoAt && <> · generado {new Date(preInforme.generadoAt).toLocaleDateString('es-CO')}</>}
+          </span>
         </div>
       </div>
-      <div style={{ fontSize: '0.74rem', color: '#7c3aed', margin: '0.2rem 0 0.55rem' }}>
-        Borrador integrado de los instrumentos; sin peso procesal — requiere revisión y aprobación de la autoridad.
+      <div style={{ fontSize: '0.74rem', color: aprobado ? '#166534' : '#7c3aed', margin: '0.2rem 0 0.55rem' }}>
+        {aprobado
+          ? `Aprobado por ${preInforme?.aprobadoPor?.fullName ?? 'la autoridad'}${preInforme?.aprobadoAt ? ` el ${new Date(preInforme.aprobadoAt).toLocaleDateString('es-CO')}` : ''} — adquiere validez procesal.`
+          : 'Borrador integrado de los instrumentos; sin peso procesal — requiere revisión y aprobación de la autoridad.'}
       </div>
+      {preInforme?.notaRevision && (
+        <div style={{ fontSize: '0.78rem', color: '#92400e', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.4rem 0.6rem', marginBottom: '0.55rem' }}>
+          📝 Nota de la autoridad: {preInforme.notaRevision}
+        </div>
+      )}
       <ErrorBox msg={error} />
       {!tiene && !editing ? (
         <button onClick={generate} disabled={busy} style={{ ...primaryBtn, background: '#7c3aed', fontSize: '0.82rem' }}>
@@ -555,16 +587,48 @@ export function ConsolidatedReportSection({ caseId, assessments, preInforme, onD
           ) : (
             <p style={{ fontSize: '0.86rem', color: '#374151', whiteSpace: 'pre-wrap', margin: 0 }}>{preInforme?.texto}</p>
           )}
+
+          {showNota && (
+            <textarea value={nota} onChange={(e) => setNota(e.target.value)} placeholder={showNota === 'devolver' ? 'Motivo de la devolución (qué debe ajustarse)…' : 'Observación de la aprobación (opcional)…'} style={{ width: '100%', minHeight: '70px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.83rem', boxSizing: 'border-box', marginTop: '0.5rem' }} />
+          )}
+
           <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.55rem', flexWrap: 'wrap' }}>
             {editing ? (
               <>
                 <button onClick={save} disabled={busy} style={{ ...primaryBtn, background: '#7c3aed', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>{busy ? 'Guardando…' : 'Guardar'}</button>
                 <button onClick={() => { setEditing(false); setText(preInforme?.texto ?? ''); }} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Cancelar</button>
               </>
+            ) : showNota ? (
+              <>
+                <button onClick={() => transition(showNota)} disabled={busy || (showNota === 'devolver' && !nota.trim())} style={{ ...primaryBtn, background: showNota === 'aprobar' ? '#16a34a' : '#b45309', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>
+                  {busy ? 'Procesando…' : showNota === 'aprobar' ? 'Confirmar aprobación' : 'Confirmar devolución'}
+                </button>
+                <button onClick={() => { setShowNota(null); setNota(''); }} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Cancelar</button>
+              </>
             ) : (
               <>
-                <button onClick={() => setEditing(true)} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Editar</button>
-                <button onClick={generate} disabled={busy} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>{busy ? 'Consolidando…' : 'Regenerar'}</button>
+                {/* BORRADOR: el equipo edita / regenera / envía a revisión */}
+                {esBorrador && (
+                  <>
+                    <button onClick={() => setEditing(true)} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Editar</button>
+                    <button onClick={generate} disabled={busy} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>{busy ? 'Consolidando…' : 'Regenerar'}</button>
+                    <button onClick={() => transition('enviar')} disabled={busy} style={{ ...primaryBtn, background: '#7c3aed', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>{busy ? 'Enviando…' : 'Enviar a revisión →'}</button>
+                  </>
+                )}
+                {/* EN_REVISION: la autoridad aprueba o devuelve; el resto solo ve el aviso */}
+                {enRevision && canApprove && (
+                  <>
+                    <button onClick={() => setShowNota('aprobar')} style={{ ...primaryBtn, background: '#16a34a', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>✔ Aprobar y firmar</button>
+                    <button onClick={() => setShowNota('devolver')} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem', color: '#b45309', borderColor: '#fed7aa' }}>↩ Devolver a borrador</button>
+                  </>
+                )}
+                {enRevision && !canApprove && (
+                  <span style={{ fontSize: '0.78rem', color: '#92400e' }}>En revisión del comisario; no editable hasta su decisión.</span>
+                )}
+                {/* APROBADO: en firme, sin acciones de edición */}
+                {aprobado && (
+                  <span style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>Documento en firme — aprobado por la autoridad.</span>
+                )}
               </>
             )}
           </div>
@@ -843,6 +907,9 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_INSTRUMENT_REPORT_GENERATED: 'Informe preliminar generado (IA)',
   FAMILY_CASE_REPORT_CONSOLIDATED: 'Pre-informe consolidado generado (IA)',
   FAMILY_CASE_REPORT_UPDATED: 'Pre-informe consolidado corregido',
+  FAMILY_CASE_REPORT_SUBMITTED: 'Pre-informe enviado a revisión',
+  FAMILY_CASE_REPORT_APPROVED: 'Pre-informe aprobado por la autoridad (en firme)',
+  FAMILY_CASE_REPORT_RETURNED: 'Pre-informe devuelto a borrador',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del

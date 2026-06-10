@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_CONFIDENTIAL_ROLES, findCaseInTenant, auditFamily } from '@/lib/familyApi';
+import { FAMILY_CONFIDENTIAL_ROLES, auditFamily } from '@/lib/familyApi';
 import { generateConsolidatedReport } from '@/services/ConsolidatedReportService';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +16,15 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
     }
 
     const db = auth.db;
-    const caseRow = await findCaseInTenant(db, params.caseId, auth.user.tenantId);
+    const caseRow = await db.case.findFirst({
+      where: { id: params.caseId, tenantId: auth.user.tenantId },
+      select: { id: true, preInformeEstado: true },
+    });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
+    }
+    if (caseRow.preInformeEstado === 'APROBADO') {
+      return NextResponse.json({ error: 'El pre-informe ya fue aprobado por la autoridad; no puede regenerarse.' }, { status: 409 });
     }
 
     const result = await generateConsolidatedReport(db, params.caseId, auth.user.tenantId);
@@ -28,8 +34,16 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
 
     const updated = await db.case.update({
       where: { id: params.caseId },
-      data: { preInformeConsolidado: result.draft, preInformeGeneradoAt: new Date() },
-      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true },
+      data: {
+        preInformeConsolidado: result.draft,
+        preInformeGeneradoAt: new Date(),
+        preInformeEstado: 'BORRADOR',
+        preInformeEnviadoAt: null,
+        preInformeAprobadoPorUserId: null,
+        preInformeAprobadoAt: null,
+        preInformeNotaRevision: null,
+      },
+      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true, preInformeEstado: true },
     });
 
     await auditFamily(db, request, auth.user, 'FAMILY_CASE_REPORT_CONSOLIDATED', 'Case', params.caseId, { caseId: params.caseId });
@@ -51,9 +65,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { caseId
     }
 
     const db = auth.db;
-    const caseRow = await findCaseInTenant(db, params.caseId, auth.user.tenantId);
+    const caseRow = await db.case.findFirst({
+      where: { id: params.caseId, tenantId: auth.user.tenantId },
+      select: { id: true, preInformeEstado: true },
+    });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
+    }
+    if (caseRow.preInformeEstado === 'APROBADO') {
+      return NextResponse.json({ error: 'El pre-informe ya fue aprobado; no puede editarse.' }, { status: 409 });
+    }
+    if (caseRow.preInformeEstado === 'EN_REVISION') {
+      return NextResponse.json({ error: 'El pre-informe está en revisión de la autoridad; no puede editarse hasta que sea devuelto a borrador.' }, { status: 409 });
     }
 
     const body = await request.json();
@@ -64,7 +87,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { caseId
     const updated = await db.case.update({
       where: { id: params.caseId },
       data: { preInformeConsolidado: body.preInformeConsolidado || null },
-      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true },
+      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true, preInformeEstado: true },
     });
 
     await auditFamily(db, request, auth.user, 'FAMILY_CASE_REPORT_UPDATED', 'Case', params.caseId, { caseId: params.caseId });

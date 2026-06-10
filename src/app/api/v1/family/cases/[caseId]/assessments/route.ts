@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssessmentType, RiskLevel } from '@prisma/client';
-import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_CONFIDENTIAL_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
+import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
+import { FAMILY_CONFIDENTIAL_ROLES, FAMILY_REPORT_APPROVER_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +17,17 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
     const db = auth.db;
     const caseRow = await db.case.findFirst({
       where: { id: params.caseId, tenantId: auth.user.tenantId },
-      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true },
+      select: {
+        id: true, preInformeConsolidado: true, preInformeGeneradoAt: true,
+        preInformeEstado: true, preInformeEnviadoAt: true,
+        preInformeAprobadoAt: true, preInformeNotaRevision: true,
+        preInformeAprobadoPor: { select: { id: true, fullName: true } },
+      },
     });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
     }
+    const canApprove = FAMILY_REPORT_APPROVER_ROLES.includes(getBaseRoleCode(auth.user.roleCode));
 
     const assessments = await db.assessment.findMany({
       where: { caseId: params.caseId, tenantId: auth.user.tenantId },
@@ -38,7 +44,16 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
 
     return NextResponse.json({
       data: assessments,
-      preInforme: { texto: caseRow.preInformeConsolidado, generadoAt: caseRow.preInformeGeneradoAt },
+      preInforme: {
+        texto: caseRow.preInformeConsolidado,
+        generadoAt: caseRow.preInformeGeneradoAt,
+        estado: caseRow.preInformeEstado,
+        enviadoAt: caseRow.preInformeEnviadoAt,
+        aprobadoAt: caseRow.preInformeAprobadoAt,
+        aprobadoPor: caseRow.preInformeAprobadoPor,
+        notaRevision: caseRow.preInformeNotaRevision,
+      },
+      canApprove,
     });
   } catch (error) {
     console.error('Error listando valoraciones:', error);
