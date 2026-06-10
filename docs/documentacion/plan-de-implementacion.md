@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 43. ICBF F5.G16.P verbatim desde el formato oficial (cierra hallazgo #3 socio-familiar)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario aportó el formato oficial `docs/documentacion/f5.g16.p_formato_informe_valoracion_socio_familiar_de_verificacion_de_derechos_v4_1.docx`. Reemplazar la estructura base del instrumento `ICBF_F5G16P` por la transcripción verbatim del formato oficial (v4.1), cerrando el hallazgo #3 por completo.
+**Hecho:**
+- `ICBF_F5G16P` pasó de 10 campos base a **58 campos verbatim** del formato oficial ICBF F5.G16.P v4 (21/04/2023), con las secciones del informe: Datos generales (SIM), Datos del NNA, Síntesis de la petición, Metodología (observación, entrevista, genograma, perfil de vulnerabilidad/generatividad, ecomapa, otras), Factores por niveles (microsistema por entornos familiar/educativo/comunitario/institucional; mesosistema con tipología y relaciones familiares + redes vinculares + eventos críticos; exosistema con redes comunitarias, SNBF y aspectos socioeconómicos: tipo/tenencia/condiciones de vivienda, servicios domiciliarios, entorno, estrato, equipamiento, ingresos), Concepto integrado, Análisis de derechos, Acciones sugeridas por niveles, y Profesional responsable.
+- `name`/`norma`/`version`/`description` actualizados; sigue TRABAJO_SOCIAL/PARD/TRABAJO_SOCIAL, descriptivo. Encabezado del catálogo: ambos ICBF (F3 y F5) ya verbatim.
+- type-check verde; catálogo resembrado (F5=58 campos).
+- **Hallazgo #3 CERRADO por completo:** los dos formatos ICBF y la batería Res. 0362/2026 están transcritos verbatim de fuente oficial. Único cabo menor restante: el ítem 10 de la entrevista (Módulo 2) sigue marcado para confirmar enunciado exacto.
+- Archivo: `src/domain/catalogs/familyInstrumentos.ts`.
+
 ### 42. ICBF F3.G16.P verbatim desde el formato oficial (cierra hallazgo #3 psicológica)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario aportó el formato oficial `docs/documentacion/f3.g16.p_formato_informe_valoracion_psicologica_de_verificacion_de_derechos_v4_1.docx`. Reemplazar la estructura base del instrumento `ICBF_F3G16P` por la transcripción verbatim del formato oficial (v4.1).

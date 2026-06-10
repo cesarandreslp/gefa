@@ -10,9 +10,8 @@
  *   para la valoración de percepción del riesgo de feminicidio, Minjusticia V.1.0):
  *   sus 5 componentes — Caracterización (Módulo 1), Entrevista semiestructurada
  *   (Módulo 2), FIR-R, DA-R y C2 — están activos; el contenedor permanece inactivo.
- * - ICBF F3.G16.P (valoración psicológica) está transcrito VERBATIM del formato
- *   oficial v4 (21/04/2023). ICBF F5.G16.P (socio-familiar) sigue siendo una BASE
- *   DE TRABAJO y DEBE validarse contra el texto oficial antes de uso en producción.
+ * - ICBF F3.G16.P (valoración psicológica) y F5.G16.P (socio-familiar) están
+ *   transcritos VERBATIM de los formatos oficiales v4 (21/04/2023).
  * ============================================================================
  */
 
@@ -129,26 +128,83 @@ export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
   // ── ICBF — Valoración socio-familiar de verificación de derechos (F5.G16.P) ───
   {
     code: 'ICBF_F5G16P',
-    name: 'Valoración socio-familiar de verificación de derechos',
-    norma: 'ICBF F5.G16.P — Verificación de garantía de derechos (Ley 1098/2006)',
-    version: 'baseline',
+    name: 'Informe de valoración socio-familiar de verificación de derechos',
+    norma: 'ICBF F5.G16.P v4 (21/04/2023) — Proceso Protección, Restablecimiento de derechos (Ley 1098/2006)',
+    version: 'v4.1',
     profesion: 'TRABAJO_SOCIAL',
     appliesTo: 'PARD',
     assessmentType: 'TRABAJO_SOCIAL',
-    description: 'Formato ICBF para la valoración del contexto socio-familiar del NNA en el marco del PARD. Estructura base — validar contra el formato oficial.',
+    description: 'Formato oficial ICBF para conceptuar, desde la perspectiva socio-familiar, el estado de garantía de derechos del NNA en la verificación que ordena la autoridad administrativa (PARD). Informe descriptivo estructurado por niveles (microsistema/mesosistema/exosistema), con caracterización familiar y aspectos socioeconómicos. No tiene alcance forense ni clínico.',
     isActive: true,
     displayOrder: 20,
     campos: [
-      { code: 'composicion_familiar', seccion: 'Grupo familiar', label: 'Composición del grupo familiar', tipo: 'TEXTO_LARGO', requerido: true, orden: 1 },
-      { code: 'vivienda', seccion: 'Condiciones socioeconómicas', label: 'Condiciones de habitabilidad / vivienda', tipo: 'TEXTO_LARGO', orden: 2 },
-      { code: 'ingresos', seccion: 'Condiciones socioeconómicas', label: 'Fuente de ingresos del hogar', tipo: 'TEXTO', orden: 3 },
-      { code: 'visita_realizada', seccion: 'Visita domiciliaria', label: '¿Se realizó visita domiciliaria?', tipo: 'BOOLEANO', orden: 4 },
-      { code: 'visita_hallazgos', seccion: 'Visita domiciliaria', label: 'Hallazgos de la visita', tipo: 'TEXTO_LARGO', orden: 5 },
-      { code: 'red_apoyo', seccion: 'Factores', label: 'Red de apoyo familiar y social', tipo: 'TEXTO_LARGO', orden: 6 },
-      { code: 'factores_protectores', seccion: 'Factores', label: 'Factores protectores', tipo: 'TEXTO_LARGO', orden: 7 },
-      { code: 'factores_riesgo', seccion: 'Factores', label: 'Factores de riesgo', tipo: 'TEXTO_LARGO', orden: 8 },
-      { code: 'concepto', seccion: 'Concepto', label: 'Concepto profesional', tipo: 'TEXTO_LARGO', requerido: true, orden: 9 },
-      { code: 'recomendaciones', seccion: 'Concepto', label: 'Recomendaciones', tipo: 'TEXTO_LARGO', requerido: true, orden: 10 },
+      // Datos generales (estructura administrativa ICBF / SIM)
+      { code: 'f5_regional', seccion: 'Datos generales (SIM)', label: 'Regional', tipo: 'TEXTO', orden: 1 },
+      { code: 'f5_centro_zonal', seccion: 'Datos generales (SIM)', label: 'Centro Zonal', tipo: 'TEXTO', orden: 2 },
+      { code: 'f5_peticion_sim', seccion: 'Datos generales (SIM)', label: 'N° de petición en el SIM', tipo: 'TEXTO', orden: 3 },
+      { code: 'f5_autoridad', seccion: 'Datos generales (SIM)', label: 'Nombre de la autoridad administrativa', tipo: 'TEXTO', orden: 4 },
+      { code: 'f5_autoridad_correo', seccion: 'Datos generales (SIM)', label: 'Correo electrónico de la autoridad administrativa', tipo: 'TEXTO', orden: 5 },
+      // Datos del NNA
+      { code: 'f5_nna_etnia', seccion: 'Datos del NNA', label: 'Pertenencia étnica', tipo: 'SELECCION', opciones: [{ value: 'NINGUNA', label: 'Ninguna de las anteriores' }, { value: 'INDIGENA', label: 'Indígena (pueblo / comunidad)' }, { value: 'ROM', label: 'Rom o Gitano' }, { value: 'AFRO', label: 'Afrocolombiano' }, { value: 'PALENQUERO', label: 'Palenquero' }, { value: 'RAIZAL', label: 'Raizal' }], orden: 6 },
+      { code: 'f5_nna_lengua', seccion: 'Datos del NNA', label: 'Lengua natal (y segunda lengua si es bilingüe)', tipo: 'TEXTO', orden: 7 },
+      { code: 'f5_nna_discapacidad', seccion: 'Datos del NNA', label: 'Discapacidad', tipo: 'SELECCION', opciones: [{ value: 'NO', label: 'No' }, { value: 'FISICA', label: 'Física' }, { value: 'AUDITIVA', label: 'Auditiva' }, { value: 'VISUAL', label: 'Visual' }, { value: 'SORDOCEGUERA', label: 'Sordoceguera' }, { value: 'INTELECTUAL', label: 'Intelectual' }, { value: 'PSICOSOCIAL', label: 'Psicosocial' }, { value: 'MULTIPLE', label: 'Múltiple' }], orden: 8 },
+      { code: 'f5_nna_enf_especial', seccion: 'Datos del NNA', label: 'Enfermedad de cuidado especial (¿cuál?)', tipo: 'TEXTO', orden: 9 },
+      { code: 'f5_nna_spa', seccion: 'Datos del NNA', label: 'Consumo de SPA', tipo: 'SELECCION', opciones: [{ value: 'NO', label: 'No' }, { value: 'EXPERIMENTAL', label: 'Experimental' }, { value: 'SOCIAL', label: 'Social' }, { value: 'HABITUAL', label: 'Habitual' }, { value: 'PROBLEMATICO', label: 'Problemático' }], orden: 10 },
+      { code: 'f5_nna_spa_tipo', seccion: 'Datos del NNA', label: 'Tipo de sustancia(s)', tipo: 'TEXTO', orden: 11 },
+      { code: 'f5_nna_emergencia', seccion: 'Datos del NNA', label: 'Situación de emergencia', tipo: 'SELECCION', opciones: [{ value: 'SI', label: 'Sí' }, { value: 'NO', label: 'No' }, { value: 'ND', label: 'No definido' }], orden: 12 },
+      { code: 'f5_nna_desplazamiento', seccion: 'Datos del NNA', label: 'Situación de desplazamiento', tipo: 'SELECCION', opciones: [{ value: 'SI', label: 'Sí' }, { value: 'NO', label: 'No' }, { value: 'ND', label: 'No definido' }], orden: 13 },
+      { code: 'f5_nna_migracion', seccion: 'Datos del NNA', label: 'Situación de migración (¿cuál tipo?)', tipo: 'TEXTO', orden: 14 },
+      { code: 'f5_nna_escolarizado', seccion: 'Datos del NNA', label: '¿Vinculado al servicio educativo (escolarizado)?', tipo: 'BOOLEANO', orden: 15 },
+      { code: 'f5_nna_nivel_edu', seccion: 'Datos del NNA', label: 'Nivel educativo', tipo: 'SELECCION', opciones: [{ value: 'INICIAL', label: 'Educación inicial' }, { value: 'PREESCOLAR', label: 'Preescolar' }, { value: 'BASICA', label: 'Básica' }, { value: 'MEDIA', label: 'Media' }], orden: 16 },
+      { code: 'f5_nna_jornada', seccion: 'Datos del NNA', label: 'Jornada', tipo: 'SELECCION', opciones: [{ value: 'MANANA', label: 'Mañana' }, { value: 'TARDE', label: 'Tarde' }, { value: 'NOCHE', label: 'Noche' }], orden: 17 },
+      { code: 'f5_nna_institucion', seccion: 'Datos del NNA', label: 'Institución educativa (nombre, sede, naturaleza)', tipo: 'TEXTO', orden: 18 },
+      { code: 'f5_nna_regimen_salud', seccion: 'Datos del NNA', label: 'Régimen de salud (SGSSS)', tipo: 'SELECCION', opciones: [{ value: 'CONTRIBUTIVO', label: 'Contributivo' }, { value: 'SUBSIDIADO', label: 'Subsidiado' }, { value: 'ESPECIAL', label: 'Especial' }, { value: 'NINGUNO', label: 'Ninguno' }, { value: 'SIN_INFO', label: 'Sin información' }], orden: 19 },
+      { code: 'f5_nna_eps', seccion: 'Datos del NNA', label: 'EPS', tipo: 'TEXTO', orden: 20 },
+      { code: 'f5_nna_convivientes', seccion: 'Datos del NNA', label: 'Personas con quienes convive en el hogar (nombre, parentesco/no pariente, sexo, edad, ocupación)', tipo: 'TEXTO_LARGO', orden: 21 },
+      { code: 'f5_nna_contacto', seccion: 'Datos del NNA', label: 'Personas de contacto (nombre, parentesco o rol, teléfono y correo)', tipo: 'TEXTO_LARGO', orden: 22 },
+      { code: 'f5_nna_ubicacion', seccion: 'Datos del NNA', label: 'Ubicación actual', tipo: 'SELECCION', opciones: [{ value: 'EMERGENCIA', label: 'Centro de emergencia' }, { value: 'HOGAR_PASO', label: 'Hogar de paso' }, { value: 'RECUP_NUTRICIONAL', label: 'Centro de recuperación nutricional' }, { value: 'INST_SALUD', label: 'Institución de salud' }, { value: 'FAMILIA_ORIGEN', label: 'Familia de origen' }, { value: 'FAMILIA_EXTENSA', label: 'Familia extensa' }, { value: 'FAMILIA_SOLIDARIA', label: 'Familia solidaria' }], orden: 23 },
+      // Síntesis de la petición
+      { code: 'f5_sintesis_peticion', seccion: 'Síntesis de la petición', label: 'Síntesis de la petición que fundamenta la solicitud de valoración', tipo: 'TEXTO_LARGO', ayuda: 'Se sugiere transcribir de forma textual la petición y los elementos del auto de trámite de la autoridad administrativa.', requerido: true, orden: 24 },
+      // Metodología
+      { code: 'f5_met_observacion', seccion: 'Metodología utilizada', label: 'Observación', tipo: 'BOOLEANO', orden: 25 },
+      { code: 'f5_met_entrevista', seccion: 'Metodología utilizada', label: 'Entrevista', tipo: 'BOOLEANO', orden: 26 },
+      { code: 'f5_met_genograma', seccion: 'Metodología utilizada', label: 'Elaboración e interpretación del genograma (se anexa)', tipo: 'BOOLEANO', orden: 27 },
+      { code: 'f5_met_vulnerabilidad', seccion: 'Metodología utilizada', label: 'Perfil de vulnerabilidad/generatividad (se anexa)', tipo: 'BOOLEANO', orden: 28 },
+      { code: 'f5_met_ecomapa', seccion: 'Metodología utilizada', label: 'Elaboración y análisis del ecomapa (se anexa)', tipo: 'BOOLEANO', orden: 29 },
+      { code: 'f5_met_otras', seccion: 'Metodología utilizada', label: 'Otras técnicas', tipo: 'BOOLEANO', orden: 30 },
+      { code: 'f5_met_otras_cuales', seccion: 'Metodología utilizada', label: 'Otras técnicas — ¿cuáles?', tipo: 'TEXTO', orden: 31 },
+      { code: 'f5_met_info', seccion: 'Metodología utilizada', label: 'Información relevante sobre aspectos metodológicos usados', tipo: 'TEXTO_LARGO', orden: 32 },
+      // Microsistema — valoración social del NNA (por entornos)
+      { code: 'f5_micro_familiar', seccion: 'Microsistema — valoración social del NNA', label: 'Entorno familiar (pares, madre, padre, familia extensa): relaciones significativas', tipo: 'TEXTO_LARGO', requerido: true, orden: 33 },
+      { code: 'f5_micro_educativo', seccion: 'Microsistema — valoración social del NNA', label: 'Entorno educativo (pares, docentes, otros): relaciones significativas', tipo: 'TEXTO_LARGO', orden: 34 },
+      { code: 'f5_micro_comunitario', seccion: 'Microsistema — valoración social del NNA', label: 'Entorno comunitario (vecindario, grupos culturales, deportivos, formales e informales)', tipo: 'TEXTO_LARGO', orden: 35 },
+      { code: 'f5_micro_institucional', seccion: 'Microsistema — valoración social del NNA', label: 'Entorno institucional (instituciones que prestan servicios según necesidades en salud o programas sociales)', tipo: 'TEXTO_LARGO', orden: 36 },
+      // Mesosistema — caracterización de la familia
+      { code: 'f5_meso_tipologia', seccion: 'Mesosistema — caracterización de la familia', label: 'Tipología familiar', tipo: 'SELECCION', opciones: [{ value: 'NUCLEAR', label: 'Nuclear' }, { value: 'EXTENSA', label: 'Extensa' }, { value: 'MONOP_MATERNA', label: 'Monoparental materna' }, { value: 'MONOP_PATERNA', label: 'Monoparental paterna' }, { value: 'RECONSTITUIDA', label: 'Reconstituida' }, { value: 'CRIANZA_SOLIDARIA', label: 'De crianza / solidaria' }, { value: 'HOMOPARENTAL', label: 'Subsistema conyugal del mismo sexo (homoparental)' }, { value: 'OTRA', label: 'Otra' }], orden: 37 },
+      { code: 'f5_meso_relaciones', seccion: 'Mesosistema — caracterización de la familia', label: 'Relaciones familiares (familia como sistema)', tipo: 'SELECCION', opciones: [{ value: 'FUSIONADOS', label: 'Muy unidos o fusionados' }, { value: 'FUSIONADOS_CONFLICTIVOS', label: 'Fusionados y conflictivos' }, { value: 'POBRE_CONFLICTIVOS', label: 'Pobre o conflictivos' }, { value: 'UNIDOS', label: 'Unidos' }, { value: 'APARTADOS', label: 'Apartados o separados' }, { value: 'DISTANTES', label: 'Distantes' }, { value: 'OTRA', label: 'Otra' }], orden: 38 },
+      { code: 'f5_meso_redes', seccion: 'Mesosistema — caracterización de la familia', label: 'Redes vinculares de apoyo (personas emocional y socialmente significativas)', tipo: 'TEXTO_LARGO', orden: 39 },
+      { code: 'f5_meso_eventos', seccion: 'Mesosistema — caracterización de la familia', label: 'Eventos significativos y/o críticos (rupturas, cambios del ciclo vital, situaciones de salud, económicas, sociales)', tipo: 'TEXTO_LARGO', orden: 40 },
+      // Exosistema — redes comunitarias, SNBF y aspectos socioeconómicos
+      { code: 'f5_exo_redes', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Redes comunitarias de apoyo (grupos políticos, religiosos, deportivos, sociales, comunitarios)', tipo: 'TEXTO_LARGO', orden: 41 },
+      { code: 'f5_exo_snbf', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Sectores, servicios e instancias del SNBF (oferta orientada a la protección integral)', tipo: 'TEXTO_LARGO', orden: 42 },
+      { code: 'f5_viv_tipo', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Tipo de vivienda', tipo: 'SELECCION', opciones: [{ value: 'CASA', label: 'Casa' }, { value: 'APARTAMENTO', label: 'Apartamento' }, { value: 'INQUILINATO', label: 'Cuarto(s) en inquilinato' }, { value: 'TRAD_INDIGENA', label: 'Vivienda tradicional indígena' }, { value: 'TRAD_ETNICA', label: 'Vivienda tradicional étnica (afro, isleña, ROM)' }, { value: 'OTRO', label: 'Otro (contenedor, carpa, embarcación, refugio, albergue, etc.)' }], orden: 43 },
+      { code: 'f5_viv_tenencia', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Tenencia de la vivienda', tipo: 'SELECCION', opciones: [{ value: 'PROPIA', label: 'Propia' }, { value: 'ALQUILER', label: 'Alquiler' }, { value: 'FAMILIAR', label: 'Familiar' }, { value: 'COMUNIDAD', label: 'De la comunidad' }, { value: 'INVASION', label: 'Invasión' }, { value: 'POSESION', label: 'Posesión' }, { value: 'OTRO', label: 'Otro' }], orden: 44 },
+      { code: 'f5_viv_condiciones', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Condiciones de la vivienda (ubicación, material de paredes y pisos, espacios, cercanía a zonas de impacto social/ambiental)', tipo: 'TEXTO_LARGO', orden: 45 },
+      { code: 'f5_servicios', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Servicios domiciliarios', tipo: 'TEXTO', ayuda: 'Acueducto, alcantarillado, electricidad, gas, manejo de basuras, internet, TV por cable, otro. Si falta alguno, describir cómo se resuelve.', orden: 46 },
+      { code: 'f5_entorno', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Entorno', tipo: 'SELECCION', opciones: [{ value: 'URBANO', label: 'Urbano' }, { value: 'RURAL', label: 'Rural' }], orden: 47 },
+      { code: 'f5_estrato', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Estrato socioeconómico', tipo: 'SELECCION', opciones: [{ value: 'NINGUNO', label: 'Ninguno' }, { value: '1', label: '1. Bajo-Bajo' }, { value: '2', label: '2. Bajo' }, { value: '3', label: '3. Medio-Bajo' }, { value: '4', label: '4. Medio' }, { value: '5', label: '5. Medio-Alto' }, { value: '6', label: '6. Alto' }], orden: 48 },
+      { code: 'f5_equipamiento', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Equipamiento público y accesibilidad (alumbrado, parques, escenarios deportivos/culturales, transporte)', tipo: 'TEXTO_LARGO', orden: 49 },
+      { code: 'f5_ingreso_monto', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Ingresos familiares (monto)', tipo: 'SELECCION', opciones: [{ value: 'MENOR_1', label: 'Menor a 1 SMMLV' }, { value: '1', label: 'Un SMMLV' }, { value: '2', label: 'Dos SMMLV' }, { value: '3', label: 'Tres SMMLV' }, { value: '4', label: 'Cuatro SMMLV' }, { value: 'MAS_4', label: 'Más de cuatro SMMLV' }, { value: 'SIN_INGRESO', label: 'Sin ingreso' }, { value: 'ESPECIE', label: 'En especie' }], orden: 50 },
+      { code: 'f5_ingreso_fuente', seccion: 'Exosistema — comunidad, SNBF y socioeconómico', label: 'Fuente y periodicidad de los ingresos; aportantes al presupuesto familiar', tipo: 'TEXTO_LARGO', ayuda: 'Fuente: salario, pensión, ayuda familiar, subsidios, donaciones, mendicidad, rentas/intereses/dividendos, trabajo informal, comercio, otros.', orden: 51 },
+      // Concepto, derechos y acciones
+      { code: 'f5_concepto', seccion: 'Concepto integrado', label: 'Concepto integrado de valoración socio-familiar', tipo: 'TEXTO_LARGO', ayuda: 'Relacionar la información de los tres niveles (micro/meso/exo); exponer factores de riesgo y de protección identificados.', requerido: true, orden: 52 },
+      { code: 'f5_derechos', seccion: 'Análisis de derechos', label: 'Análisis de derechos garantizados, amenazados y/o vulnerados desde la perspectiva social', tipo: 'TEXTO_LARGO', requerido: true, orden: 53 },
+      { code: 'f5_acciones', seccion: 'Acciones sugeridas', label: 'Acciones sugeridas por niveles', tipo: 'TEXTO_LARGO', ayuda: 'Distinguir acciones especializadas de apoyo; indicar prioridad (urgente/importante/necesario) y el actor responsable del SNBF para cada acción.', requerido: true, orden: 54 },
+      // Profesional responsable
+      { code: 'f5_prof_nombre', seccion: 'Profesional responsable', label: 'Nombre del profesional en trabajo social o desarrollo familiar', tipo: 'TEXTO', orden: 55 },
+      { code: 'f5_prof_registro', seccion: 'Profesional responsable', label: 'Tarjeta o registro profesional', tipo: 'TEXTO', orden: 56 },
+      { code: 'f5_fecha_elaboracion', seccion: 'Profesional responsable', label: 'Fecha de elaboración del informe', tipo: 'FECHA', orden: 57 },
+      { code: 'f5_fecha_entrega', seccion: 'Profesional responsable', label: 'Fecha de entrega del informe', tipo: 'FECHA', orden: 58 },
     ],
   },
 
