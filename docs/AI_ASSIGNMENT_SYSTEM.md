@@ -386,7 +386,7 @@ Asegúrate de tener configurada la API key de Groq en tu archivo `.env`:
 
 ```env
 # IA - Groq (Asistente IA)
-GROQ_API_KEY="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"
+GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # tu propia API key
 ```
 
 ### Modelo de IA

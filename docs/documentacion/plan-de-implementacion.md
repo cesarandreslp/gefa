@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 39. Quitar API key de GROQ versionada en documentación
+**Estado:** COMPLETADO
+**Objetivo:** Eliminar una API key real de GROQ que estaba en texto plano dentro de un archivo versionado (riesgo de exposición del secreto).
+- **`docs/AI_ASSIGNMENT_SYSTEM.md:389`**: la key real (`gsk_izQk...`) se reemplazó por un placeholder `gsk_xxxx...`. Único punto del repo versionado que la contenía (verificado con `grep gsk_`). La key de pruebas se configuró aparte en `.env` (gitignored), no en archivos versionados.
+- **Nota de seguridad:** la key ya está en el historial de git; borrarla del archivo no la elimina del historial → debe rotarse en el panel de GROQ.
+
 ### 38. Bloque de dominio — peso procesal (declaración), acervo probatorio e instrumento de valoración
 **Estado:** EN CURSO
 **Objetivo:** Recopilar e implementar lo identificado en la sesión (a partir de "¿a quién le corresponde tomar las declaraciones?") para que el expediente sea conforme a la norma. Principio rector ya guardado: solo la declaración del Comisario (`DIRECTOR`) tiene peso procesal; lo que aportan partes y funcionarios es insumo del expediente cuyo valor probatorio fija el comisario.
