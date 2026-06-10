@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff, Building2 } from 'lucide-react';
 
 interface Role {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface Comisaria {
   id: string;
   code: string;
   name: string;
@@ -13,13 +19,11 @@ interface Role {
 interface User {
   id: string;
   email: string;
-  firstName: string;
-  secondName?: string;
-  firstLastName: string;
-  secondLastName?: string;
+  fullName: string;
   documentType: string;
   documentNumber: string;
   role?: Role;
+  comisaria?: Comisaria | null;
   department?: string;
   position?: string;
   isActive: boolean;
@@ -31,19 +35,18 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [comisarias, setComisarias] = useState<Comisaria[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    firstName: '',
-    secondName: '',
-    firstLastName: '',
-    secondLastName: '',
+    fullName: '',
     documentType: 'CC',
     documentNumber: '',
     roleId: '',
+    comisariaId: '',
     department: '',
     position: ''
   });
@@ -58,6 +61,7 @@ export default function UsersPage() {
 
     loadUsers();
     loadRoles();
+    loadComisarias();
   }, [router]);
 
   const loadUsers = async () => {
@@ -87,19 +91,29 @@ export default function UsersPage() {
     }
   };
 
+  const loadComisarias = async () => {
+    try {
+      const response = await fetch('/api/v1/comisarias');
+      if (response.ok) {
+        const data = await response.json();
+        setComisarias(data.filter((c: Comisaria & { isActive: boolean }) => c.isActive));
+      }
+    } catch (error) {
+      console.error('Error cargando comisarías:', error);
+    }
+  };
+
   const handleOpenModal = (user?: User) => {
     if (user) {
       setEditingUser(user);
       setFormData({
         email: user.email,
         password: '',
-        firstName: user.firstName,
-        secondName: user.secondName || '',
-        firstLastName: user.firstLastName,
-        secondLastName: user.secondLastName || '',
+        fullName: user.fullName || '',
         documentType: user.documentType,
         documentNumber: user.documentNumber,
         roleId: user.role?.id || '',
+        comisariaId: user.comisaria?.id || '',
         department: user.department || '',
         position: user.position || ''
       });
@@ -108,13 +122,11 @@ export default function UsersPage() {
       setFormData({
         email: '',
         password: '',
-        firstName: '',
-        secondName: '',
-        firstLastName: '',
-        secondLastName: '',
+        fullName: '',
         documentType: 'CC',
         documentNumber: '',
         roleId: '',
+        comisariaId: '',
         department: '',
         position: ''
       });
@@ -381,12 +393,18 @@ export default function UsersPage() {
                     <td style={{ padding: '1rem' }}>
                       <div>
                         <p style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827', margin: 0 }}>
-                          {user.firstName} {user.secondName && `${user.secondName} `}{user.firstLastName} {user.secondLastName}
+                          {user.fullName}
                         </p>
                         <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
                           <Mail size={12} />
                           {user.email}
                         </p>
+                        {user.comisaria && (
+                          <p style={{ fontSize: '0.7rem', color: '#2563eb', margin: '0.25rem 0 0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <Building2 size={11} />
+                            {user.comisaria.code} — {user.comisaria.name}
+                          </p>
+                        )}
                       </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
@@ -538,81 +556,25 @@ export default function UsersPage() {
                 <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
                   Datos Personales
                 </h3>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
-                      Primer Nombre *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        fontSize: '0.875rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
-                      Segundo Nombre
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.secondName}
-                      onChange={(e) => setFormData({ ...formData, secondName: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        fontSize: '0.875rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
-                      Primer Apellido *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.firstLastName}
-                      onChange={(e) => setFormData({ ...formData, firstLastName: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        fontSize: '0.875rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
-                      Segundo Apellido
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.secondLastName}
-                      onChange={(e) => setFormData({ ...formData, secondLastName: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        fontSize: '0.875rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Nombre completo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="Ej: María Fernanda Gómez Ríos"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      fontSize: '0.875rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px'
+                    }}
+                  />
                 </div>
               </div>
 
@@ -757,6 +719,28 @@ export default function UsersPage() {
                       <option value="">Sin rol asignado</option>
                       {roles.map(role => (
                         <option key={role.id} value={role.id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                      Comisaría (sede)
+                    </label>
+                    <select
+                      value={formData.comisariaId}
+                      onChange={(e) => setFormData({ ...formData, comisariaId: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <option value="">Sin sede asignada</option>
+                      {comisarias.map(c => (
+                        <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
                       ))}
                     </select>
                   </div>

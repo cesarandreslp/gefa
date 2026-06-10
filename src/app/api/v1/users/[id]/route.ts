@@ -26,6 +26,7 @@ export async function PUT(
       documentType,
       documentNumber,
       roleId,
+      comisariaId,
       department,
       position
     } = body;
@@ -96,6 +97,22 @@ export async function PUT(
       updateData.roleId = (roleId === '' || roleId === null) ? null : roleId;
     }
 
+    // Manejar comisariaId (string vacío/null = sin sede), validando el tenant
+    if (comisariaId !== undefined) {
+      if (comisariaId === '' || comisariaId === null) {
+        updateData.comisariaId = null;
+      } else {
+        const comisaria = await db.comisaria.findFirst({
+          where: { id: comisariaId, tenantId: auth.user.tenantId },
+          select: { id: true },
+        });
+        if (!comisaria) {
+          return NextResponse.json({ error: 'La comisaría seleccionada no existe en la entidad' }, { status: 400 });
+        }
+        updateData.comisariaId = comisariaId;
+      }
+    }
+
     // Actualizar usuario (usar updateMany con tenantId como barrera de seguridad)
     const updatedUser = await db.user.update({
       where: { id },
@@ -107,6 +124,9 @@ export async function PUT(
             code: true,
             name: true
           }
+        },
+        comisaria: {
+          select: { id: true, code: true, name: true }
         }
       }
     });

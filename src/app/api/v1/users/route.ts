@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
             code: true,
             name: true
           }
+        },
+        comisaria: {
+          select: { id: true, code: true, name: true }
         }
       },
       orderBy: [
@@ -65,6 +68,7 @@ export async function POST(request: NextRequest) {
       documentType,
       documentNumber,
       roleId,
+      comisariaId,
       department,
       position
     } = body;
@@ -112,6 +116,18 @@ export async function POST(request: NextRequest) {
     if (department) userData.department = department;
     if (position) userData.position = position;
 
+    // Asignar a una comisaría (sede), validando que pertenezca al tenant
+    if (comisariaId) {
+      const comisaria = await db.comisaria.findFirst({
+        where: { id: comisariaId, tenantId: auth.user.tenantId },
+        select: { id: true },
+      });
+      if (!comisaria) {
+        return NextResponse.json({ error: 'La comisaría seleccionada no existe en la entidad' }, { status: 400 });
+      }
+      userData.comisariaId = comisariaId;
+    }
+
     const newUser = await db.user.create({
       data: userData,
       include: {
@@ -121,6 +137,9 @@ export async function POST(request: NextRequest) {
             code: true,
             name: true
           }
+        },
+        comisaria: {
+          select: { id: true, code: true, name: true }
         }
       }
     });

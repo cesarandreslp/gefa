@@ -6,6 +6,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 53. Gestión de comisarías desde el panel del tenant (CRUD + asignar usuario a sede)
+**Estado:** COMPLETADO
+**Objetivo:** Hoy las comisarías (sedes) de una Alcaldía solo existen vía seed; no hay forma de crearlas/editarlas desde el panel ni de asignar un usuario a su comisaría (`POST /api/v1/users` no acepta `comisariaId`). Construir el corazón del modelo tenant=Alcaldía: (1) CRUD `/api/v1/comisarias` scopeado al tenant y restringido a ADMIN; (2) agregar `comisariaId` al alta/edición de usuarios (API + form); (3) pantalla admin para gestionar sedes.
+**Hecho:**
+- `src/app/api/v1/comisarias/route.ts` (NUEVO) — GET (lista del tenant, cualquier usuario interno) + POST (crear, solo ADMIN). Valida código único por tenant; audita `COMISARIA_CREATED`.
+- `src/app/api/v1/comisarias/[id]/route.ts` (NUEVO) — PUT (editar) + DELETE (desactivación suave; bloquea si tiene casos asociados), solo ADMIN. Audita `COMISARIA_UPDATED`/`COMISARIA_DEACTIVATED`.
+- `src/services/AuditService.ts` — añadidas las 3 acciones `COMISARIA_*` al tipo `AuditAction`.
+- `src/app/api/v1/users/route.ts` + `users/[id]/route.ts` — el alta/edición de usuario acepta `comisariaId` (validando que la comisaría pertenezca al tenant) y el listado/respuesta incluye la `comisaria` asignada.
+- `src/app/admin/comisarias/page.tsx` (NUEVO) — pantalla de gestión de sedes (tabla con código/nombre/contacto/personal/casos/estado; modal crear-editar con código, nombre, dirección, teléfono, unidad móvil; activar/desactivar).
+- `src/app/admin/AdminNav.tsx` — nuevo ítem "🏢 Comisarías" (solo ADMIN).
+- `src/app/admin/usuarios/page.tsx` — **arreglo de fondo**: el form estaba desalineado con el schema (usaba `firstName/secondName/...` cuando el modelo es `fullName`, lo que rompía el alta). Migrado a un único campo "Nombre completo" (`fullName`) y añadido el selector "Comisaría (sede)"; el listado muestra la sede de cada usuario.
+**Verificación:** `tsc --noEmit` limpio; `next lint` de los archivos tocados sin warnings. Falta verificación runtime tras el redeploy de Vercel.
+**Pendiente/nota:** las comisarías las crea el ADMIN de la Alcaldía; el seed sigue sembrando CF1/CF2/CF3 para el demo. La asignación de comisaría a un caso (no a usuario) ya existía en el modelo (`Case.comisariaId`) pero su UI de asignación queda fuera de este alcance.
+
 ### 52. VERIFICADO EN VIVO: dominio propio ossgefa.lat operativo (entradas 50 y 51)
 **Estado:** COMPLETADO
 **Objetivo:** Confirmar end-to-end el routing del dominio propio una vez configurado en Vercel + Spaceship.

@@ -25,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '📊 Estadísticas',     path: '/admin/family/stats',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   // Dirección y gestión
   { label: '📈 Seguimiento',      path: '/admin/seguimiento',   roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'], separatorBefore: true },
+  { label: '🏢 Comisarías',       path: '/admin/comisarias',    roles: ['ADMIN'] },
   { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'] },
   { label: '📄 Reportes',         path: '/admin/reports',       roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   { label: '🏛️ Entidad',          path: '/admin/entidad',       roles: ['ADMIN', 'DIRECTOR'] },
