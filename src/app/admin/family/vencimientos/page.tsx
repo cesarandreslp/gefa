@@ -92,19 +92,19 @@ export default function VencimientosPage() {
           </div>
 
           {/* PARD atrasados */}
-          <div style={{ ...card, borderColor: '#ddd6fe' }}>
-            <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#6d28d9' }}>
+          <div style={{ ...card, borderColor: '#cfe0f4' }}>
+            <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#003d7a' }}>
               <Baby size={18} /> PARD con término atrasado ({data.counts.pardOverdue})
             </h2>
             {data.pardOverdue.length === 0 ? <p style={empty}>Sin procesos PARD atrasados.</p> : (
               <div style={{ display: 'grid', gap: '0.5rem' }}>
                 {data.pardOverdue.map((p) => (
-                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #ede9fe', borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e8eef7', borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
                     <div>
                       <b>NNA: {p.child?.firstName} {p.child?.firstLastName}</b>
                       <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>· <CaseLink c={p.case} router={router} /></span>
                     </div>
-                    <span style={{ color: '#6d28d9', fontSize: '0.82rem', fontWeight: 600 }}>abierto {new Date(p.openedAt).toLocaleDateString('es-CO')}</span>
+                    <span style={{ color: '#003d7a', fontSize: '0.82rem', fontWeight: 600 }}>abierto {new Date(p.openedAt).toLocaleDateString('es-CO')}</span>
                   </div>
                 ))}
               </div>

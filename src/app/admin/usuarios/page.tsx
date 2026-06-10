@@ -397,7 +397,7 @@ export default function UsersPage() {
                     <td style={{ padding: '1rem' }}>
                       {user.role ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Shield size={14} color="#8b5cf6" />
+                          <Shield size={14} color="#0e7490" />
                           <span style={{ fontSize: '0.875rem', color: '#374151' }}>
                             {user.role.name}
                           </span>

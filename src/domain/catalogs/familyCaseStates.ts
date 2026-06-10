@@ -46,7 +46,7 @@ export const FAMILY_CASE_STATES: FamilyCaseStateSeed[] = [
     isInitial: false,
     isFinal: false,
     requiresComment: false,
-    color: '#8B5CF6',
+    color: '#0e7490',
     displayOrder: 2,
   },
   {

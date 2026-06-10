@@ -199,9 +199,9 @@ export default function NotificationsPage() {
           <div className="text-sm text-blue-600">Email</div>
           <div className="text-2xl font-bold text-blue-700">{stats.email}</div>
         </div>
-        <div className="bg-purple-50 p-4 rounded shadow">
-          <div className="text-sm text-purple-600">SMS</div>
-          <div className="text-2xl font-bold text-purple-700">{stats.sms}</div>
+        <div className="bg-cyan-50 p-4 rounded shadow">
+          <div className="text-sm text-cyan-700">SMS</div>
+          <div className="text-2xl font-bold text-cyan-800">{stats.sms}</div>
         </div>
       </div>
 
@@ -334,7 +334,7 @@ export default function NotificationsPage() {
                     </td>
                     <td className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        notif.channel === 'EMAIL' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                        notif.channel === 'EMAIL' ? 'bg-blue-100 text-blue-700' : 'bg-cyan-100 text-cyan-800'
                       }`}>
                         {notif.channel}
                       </span>

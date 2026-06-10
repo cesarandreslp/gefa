@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 
 interface AdminNavProps {
   userRole: string;
@@ -12,6 +12,7 @@ interface NavItem {
   path: string;
   roles?: string[];
   exact?: boolean;
+  separatorBefore?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -23,7 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '⏰ Vencimientos',     path: '/admin/family/vencimientos' },
   { label: '📊 Estadísticas',     path: '/admin/family/stats',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   // Dirección y gestión
-  { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'] },
+  { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'], separatorBefore: true },
   { label: '📄 Reportes',         path: '/admin/reports',       roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   { label: '🏛️ Entidad',          path: '/admin/entidad',       roles: ['ADMIN', 'DIRECTOR'] },
   { label: '🔧 Configuración',    path: '/admin/settings',      roles: ['ADMIN', 'DIRECTOR'] },
@@ -105,22 +106,26 @@ export default function AdminNav({ userRole }: AdminNavProps) {
         overflowX: 'auto',
       }}
     >
-      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flexWrap: 'nowrap' }}>
-        <h2 style={{ margin: '0 1rem 0 0', fontSize: '1.1rem', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'nowrap' }}>
+        <h2 style={{ margin: '0 0.75rem 0 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-primary, #003d7a)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
           Panel Admin
         </h2>
 
         {visible.map(item => (
-          <button
-            key={item.path}
-            onClick={() => router.push(item.path)}
-            onMouseEnter={() => setHovered(item.path)}
-            onMouseLeave={() => setHovered(null)}
-            style={getStyle(item.path, item.exact)}
-            aria-current={isActive(item.path, item.exact) ? 'page' : undefined}
-          >
-            {item.label}
-          </button>
+          <Fragment key={item.path}>
+            {item.separatorBefore && (
+              <span aria-hidden style={{ width: 1, height: 26, background: '#d1d5db', margin: '0 0.4rem', flexShrink: 0 }} />
+            )}
+            <button
+              onClick={() => router.push(item.path)}
+              onMouseEnter={() => setHovered(item.path)}
+              onMouseLeave={() => setHovered(null)}
+              style={getStyle(item.path, item.exact)}
+              aria-current={isActive(item.path, item.exact) ? 'page' : undefined}
+            >
+              {item.label}
+            </button>
+          </Fragment>
         ))}
       </div>
     </nav>

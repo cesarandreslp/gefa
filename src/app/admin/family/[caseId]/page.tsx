@@ -174,7 +174,7 @@ export default function ExpedienteFamiliaPage() {
                 <div>
                   <b>{cp.person.firstName} {cp.person.firstLastName}</b>
                   <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{cp.person.documentType} {cp.person.documentNumber}</span>
-                  {cp.person.isMinor && <span style={{ marginLeft: '0.5rem', background: '#fce7f3', color: '#be185d', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.7rem', fontWeight: 700 }}>NNA</span>}
+                  {cp.person.isMinor && <span style={{ marginLeft: '0.5rem', background: '#fef3c7', color: '#b45309', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.7rem', fontWeight: 700 }}>NNA</span>}
                 </div>
                 <span style={pill('#2563eb')}>{PARTY_ROLE_LABELS[cp.role] ?? cp.role}</span>
               </div>
@@ -221,7 +221,7 @@ export default function ExpedienteFamiliaPage() {
               <div key={r.id} style={{ border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.7rem 0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <b>NNA: {r.child?.firstName} {r.child?.firstLastName}</b>
-                  <span style={pill('#7c3aed')}>{PARD_STAGE_LABELS[r.stage] ?? r.stage}</span>
+                  <span style={pill('#1a5fb4')}>{PARD_STAGE_LABELS[r.stage] ?? r.stage}</span>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{r.legalBasis} · abierto {new Date(r.openedAt).toLocaleDateString('es-CO')}</div>
                 <PardStageControl process={r} onDone={load} />

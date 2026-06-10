@@ -469,7 +469,7 @@ export default function LoginModal({
 
             {/* Titulo / Logo */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
-              {logoUrl ? (
+              {logoUrl && !logoUrl.endsWith('/logo.png') ? (
                 <img src={logoUrl} alt={tenantName || 'Login'} style={{ maxHeight: '60px', marginBottom: '1rem' }} />
               ) : (
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)', marginBottom: '1rem', textAlign: 'center' }}>

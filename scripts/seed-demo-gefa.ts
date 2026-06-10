@@ -64,8 +64,8 @@ async function main() {
       institutionalEmail: 'comisaria1@buga.gov.co',
       phone: '(+57) 602 236 0000',
       address: 'Calle 6 No. 11-40, Guadalajara de Buga, Valle del Cauca',
-      primaryColor: '#7C3AED',
-      secondaryColor: '#0891B2',
+      primaryColor: '#003d7a',
+      secondaryColor: '#1a5fb4',
       isActive: true,
       // databaseUrl null → opera en la BD global (modo demo / desarrollo)
     },
@@ -79,8 +79,8 @@ async function main() {
       businessHours: 'Lunes a viernes, 8:00 a.m. – 5:00 p.m.',
       phone: '(+57) 602 236 0000',
       institutionalEmail: 'comisaria1@buga.gov.co',
-      primaryColor: '#7C3AED',
-      secondaryColor: '#0891B2',
+      primaryColor: '#003d7a',
+      secondaryColor: '#1a5fb4',
     },
   });
   console.log(`   ✅ ${tenant.name} (${SIGLA}) — id ${tenant.id}\n`);

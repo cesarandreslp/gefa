@@ -159,7 +159,7 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
         </Link>
 
         <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <div style={{ background: '#7c3aed', borderRadius: 12, padding: 10, color: '#fff', display: 'flex' }}>
+          <div style={{ background: '#1a5fb4', borderRadius: 12, padding: 10, color: '#fff', display: 'flex' }}>
             <ShieldCheck size={28} />
           </div>
           <div>
@@ -170,7 +170,7 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
           </div>
         </header>
 
-        <div style={{ background: '#ede9fe', border: '1px solid #ddd6fe', borderRadius: 10, padding: '12px 14px', margin: '16px 0', fontSize: 13, color: '#5b21b6', display: 'flex', gap: 8 }}>
+        <div style={{ background: '#e8eef7', border: '1px solid #cfe0f4', borderRadius: 10, padding: '12px 14px', margin: '16px 0', fontSize: 13, color: '#003d7a', display: 'flex', gap: 8 }}>
           <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
             <strong>¿Está en peligro inmediato?</strong> Llame a la línea <strong>123</strong> o a la línea nacional <strong>155</strong>.
@@ -189,7 +189,7 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   padding: '10px 12px', borderRadius: 7, border: 'none', cursor: 'pointer',
                   fontSize: 14, fontWeight: 600,
-                  background: tab === key ? '#7c3aed' : 'transparent',
+                  background: tab === key ? '#1a5fb4' : 'transparent',
                   color: tab === key ? '#fff' : '#64748b',
                 }}
               >
@@ -298,9 +298,9 @@ function ReceiptCard({ receipt, onConsult, onNew }: { receipt: { filingNumber: s
       </p>
       <div style={{ background: '#f1f5f9', borderRadius: 10, padding: 16, marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>Número de radicado</div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 24, fontWeight: 700, color: '#7c3aed' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 24, fontWeight: 700, color: '#1a5fb4' }}>
           {receipt.filingNumber}
-          <button onClick={() => navigator.clipboard?.writeText(receipt.filingNumber)} title="Copiar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7c3aed', display: 'flex' }}>
+          <button onClick={() => navigator.clipboard?.writeText(receipt.filingNumber)} title="Copiar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a5fb4', display: 'flex' }}>
             <Copy size={18} />
           </button>
         </div>
@@ -351,7 +351,7 @@ function StatusCard({ result, fmtDate }: { result: StatusResult; fmtDate: (s: st
 
 // --- Subcomponentes y estilos ---
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 style={{ fontSize: 14, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.5, margin: '4px 0 12px', fontWeight: 700 }}>{children}</h3>;
+  return <h3 style={{ fontSize: 14, color: '#1a5fb4', textTransform: 'uppercase', letterSpacing: 0.5, margin: '4px 0 12px', fontWeight: 700 }}>{children}</h3>;
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -374,5 +374,5 @@ const rowStyle: React.CSSProperties = { display: 'flex', gap: 12, flexWrap: 'wra
 const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 11px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, boxSizing: 'border-box', color: '#1e293b', background: '#fff' };
 const secondaryBtn: React.CSSProperties = { padding: '11px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', color: '#334155', fontSize: 14, fontWeight: 600, cursor: 'pointer' };
 function primaryBtn(disabled: boolean): React.CSSProperties {
-  return { width: '100%', padding: '12px 16px', borderRadius: 8, border: 'none', background: disabled ? '#a78bda' : '#7c3aed', color: '#fff', fontSize: 15, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 };
+  return { width: '100%', padding: '12px 16px', borderRadius: 8, border: 'none', background: disabled ? '#9db8dd' : '#1a5fb4', color: '#fff', fontSize: 15, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 };
 }

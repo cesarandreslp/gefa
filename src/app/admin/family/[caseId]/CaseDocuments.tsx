@@ -118,7 +118,7 @@ export function CaseDocuments({ caseId }: { caseId: string }) {
                 </div>
               </div>
               {d.fileUrl && (
-                <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" title="Abrir" style={{ color: '#7c3aed', display: 'flex', flexShrink: 0 }}>
+                <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" title="Abrir" style={{ color: '#1a5fb4', display: 'flex', flexShrink: 0 }}>
                   <Download size={18} />
                 </a>
               )}

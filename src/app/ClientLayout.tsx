@@ -144,15 +144,21 @@ export default function ClientLayout({
           zIndex: 2000,
           display: mobileMenuOpen ? 'none' : 'block'
         }}>
-          <Image 
-            src={logoUrl || "/logo.png"} 
-            alt={tenantName} 
-            width={200}
-            height={50}
-            className="main-logo-img"
-            style={{ maxHeight: '40px', objectFit: 'contain', width: 'auto' }}
-            priority
-          />
+          {logoUrl && !logoUrl.endsWith('/logo.png') ? (
+            <Image
+              src={logoUrl}
+              alt={tenantName}
+              width={200}
+              height={50}
+              className="main-logo-img"
+              style={{ maxHeight: '40px', objectFit: 'contain', width: 'auto' }}
+              priority
+            />
+          ) : (
+            <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '0.95rem', maxWidth: 280, display: 'inline-block', lineHeight: 1.15 }}>
+              {tenantName}
+            </span>
+          )}
         </div>        {/* Skip link para accesibilidad WCAG 2.1 AA */}
         <SkipLink />
 

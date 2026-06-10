@@ -4,6 +4,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ---
 
+## 2026-06-10
+
+### 35. Rebranding visual del tenant: paleta institucional (gov.co/MinTIC), logo y navegación
+**Estado:** COMPLETADO
+
+**Hecho:**
+- **Paleta institucional (azul gov.co)**: reemplazo de morado/fucsia por azul institucional/ámbar/teal en ~17 archivos (portal, tablero, expediente, hub ciudadano, landing, plantillas de correo, estados de familia, notifications/system): `#7c3aed`→`#1a5fb4`, morados oscuros→`#003d7a`/`#002855`, fondos morado claro→azul claro, fucsia NNA `#be185d`→ámbar `#b45309`, `#8b5cf6`/`#9333ea` y clases `purple-`→teal/cyan. `globals.css` ya tenía base azul (`#003d7a`).
+- **Tenant CFBUGA**: `primaryColor`/`secondaryColor` en BD y en el seed → `#003d7a`/`#1a5fb4` (antes morado/cyan). El tenant inyecta estas variables vía `ClientLayout`, así todo el panel/login usa azul.
+- **Logo de personería retirado**: `ClientLayout` (header) y `LoginModal` muestran el **nombre de la comisaría** en texto institucional cuando el tenant no tiene logo propio (antes caían a `/logo.png` heredado).
+- **Navegación**: `AdminNav` con más separación entre items, **separador vertical** entre grupos (Operación / Dirección) y título "Panel Admin" en azul institucional.
+
+Type-check en verde. Sin morados/fucsia residuales (grep limpio).
+**Objetivo:** Aplicar identidad institucional al tenant en todo lo suyo: (a) eliminar el **logo heredado de personería**; (b) cambiar la **paleta** a estándar gov.co/MinTIC (azul institucional), **sin fucsia ni morado** (hoy `#7c3aed`/`#be185d`/`#ede9fe` en portal/tablero/expediente/landing y `primaryColor` del tenant en BD); (c) **barra de navegación** con separación más resaltada. Aplica a login del tenant, panel `/admin`, expediente, portal ciudadano y landing de la entidad.
+
 ## 2026-06-09
 
 ### 34. Revisar páginas transversales del menú admin (rastros de Ventanilla)

@@ -54,8 +54,8 @@ export default function AdminDashboard() {
   const maxState = Math.max(1, ...(stats?.byState.map((s) => s.count) ?? [1]));
 
   const KPIS = [
-    { label: 'Casos de familia', value: stats?.totalCases ?? 0, icon: Folder, color: '#7c3aed' },
-    { label: 'NNA involucrados', value: stats?.totalMinors ?? 0, icon: Baby, color: '#be185d' },
+    { label: 'Casos de familia', value: stats?.totalCases ?? 0, icon: Folder, color: '#1a5fb4' },
+    { label: 'NNA involucrados', value: stats?.totalMinors ?? 0, icon: Baby, color: '#b45309' },
     { label: 'Medidas vigentes', value: vigentes, icon: ShieldCheck, color: '#059669' },
     { label: 'Alertas de vencimiento', value: alertas, icon: AlertTriangle, color: alertas > 0 ? '#dc2626' : '#6b7280' },
   ];
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                         <span style={{ fontWeight: 700, color: '#1e293b' }}>{s.count}</span>
                       </div>
                       <div style={{ height: 8, background: '#f1f5f9', borderRadius: 999 }}>
-                        <div style={{ height: 8, width: `${(s.count / maxState) * 100}%`, background: s.color || '#7c3aed', borderRadius: 999 }} />
+                        <div style={{ height: 8, width: `${(s.count / maxState) * 100}%`, background: s.color || '#1a5fb4', borderRadius: 999 }} />
                       </div>
                     </div>
                   ))}
@@ -152,5 +152,5 @@ export default function AdminDashboard() {
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.1rem 1.25rem' };
 const h2: React.CSSProperties = { fontSize: '1rem', margin: '0 0 0.85rem', color: '#1e293b' };
 const empty: React.CSSProperties = { color: '#94a3b8', fontSize: '0.88rem', margin: 0 };
-const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, background: '#7c3aed', color: '#fff', textDecoration: 'none', padding: '0.5rem 0.9rem', borderRadius: 8, fontSize: '0.88rem', fontWeight: 600 };
+const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a5fb4', color: '#fff', textDecoration: 'none', padding: '0.5rem 0.9rem', borderRadius: 8, fontSize: '0.88rem', fontWeight: 600 };
 const btnGhost: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#334155', textDecoration: 'none', padding: '0.5rem 0.9rem', borderRadius: 8, fontSize: '0.88rem', fontWeight: 600, border: '1px solid #cbd5e1' };

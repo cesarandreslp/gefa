@@ -131,7 +131,7 @@ export default function FamilyCasesPage() {
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#6b7280' }}>
                       <Users size={14} /> {c.caseParties.length}
                       {c.caseParties.some((p) => p.person.isMinor) && (
-                        <span title="Incluye NNA" style={{ marginLeft: '0.3rem', background: '#fce7f3', color: '#be185d', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.7rem', fontWeight: 700 }}>NNA</span>
+                        <span title="Incluye NNA" style={{ marginLeft: '0.3rem', background: '#fef3c7', color: '#b45309', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.7rem', fontWeight: 700 }}>NNA</span>
                       )}
                     </span>
                   </td>

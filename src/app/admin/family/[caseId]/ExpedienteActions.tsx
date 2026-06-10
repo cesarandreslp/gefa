@@ -246,7 +246,7 @@ export function PardStageControl({ process, onDone }: { process: any; onDone: ()
     onDone();
   };
   return (
-    <button onClick={advance} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', marginTop: '0.4rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>
+    <button onClick={advance} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', marginTop: '0.4rem', color: '#1a5fb4', borderColor: '#cfe0f4' }}>
       Avanzar a: {PARD_STAGE_LABELS[next]}
     </button>
   );

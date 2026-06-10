@@ -36,7 +36,7 @@ export default async function AtencionCiudadanoPage() {
   return (
     <main id="main-content">
       {/* Hero */}
-      <section style={{ backgroundColor: '#ede9fe', backgroundImage: 'linear-gradient(180deg, #ede9fe 0%, #f5f3ff 100%)', padding: 'var(--spacing-3xl) 0', textAlign: 'center', borderBottom: '1px solid var(--color-border)' }}>
+      <section style={{ backgroundColor: '#e8eef7', backgroundImage: 'linear-gradient(180deg, #e8eef7 0%, #eff4fb 100%)', padding: 'var(--spacing-3xl) 0', textAlign: 'center', borderBottom: '1px solid var(--color-border)' }}>
         <div className="container">
           <h1 style={{ fontSize: '3rem', fontWeight: 700, marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-dark)' }}>
             Atención a la Ciudadanía

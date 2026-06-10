@@ -248,9 +248,9 @@ export default function SystemPage() {
                   <p className="text-3xl font-bold text-green-700">{metrics.operations.casesClosedToday}</p>
                 </div>
 
-                <div className="bg-purple-50 p-4 rounded border border-purple-200">
-                  <p className="text-sm text-purple-600 mb-1">Notificaciones Enviadas</p>
-                  <p className="text-3xl font-bold text-purple-700">{metrics.operations.notificationsSentToday}</p>
+                <div className="bg-cyan-50 p-4 rounded border border-cyan-200">
+                  <p className="text-sm text-cyan-700 mb-1">Notificaciones Enviadas</p>
+                  <p className="text-3xl font-bold text-cyan-800">{metrics.operations.notificationsSentToday}</p>
                 </div>
 
                 <div className="bg-orange-50 p-4 rounded border border-orange-200">

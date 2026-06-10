@@ -104,7 +104,7 @@ export default function FamilyStatsPage() {
               <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Casos de familia</div>
             </div>
             <div style={{ ...card, marginBottom: 0, textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#be185d', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}><Baby size={24} /> {stats.totalMinors}</div>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}><Baby size={24} /> {stats.totalMinors}</div>
               <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>NNA registrados</div>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function FamilyStatsPage() {
           <div style={card}><h2 style={h2}>Casos por estado</h2><BarList items={stats.byState} /></div>
           <div style={card}><h2 style={h2}>Tipos de violencia (cruce)</h2><BarList items={stats.byViolenceType} labelMap={VIOLENCE_TYPE_LABELS} color="#dc2626" /></div>
           <div style={card}><h2 style={h2}>Medidas de protección por estado</h2><BarList items={stats.measuresByStatus} labelMap={MEASURE_STATUS_LABELS} color="#059669" /></div>
-          <div style={card}><h2 style={h2}>Partes por rol</h2><BarList items={stats.partiesByRole} labelMap={PARTY_ROLE_LABELS} color="#7c3aed" /></div>
+          <div style={card}><h2 style={h2}>Partes por rol</h2><BarList items={stats.partiesByRole} labelMap={PARTY_ROLE_LABELS} color="#1a5fb4" /></div>
           <div style={card}>
             <h2 style={{ ...h2, display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Users size={16} /> Carga por profesional</h2>
             <BarList items={stats.workloadByUser} color="#0891b2" />

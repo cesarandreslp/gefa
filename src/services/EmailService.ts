@@ -542,7 +542,7 @@ export class EmailService {
         break;
       case "ESCALADO_A_OTRA_DEPENDENCIA":
         stateMessage = "Escalado a Otra Dependencia";
-        stateColor = "#9333ea";
+        stateColor = "#0e7490";
         stateIcon = "↗️";
         break;
       case "REMITIDO_A_ENTIDAD_EXTERNA":
@@ -742,8 +742,8 @@ export class EmailService {
     .header h1 { margin: 0 0 8px 0; font-size: 22px; }
     .header p { margin: 0; font-size: 14px; opacity: 0.9; }
     .content { background-color: #f9f9f9; padding: 25px; border: 1px solid #ddd; border-top: none; }
-    .state-badge { display: inline-block; background-color: #7c3aed; color: white; padding: 8px 20px; border-radius: 20px; font-size: 15px; font-weight: bold; margin: 15px 0; }
-    .response-box { background-color: white; padding: 18px; margin: 15px 0; border-left: 4px solid #7c3aed; border-radius: 0 4px 4px 0; }
+    .state-badge { display: inline-block; background-color: #1a5fb4; color: white; padding: 8px 20px; border-radius: 20px; font-size: 15px; font-weight: bold; margin: 15px 0; }
+    .response-box { background-color: white; padding: 18px; margin: 15px 0; border-left: 4px solid #1a5fb4; border-radius: 0 4px 4px 0; }
     .signature { margin-top: 25px; padding-top: 20px; border-top: 1px solid #ddd; }
     .footer { margin-top: 0; padding: 15px 25px; background-color: #f0f0f0; font-size: 12px; border-top: 2px solid #003366; border-radius: 0 0 5px 5px; }
     .warning { background-color: #fef3c7; padding: 10px 15px; border-left: 4px solid #f59e0b; margin: 15px 0; font-size: 13px; border-radius: 0 4px 4px 0; }
@@ -765,7 +765,7 @@ export class EmailService {
     </div>
 
     <div class="response-box">
-      <h3 style="margin-top: 0; color: #7c3aed;">Respuesta:</h3>
+      <h3 style="margin-top: 0; color: #1a5fb4;">Respuesta:</h3>
       <p style="white-space: pre-wrap; margin: 0;">${bodyTexto}</p>
     </div>
 
