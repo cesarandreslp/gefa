@@ -17,7 +17,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - `src/app/api/v1/tenant/limits/route.ts` (NUEVO) — GET ligero con `{ maxUsers, maxComisarias, activeUsers, activeComisarias }` para la UI (no rompe el shape del listado de usuarios).
 - `src/app/super-admin/page.tsx` — campo "Usuarios contratados".
 - `src/app/admin/usuarios/page.tsx` — indicador "X de Y usuarios contratados en uso" + botones "Crear" deshabilitados al tope.
-**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. Runtime tras redeploy pendiente.
+**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. **Runtime en prod (admin@buga):** 17 usuarios activos (sin IA); con cupo=17 crear usuario → **409** con mensaje; con cupo=18 → **201**. Limpieza aplicada (usuario de prueba borrado, maxUsers a null). Cupo de usuarios confirmado end-to-end.
 
 ### 56. Asignar un caso a su comisaría (sede) en la radicación y gestión
 **Estado:** COMPLETADO
