@@ -14,7 +14,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - Guard explícito `roleCode === 'SECRETARIA_GOBIERNO' → 403` en los GET de `users`, `roles`, `comisarias` y `tenant/limits` (no altera a ningún otro rol).
 - `casos/[caseId]/reasignar` — gateado a `['ADMIN','DIRECTOR']` (cierra el mutation abierto y excluye a la Secretaría).
 **Resultado:** la Secretaría queda confinada a `family/stats`, `family/seguimiento` y `reports*` (estadística/reportes agregados) — confirmado por código junto con el matrix de la entrada 54.
-**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. Runtime tras redeploy pendiente.
+**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. **Runtime en prod:** SECRETARIA → 403 en `/users`, `/roles`, `/comisarias`, `/tenant/limits` y 200 en `/reports`, `/family/stats`; ADMIN → 200 en todas (flujos intactos). Lockdown confirmado end-to-end.
 
 ### 57. Cupo de usuarios contratados por tenant (seats): el superadmin lo fija, el tenant no lo excede
 **Estado:** COMPLETADO
