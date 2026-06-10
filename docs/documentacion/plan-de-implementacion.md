@@ -6,6 +6,13 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 63. Crear el SUPER_ADMIN SaaS (faltaba en producción)
+**Estado:** COMPLETADO
+**Objetivo:** Al auditar las credenciales (a pedido del usuario) se detectó que en la BD de producción NO existe ningún usuario SUPER_ADMIN: el `db push --force-reset` + `prisma/seed.ts` (seed activo, 3 alcaldías, pass `Gefa2026!`) borró el super admin que creaba `seed-superadmin.ts` y no lo recrea. Sin él no se puede entrar al panel `/super-admin` (necesario para probar el alta automática de Fase 2). Crear `superadmin@system.local` (rol SUPER_ADMIN global, tenantId null) con contraseña fuerte.
+**Auditoría (verificada contra la BD viva, read-only):** 3 tenants (BUGA/PALMIRA/TULUA) × 18 usuarios = 54, todos de tenant, ninguno SUPER_ADMIN. Esquema = `prisma/seed.ts`: pass única `Gefa2026!`; correos `admin@<sigla>.gov.co`, `secretaria.gobierno@<sigla>.gov.co`, `ia.asignacion@<sigla>.interno` (IA, no-login), y por comisaría cf1/cf2/cf3: `comisario.<cf>`, `psicologo.<cf>`, `trabajador.social.<cf>`, `ventanilla.<cf>`, `auxiliar.<cf>` @`<sigla>.gov.co`.
+**Hecho:** creado `superadmin@system.local` (rol SUPER_ADMIN global, tenantId null) con contraseña fuerte aleatoria, vía script one-off (eliminado tras correr). La contraseña se entregó al usuario una sola vez en el chat; NO se versiona aquí. El `bcrypt` usado es el mismo que valida la app.
+**Nota de higiene del repo (deuda, no abordada aquí):** conviven 3 definiciones divergentes del super admin con claves débiles hardcodeadas (`seed-superadmin.ts`→superadmin123, `reset-superadmin.js`→SuperAdmin2026!, `crear-superadmin.js`→admin@ventanillaunica.com/Admin2026! legacy). Deberían unificarse/eliminarse para no reintroducir credenciales débiles.
+
 ### 62. Configurar env vars de Fase 2 en Vercel (NEON_API_KEY, NEON_ORG_ID, NEON_PROJECT_REGION) + deploy
 **Estado:** COMPLETADO
 **Objetivo:** El provisioning automático (entrada 61) está verificado en local pero en producción necesita las env vars nuevas en Vercel. Agregarlas vía CLI y desplegar.
