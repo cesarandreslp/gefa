@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 41. Cerrar hallazgos del catálogo de instrumentos (núcleo del servicio)
+**Estado:** COMPLETADO (hallazgos #1 y #2; #3 documentado como pendiente por falta de fuente)
+**Objetivo:** Resolver los 3 hallazgos detectados en el catálogo, que son el núcleo del valor para las comisarías: (1) faltan en la batería Res. 0362/2026 el Módulo 1 Caracterización y el Módulo 2 entrevista semiestructurada; (2) FIR-R no tiene marcados los ítems críticos (afirmativo → riesgo alto); (3) los formatos ICBF F3/F5 son estructura base, no verbatim oficial.
+**Fuente:** se extrajo la Guía oficial completa (`docs/documentacion/Guia-...feminicidio...comprimido.docx`, 234k chars) — el `.docx` "ABC...Manual de uso" es solo la guía de uso, no trae los ítems.
+**Hecho:**
+- **Hallazgo #1 (RESUELTO).** Se transcribieron del manual oficial los 2 módulos faltantes como sub-instrumentos de la batería (`parentCode: MINJUSTICIA_RES0362_2026`), profesión AMBOS, `assessmentType: INTERDISCIPLINARIA`, descriptivos (sin puntaje):
+  - `RES0362_CARACTERIZACION` — Módulo 1 (68 campos): identificación de víctima y agresor/a, historial de la relación, detalles de la violencia, factores contextuales, solicitudes de ayuda y respuesta institucional, observaciones. El campo `rel_tipo` (tipo de vínculo) orienta qué instrumento actuarial aplicar.
+  - `RES0362_ENTREVISTA` — Módulo 2 (15 campos): 14 preguntas abiertas (hecho denunciado, historia familiar, historial de violencia, afrontamiento, redes de apoyo, percepción del riesgo) + observaciones. El ítem 10 se reconstruyó de la estructura de su sección (marcado en `ayuda` para confirmar enunciado exacto contra el Excel oficial).
+- **Hallazgo #2 (RESUELTO).** FIR-R: (a) marcados como `esCritico: true` los ítems **14, 15 y 18** (ficha técnica oficial: agresión física con heridas / intento de asfixia o estrangulamiento / lesiones graves que pusieron la vida en peligro) → el motor (`computeInstrumentoScore`) ahora eleva a ALTO por override clínico vía `criticalToHigh`. (b) **Bug de factores corregido:** la Guía asigna Factor 2 = 1,2,5,10,13,**19**,20,21,22 y Factor 3 = **12**,14,15,16,17,18; en el seed los ítems 12 y 19 estaban en el factor equivocado — reubicados. (c) Precisión de población: >18 años (o >14 emancipada).
+- **Hallazgo #3 (PENDIENTE, sin fuente).** Los formatos ICBF F3.G16.P / F5.G16.P siguen siendo estructura base: el `.docx`/PDF disponibles son de la batería de feminicidio (Minjusticia), NO de ICBF. Para hacerlos verbatim se necesitan los formatos oficiales ICBF (no están en el repo). Encabezado del catálogo actualizado para reflejarlo.
+- Catálogo resembrado (`scripts/seed-instrumentos.ts`): batería con sus 5 componentes activos (Caracterización 68 · Entrevista 15 · FIR-R 22 · DA-R 18 · C2 34); contenedor inactivo. type-check verde.
+- Archivos: `src/domain/catalogs/familyInstrumentos.ts` (los 2 módulos nuevos + fixes FIR-R + encabezado). Los `.docx`/PDF oficiales no se versionan (binarios pesados).
+
 ### 40. Fase C4 — Pre-informe consolidado por IA del caso
 **Estado:** COMPLETADO
 **Objetivo:** Cuando un caso tiene varias valoraciones/instrumentos diligenciados, la IA integra sus borradores en un pre-informe consolidado del caso (borrador editable), que luego pasa a la aprobación del `DIRECTOR` (C5). Reusa `aiClient` (multiproveedor) y `anonymize`; la IA solo produce borradores, sin peso procesal.
