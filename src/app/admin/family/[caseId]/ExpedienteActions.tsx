@@ -907,6 +907,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_INSTRUMENT_REPORT_GENERATED: 'Informe preliminar generado (IA)',
   FAMILY_CASE_REPORT_CONSOLIDATED: 'Pre-informe consolidado generado (IA)',
   FAMILY_CASE_REPORT_UPDATED: 'Pre-informe consolidado corregido',
+  FAMILY_PUBLIC_INTAKE: 'Radicación por el portal ciudadano',
   FAMILY_CASE_REPORT_SUBMITTED: 'Pre-informe enviado a revisión',
   FAMILY_CASE_REPORT_APPROVED: 'Pre-informe aprobado por la autoridad (en firme)',
   FAMILY_CASE_REPORT_RETURNED: 'Pre-informe devuelto a borrador',

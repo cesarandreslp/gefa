@@ -197,3 +197,51 @@ export async function auditFamily(
     console.error('[AUDIT FAMILY ERROR]', action, entityType, entityId, error);
   }
 }
+
+/**
+ * Variante de `auditFamily` para acciones SIN usuario autenticado (radicación por
+ * el portal ciudadano). Mantiene el encadenado de checksum del `ActionLog` con un
+ * actor anónimo (`userId` nulo). Best-effort: nunca lanza ni interrumpe el request.
+ */
+export async function auditFamilyPublic(
+  db: PrismaClient,
+  request: NextRequest,
+  tenantId: string,
+  action: string,
+  entityType: string,
+  entityId: string,
+  opts: { caseId?: string; metadata?: Record<string, unknown> } = {}
+): Promise<void> {
+  try {
+    const last = await db.actionLog.findFirst({
+      where: { tenantId },
+      orderBy: { timestamp: 'desc' },
+      select: { checksum: true },
+    });
+    const previousHash = last?.checksum || 'GENESIS_BLOCK';
+    const timestamp = new Date();
+    const checksum = computeAuditChecksum({ action, userId: null, entityType, entityId, timestamp, previousHash });
+
+    await db.actionLog.create({
+      data: {
+        tenantId,
+        timestamp,
+        userId: null,
+        userEmail: 'portal_ciudadano',
+        userRole: 'PUBLICO',
+        action,
+        entityType,
+        entityId,
+        ipAddress: getClientIp(request.headers),
+        userAgent: getUserAgent(request.headers),
+        metadata: (opts.metadata ?? undefined) as never,
+        caseId: opts.caseId,
+        checksum,
+        previousHash,
+        success: true,
+      },
+    });
+  } catch (error) {
+    console.error('[AUDIT FAMILY PUBLIC ERROR]', action, entityType, entityId, error);
+  }
+}

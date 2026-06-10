@@ -7,6 +7,7 @@ import { LegalTermsCalculator } from '@/domain/rules/LegalTermsCalculator';
 import { CASE_TYPE_MODALITY } from '@/domain/catalogs/familyCaseTypes';
 import { applyRateLimit, RATE_LIMIT_CONFIGS, addRateLimitHeaders } from '@/lib/rateLimit';
 import { sanitizeString } from '@/lib/validation';
+import { auditFamilyPublic } from '@/lib/familyApi';
 import { CaseModality } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
@@ -135,6 +136,13 @@ export async function POST(request: NextRequest) {
 
       return newCase;
     }, { timeout: 20000 });
+
+    // Trazabilidad inmutable: la radicación ciudadana queda en el ActionLog con
+    // actor anónimo del portal (datos sensibles de víctima/NNA, Ley 1581/2012).
+    await auditFamilyPublic(db, request, tenantId, 'FAMILY_PUBLIC_INTAKE', 'Case', created.id, {
+      caseId: created.id,
+      metadata: { filingNumber: created.filingNumber, caseTypeCode: baseCode, esVictima: esVictima === true },
+    });
 
     const response = NextResponse.json(
       {

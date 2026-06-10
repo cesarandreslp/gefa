@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 46. Fase D — Endurecimiento RBAC/auditoría transversal (cierre)
+**Estado:** COMPLETADO
+**Objetivo:** Auditar y endurecer el control de acceso y la trazabilidad de todo el dominio familia (datos sensibles de NNA y víctimas, Ley 1581/2012 + Ley 1098/2006): verificar aislamiento por tenant, RBAC consistente, autoría exclusiva del DIRECTOR donde corresponde, y auditoría de accesos/escrituras a datos confidenciales. Cerrar los huecos detectados.
+**Auditoría realizada (31 rutas `/api/v1/family/*`):**
+- **RBAC:** todas las rutas pasan por `protectAPIRoute` con el grupo de roles correcto. Confidenciales (valoraciones, instrumentos, pre-informe) → `FAMILY_CONFIDENTIAL_ROLES`; actos de autoridad (declaración, valoración de prueba, aprobación de pre-informe) → solo `DIRECTOR`; lectura/escritura/intake/stats con sus grupos. Sin rutas sin protección salvo las públicas por diseño (`public/intake`, `public/status`).
+- **Aislamiento por tenant:** sólido y doble — cada ruta de detalle valida `tenantId` en un `findFirst` antes de actualizar por `id`, y además el cliente Prisma es por-tenant (`getPrismaForTenant`). Sin fuga entre comisarías.
+- **Auditoría:** todas las escrituras autenticadas registran en `ActionLog` (cadena de checksum). Las lecturas de datos confidenciales (valoraciones) quedan auditadas.
+**Hueco detectado y CERRADO:**
+- **Radicación ciudadana (`public/intake`) no dejaba rastro en `ActionLog`** — creaba caso + persona (posible víctima/NNA) solo con `CaseStateHistory`. Se añadió `auditFamilyPublic` en `familyApi` (actor anónimo del portal, `userId` nulo, mantiene la cadena de checksum y es verificable por el visor de auditoría) y se invoca tras crear el caso (`FAMILY_PUBLIC_INTAKE`, metadata: radicado/tipo/esVíctima). Etiqueta añadida al visor.
+**Recomendación abierta (no aplicada, decisión de política):** `FAMILY_CONFIDENTIAL_ROLES` incluye `ADMIN`. Para minimización de datos sensibles de NNA/víctimas (y por coherencia con declaración/valoración de prueba que ya excluyen a ADMIN como "no autoridad procesal"), podría retirarse ADMIN del acceso de lectura a valoraciones psicosociales. Se deja a criterio del usuario por su impacto en la supervisión administrativa.
+**Archivos:** `src/lib/familyApi.ts` (`auditFamilyPublic`), `src/app/api/v1/family/public/intake/route.ts`, `src/app/admin/family/[caseId]/ExpedienteActions.tsx` (etiqueta). type-check verde.
+
 ### 45. Fase C5 — Revisión y aprobación del pre-informe por el comisario (DIRECTOR)
 **Estado:** COMPLETADO
 **Objetivo:** Dar peso procesal al pre-informe consolidado mediante un flujo de estados BORRADOR → EN_REVISIÓN → APROBADO con firma exclusiva del `DIRECTOR`. Mientras es borrador la IA/equipo no tiene peso procesal; al aprobarlo la autoridad, adquiere validez (principio rector). Bloquear edición/regeneración tras la aprobación.
