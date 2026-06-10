@@ -13,6 +13,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // La Secretaría de Gobierno solo accede a estadística/reportes agregados:
+    // no enumera el directorio de personal.
+    if (auth.user.roleCode === 'SECRETARIA_GOBIERNO') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
     const db = auth.db;
     const users = await db.user.findMany({
       where: {

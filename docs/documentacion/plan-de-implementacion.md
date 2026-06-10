@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 58. "Nada más" literal para la Secretaría: cerrar GETs de metadatos y reasignaciones legacy
+**Estado:** COMPLETADO
+**Objetivo:** Completar la entrada 54: `SECRETARIA_GOBIERNO` solo debe tocar estadística/reportes. Quedaban GETs sin gate de rol (`/users`, `/roles`, `/comisarias`) y 2 endpoints legacy de reasignación (`casos/[caseId]/proponer-reasignacion`, `reasignar`) que cualquier autenticado podía invocar. Bloquear a la Secretaría de todos ellos (y gatear las reasignaciones a roles con potestad) sin romper a ADMIN/DIRECTOR ni los flujos operativos.
+**Hallazgo:** los GETs de metadatos los consumen roles operativos (ADMIN/DIRECTOR + manejo de casos vía `ExpedienteActions`), nunca la Secretaría → un guard que la excluya es de mínimo riesgo. Los 2 endpoints legacy de reasignación no los llama ninguna UI (huérfanos): `proponer-reasignacion` ya restringía a VENTANILLA_UNICA; `reasignar` estaba abierto a cualquier autenticado.
+**Hecho:**
+- Guard explícito `roleCode === 'SECRETARIA_GOBIERNO' → 403` en los GET de `users`, `roles`, `comisarias` y `tenant/limits` (no altera a ningún otro rol).
+- `casos/[caseId]/reasignar` — gateado a `['ADMIN','DIRECTOR']` (cierra el mutation abierto y excluye a la Secretaría).
+**Resultado:** la Secretaría queda confinada a `family/stats`, `family/seguimiento` y `reports*` (estadística/reportes agregados) — confirmado por código junto con el matrix de la entrada 54.
+**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. Runtime tras redeploy pendiente.
+
 ### 57. Cupo de usuarios contratados por tenant (seats): el superadmin lo fija, el tenant no lo excede
 **Estado:** COMPLETADO
 **Objetivo:** Igual que el cupo de comisarías (entrada 55), el superadmin fija cuántos **usuarios** (seats) contrató la Alcaldía; desde el tenant no se pueden crear/reactivar más usuarios activos que ese número. Decisión: cupo **por tenant** (no por comisaría), consistente con `maxComisarias` y con el modelo de "seats contratados". Se excluye del conteo al usuario interno de IA (rol `ASIGNACION_DE_CASOS`). Añadir `maxUsers` al `Tenant`, aceptarlo en el alta de superadmin, forzarlo en el POST de usuarios, y reflejarlo en la UI.

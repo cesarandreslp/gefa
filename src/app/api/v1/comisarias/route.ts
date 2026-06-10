@@ -14,6 +14,12 @@ export async function GET(request: NextRequest) {
       return auth.response ?? NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // La Secretaría de Gobierno solo accede a estadística/reportes agregados:
+    // no enumera las sedes.
+    if (auth.user.roleCode === 'SECRETARIA_GOBIERNO') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
     const [comisarias, tenant] = await Promise.all([
       auth.db.comisaria.findMany({
         where: { tenantId: auth.user.tenantId },

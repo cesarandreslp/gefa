@@ -7,8 +7,9 @@ export async function POST(
   { params }: { params: { caseId: string } }
 ) {
   try {
-    // Verificar autenticación
-    const auth = await protectAPIRoute(request);
+    // Reasignar un caso es un acto con potestad: solo ADMIN/DIRECTOR.
+    // (La Secretaría de Gobierno —supervisión estadística— queda excluida.)
+    const auth = await protectAPIRoute(request, ['ADMIN', 'DIRECTOR']);
 
     if (!auth.authorized || !auth.user) {
       return auth.response!;
