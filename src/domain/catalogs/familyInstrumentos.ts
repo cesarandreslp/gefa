@@ -337,8 +337,10 @@ export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
   // Cualitativa (sin puntaje). Explora de forma contextual y sensible las dinámicas
   // de violencia. El profesional plantea cada ítem como punto de partida de una
   // conversación. Transcrita del manual oficial Minjusticia V.1.0.
-  // Nota: el ítem 10 se reconstruye a partir de la estructura de la sección "Redes
-  // de apoyo"; confirmar su enunciado exacto contra el formato Excel oficial.
+  // Numeración reconciliada con la sección oficial "Respuestas de alta alarma" de la
+  // Guía (enumera las 14 preguntas). El ítem 3 ("Manejo de conflictos en el hogar
+  // durante la infancia") se reconstruye de ese tema; confirmar su enunciado exacto
+  // contra el Excel oficial. Los otros 13 ítems son verbatim del instructivo.
   {
     code: 'RES0362_ENTREVISTA',
     name: 'Módulo 2 — Entrevista semiestructurada',
@@ -354,14 +356,14 @@ export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
     campos: [
       { code: 'ent_01', seccion: 'Información sobre el hecho denunciado', label: '¿Podrías contarme, con tus propias palabras y a tu propio ritmo, qué situación te ha llevado a buscar ayuda hoy?', tipo: 'TEXTO_LARGO', requerido: true, orden: 1 },
       { code: 'ent_02', seccion: 'Historia familiar', label: '¿Cómo describirías las relaciones entre los miembros de tu familia durante tu infancia y adolescencia?', tipo: 'TEXTO_LARGO', orden: 2 },
-      { code: 'ent_03', seccion: 'Historia familiar', label: '¿Cómo crees que tus experiencias familiares han influido en tu forma de ver las relaciones de pareja o tu rol como mujer en la sociedad?', tipo: 'TEXTO_LARGO', ayuda: 'Explorar relaciones de asimetría o desigualdad de poder.', orden: 3 },
-      { code: 'ent_04', seccion: 'Historial de violencia', label: 'A lo largo de tu vida, ¿has experimentado situaciones de violencia en tus relaciones de pareja anteriores o en la actual?', tipo: 'TEXTO_LARGO', orden: 4 },
-      { code: 'ent_05', seccion: 'Historial de violencia', label: 'A lo largo de tu vida, ¿has experimentado situaciones de violencia con las personas con las que cohabitas, convives o con las que has establecido una relación de cuidado?', tipo: 'TEXTO_LARGO', orden: 5 },
-      { code: 'ent_06', seccion: 'Historial de violencia', label: '¿Has notado cambios en la frecuencia o intensidad de los actos violentos con el tiempo? Por ejemplo, ¿han aumentado?', tipo: 'TEXTO_LARGO', orden: 6 },
-      { code: 'ent_07', seccion: 'Historial de violencia', label: 'Si has denunciado, ¿hubo alguna represalia o cambio en su comportamiento después de la denuncia?', tipo: 'TEXTO_LARGO', orden: 7 },
-      { code: 'ent_08', seccion: 'Estrategias de afrontamiento', label: 'Cuando te has enfrentado a situaciones difíciles o de peligro en tu relación, ¿qué acciones has tomado para protegerte a ti misma o a tus seres queridos?', tipo: 'TEXTO_LARGO', orden: 8 },
-      { code: 'ent_09', seccion: 'Estrategias de afrontamiento', label: '¿Has intentado acceder a servicios de apoyo institucional, como líneas de ayuda, centros de atención a mujeres o asesoría legal? Si es así, ¿cómo ha sido tu experiencia?', tipo: 'TEXTO_LARGO', orden: 9 },
-      { code: 'ent_10', seccion: 'Redes de apoyo y acceso a servicios', label: '¿Con qué redes de apoyo (familiares, amigas, comunitarias o institucionales) cuentas actualmente a las que puedas acudir?', tipo: 'TEXTO_LARGO', ayuda: 'Reconstruido de la estructura de la sección — confirmar enunciado exacto contra el formato oficial.', orden: 10 },
+      { code: 'ent_03', seccion: 'Historia familiar', label: 'Durante tu infancia, ¿cómo se manejaban o resolvían los conflictos en tu hogar?', tipo: 'TEXTO_LARGO', ayuda: 'Ítem reconstruido del tema oficial "Manejo de conflictos en el hogar durante la infancia"; confirmar enunciado exacto contra el Excel oficial.', orden: 3 },
+      { code: 'ent_04', seccion: 'Historia familiar', label: '¿Cómo crees que tus experiencias familiares han influido en tu forma de ver las relaciones de pareja o tu rol como mujer en la sociedad?', tipo: 'TEXTO_LARGO', ayuda: 'Explorar relaciones de asimetría o desigualdad de poder.', orden: 4 },
+      { code: 'ent_05', seccion: 'Historial de violencia', label: 'A lo largo de tu vida, ¿has experimentado situaciones de violencia en tus relaciones de pareja anteriores o en la actual?', tipo: 'TEXTO_LARGO', orden: 5 },
+      { code: 'ent_06', seccion: 'Historial de violencia', label: 'A lo largo de tu vida, ¿has experimentado situaciones de violencia con las personas con las que cohabitas, convives o con las que has establecido una relación de cuidado?', tipo: 'TEXTO_LARGO', orden: 6 },
+      { code: 'ent_07', seccion: 'Historial de violencia', label: '¿Has notado cambios en la frecuencia o intensidad de los actos violentos con el tiempo? Por ejemplo, ¿han aumentado?', tipo: 'TEXTO_LARGO', orden: 7 },
+      { code: 'ent_08', seccion: 'Historial de violencia', label: 'Si has denunciado, ¿hubo alguna represalia o cambio en su comportamiento después de la denuncia?', tipo: 'TEXTO_LARGO', orden: 8 },
+      { code: 'ent_09', seccion: 'Estrategias de afrontamiento', label: 'Cuando te has enfrentado a situaciones difíciles o de peligro en tu relación, ¿qué acciones has tomado para protegerte a ti misma o a tus seres queridos?', tipo: 'TEXTO_LARGO', orden: 9 },
+      { code: 'ent_10', seccion: 'Estrategias de afrontamiento', label: '¿Has intentado acceder a servicios de apoyo institucional, como líneas de ayuda, centros de atención a mujeres o asesoría legal? Si es así, ¿cómo ha sido tu experiencia?', tipo: 'TEXTO_LARGO', orden: 10 },
       { code: 'ent_11', seccion: 'Redes de apoyo y acceso a servicios', label: '¿Te sentirías segura utilizando alguno de estos servicios?', tipo: 'TEXTO_LARGO', orden: 11 },
       { code: 'ent_12', seccion: 'Redes de apoyo y acceso a servicios', label: '¿Sientes que existen barreras que te dificultan buscar ayuda o acceder a servicios de apoyo?', tipo: 'TEXTO_LARGO', orden: 12 },
       { code: 'ent_13', seccion: 'Percepción del riesgo', label: '¿Qué tan grave crees que es el riesgo para tu vida en este momento?', tipo: 'TEXTO_LARGO', requerido: true, orden: 13 },

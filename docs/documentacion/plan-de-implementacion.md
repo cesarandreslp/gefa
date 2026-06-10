@@ -6,6 +6,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 44. Corregir numeración de la Entrevista (Módulo 2) y fijar el ítem 10
+**Estado:** COMPLETADO
+**Objetivo:** El usuario preguntó cómo confirmar el ítem 10 de la entrevista. Se halló en la propia Guía (sección "Respuestas de alta alarma", que enumera las 14 preguntas) — no hace falta el Excel. Al reconciliar, se detectó que la transcripción previa tenía la numeración corrida.
+**Hecho:**
+- El **ítem 10** real es "¿Has intentado acceder a servicios de apoyo institucional (líneas de ayuda, centros de atención a mujeres, asesoría legal)? Si es así, ¿cómo ha sido tu experiencia?" (sección Estrategias de afrontamiento) — ya no es un campo reconstruido.
+- Faltaba el **ítem 3** "Manejo de conflictos en el hogar durante la infancia" (la extracción anterior lo colapsó con el ítem 4). Insertado; es el ÚNICO reconstruido ahora (el tema está nombrado en la Guía; se marca para confirmar enunciado exacto).
+- Renumerados los 14 ítems al orden oficial del instructivo: 1 hecho · 2 relaciones familia infancia · 3 manejo de conflictos infancia · 4 influencia experiencias familiares · 5 violencia pareja · 6 violencia cohabitación/cuidado · 7 cambios frecuencia · 8 represalias · 9 acciones de protección · 10 servicios institucionales · 11 ¿se sentiría segura? · 12 barreras · 13 gravedad del riesgo · 14 qué podría suceder.
+- type-check verde; catálogo resembrado (Entrevista 15 campos). Archivo: `src/domain/catalogs/familyInstrumentos.ts`.
+
 ### 43. ICBF F5.G16.P verbatim desde el formato oficial (cierra hallazgo #3 socio-familiar)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario aportó el formato oficial `docs/documentacion/f5.g16.p_formato_informe_valoracion_socio_familiar_de_verificacion_de_derechos_v4_1.docx`. Reemplazar la estructura base del instrumento `ICBF_F5G16P` por la transcripción verbatim del formato oficial (v4.1), cerrando el hallazgo #3 por completo.
