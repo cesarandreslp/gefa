@@ -521,8 +521,14 @@ export default function SuperAdminDashboard() {
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>Así aparece la entidad en la bandeja del ciudadano.</p>
                 </div>
 
+                <div style={{ marginBottom: '16px', padding: '12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#1e40af' }}>
+                    🗄️ <strong>Base de datos automática:</strong> si dejas vacíos los dos campos de abajo, al crear la entidad se aprovisiona automáticamente un proyecto Neon propio (<code>gefa-&lt;sigla&gt;</code>), se le aplica el esquema y se siembra el catálogo. Solo completa las URLs si quieres usar una BD creada a mano.
+                  </p>
+                </div>
+
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '0.9rem' }}>URL Base de Datos Neon <span style={{ color: '#9ca3af', fontWeight: '400' }}>(opcional — pooled connection string)</span></label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '0.9rem' }}>URL Base de Datos Neon <span style={{ color: '#9ca3af', fontWeight: '400' }}>(opcional — vacío = se crea sola)</span></label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type={showDbUrl ? 'text' : 'password'}
@@ -536,7 +542,7 @@ export default function SuperAdminDashboard() {
                       {showDbUrl ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>Si se proporciona, roles, usuarios y tipos de caso se crean en la BD propia del tenant.</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>Si la proporcionas, se usa esa BD (creada a mano) en vez de crear una nueva en Neon.</p>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>

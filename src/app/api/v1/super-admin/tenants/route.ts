@@ -6,9 +6,20 @@ import { getClientIp, getUserAgent } from '@/lib/validation';
 import { getTenantPrisma } from '@/lib/tenantDb';
 import { FAMILY_CASE_TYPES } from '@/domain/catalogs/familyCaseTypes';
 import { FAMILY_CASE_STATES } from '@/domain/catalogs/familyCaseStates';
+import {
+  createTenantProject,
+  applyTenantSchema,
+  seedTenantInstrumentos,
+  deleteTenantProject,
+} from '@/services/NeonService';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// El alta con provisioning automático crea el proyecto Neon, aplica el esquema y
+// siembra el catálogo: puede tardar varias decenas de segundos.
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 async function checkSuperAdmin(request: NextRequest) {
   const auth = await protectAPIRoute(request);
@@ -84,6 +95,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'La sigla o el dominio ya están en uso por otra entidad' }, { status: 400 });
     }
 
+    // Provisioning automático (Fase 2): si NO se pasa databaseUrl manual, se crea un
+    // proyecto Neon dedicado para el tenant y se le aplica el esquema. Si se pasa
+    // databaseUrl en el body, se respeta el modo manual (BD creada a mano) como antes.
+    const autoProvision = !databaseUrl;
+    let provisionedProjectId: string | null = null;
+    // Cadenas efectivas que se persisten/usan más abajo.
+    let tenantDbUrl: string | null = databaseUrl || null; // pooled → runtime
+    let tenantDbUrlDirect: string | null = databaseUrlDirect || null; // direct → DDL/seed
+
+    if (autoProvision) {
+      if (!process.env.NEON_API_KEY) {
+        return NextResponse.json(
+          { success: false, error: 'Provisioning automático no disponible: falta NEON_API_KEY. Provea databaseUrl manual o configure Neon.' },
+          { status: 400 }
+        );
+      }
+      try {
+        const neon = await createTenantProject(sigla);
+        provisionedProjectId = neon.projectId;
+        tenantDbUrl = neon.databaseUrl;
+        tenantDbUrlDirect = neon.databaseUrlDirect;
+        await applyTenantSchema(neon.databaseUrlDirect);
+      } catch (provErr: any) {
+        if (provisionedProjectId) await deleteTenantProject(provisionedProjectId);
+        console.error('Error creando/aprovisionando el proyecto Neon del tenant:', provErr);
+        return NextResponse.json(
+          { success: false, error: 'No se pudo crear la base de datos del tenant en Neon.', details: provErr?.message || String(provErr) },
+          { status: 500 }
+        );
+      }
+    }
+
     // Credentials generated before transactions
     const adminEmail = `admin@${sigla.toLowerCase()}.gov.co`;
     const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
@@ -106,8 +149,8 @@ export async function POST(request: NextRequest) {
           isActive: true,
           maxComisarias: comisariasCap,
           maxUsers: usersCap,
-          databaseUrl: databaseUrl || null,
-          databaseUrlDirect: databaseUrlDirect || null,
+          databaseUrl: tenantDbUrl,
+          databaseUrlDirect: tenantDbUrlDirect,
         } as any
       });
 
@@ -129,14 +172,18 @@ export async function POST(request: NextRequest) {
     // completo (roles + tipos + ADMIN + IA) corre dentro de UNA transacción interactiva.
     // Si cualquier paso falla, la transacción revierte TODO y además se elimina el registro
     // global del Paso 1, de modo que nunca quede una entidad a medio crear ni sin administrador.
-    const db = databaseUrl ? getTenantPrisma(databaseUrl) : prisma;
+    // Para sembrar usamos la conexión DIRECTA cuando existe (más fiable para
+    // transacciones interactivas que la pooled); fallback a la pooled o, en su
+    // ausencia (sin BD dedicada), a la BD global.
+    const provisioningUrl = tenantDbUrlDirect || tenantDbUrl;
+    const db = provisioningUrl ? getTenantPrisma(provisioningUrl) : prisma;
     const iaPasswordHash = await bcrypt.hash(`ia-internal-${tenant.id}`, 10);
 
     let adminUser;
     try {
       adminUser = await db.$transaction(async (tx) => {
         // When using a dedicated tenant DB, first create a Tenant replica so FK constraints are satisfied
-        if (databaseUrl) {
+        if (provisioningUrl) {
           await tx.tenant.create({
             data: {
               id: tenant.id,
@@ -151,8 +198,8 @@ export async function POST(request: NextRequest) {
               isActive: true,
               maxComisarias: comisariasCap,
               maxUsers: usersCap,
-              databaseUrl,
-              databaseUrlDirect: databaseUrlDirect || null,
+              databaseUrl: tenantDbUrl,
+              databaseUrlDirect: tenantDbUrlDirect,
             } as any
           });
         }
@@ -230,7 +277,9 @@ export async function POST(request: NextRequest) {
       }, { timeout: 20000 });
     } catch (provisionError: any) {
       // El aprovisionamiento falló: la transacción ya revirtió la BD del tenant.
-      // Revertimos también el registro global del Paso 1 para no dejar un tenant sin admin.
+      // Revertimos también el registro global del Paso 1 y, si se creó, el proyecto
+      // Neon, de modo que nunca quede una entidad a medio crear ni sin administrador.
+      if (provisionedProjectId) await deleteTenantProject(provisionedProjectId);
       await prisma.tenantSettings.deleteMany({ where: { tenantId: tenant.id } }).catch(() => {});
       await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
       console.error('Error aprovisionando tenant (rollback aplicado, no se creó ningún registro):', provisionError);
@@ -242,12 +291,33 @@ export async function POST(request: NextRequest) {
 
     // Salvaguarda de la invariante: si por cualquier razón no quedó el ADMIN, revertir todo.
     if (!adminUser) {
+      if (provisionedProjectId) await deleteTenantProject(provisionedProjectId);
       await prisma.tenantSettings.deleteMany({ where: { tenantId: tenant.id } }).catch(() => {});
       await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
       return NextResponse.json(
         { success: false, error: 'No se pudo crear el administrador del tenant. Operación revertida.' },
         { status: 500 }
       );
+    }
+
+    // Sembrar el catálogo de instrumentos de valoración en la BD del tenant (núcleo
+    // del servicio). En provisioning automático, si falla, se revierte TODO: una
+    // entidad recién creada debe quedar lista o no quedar.
+    if (provisioningUrl) {
+      try {
+        await seedTenantInstrumentos(db);
+      } catch (seedErr: any) {
+        console.error('Error sembrando instrumentos del tenant:', seedErr);
+        if (autoProvision) {
+          if (provisionedProjectId) await deleteTenantProject(provisionedProjectId);
+          await prisma.tenantSettings.deleteMany({ where: { tenantId: tenant.id } }).catch(() => {});
+          await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
+          return NextResponse.json(
+            { success: false, error: 'No se pudo sembrar el catálogo de instrumentos. Operación revertida.', details: seedErr?.message || String(seedErr) },
+            { status: 500 }
+          );
+        }
+      }
     }
 
     const ipAddress = getClientIp(request.headers);

@@ -6,6 +6,21 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 61. Fase 2 — Provisioning automático de BD Neon por tenant en el alta
+**Estado:** COMPLETADO
+**Objetivo:** Hoy `POST /super-admin/tenants` recibe `databaseUrl`/`databaseUrlDirect` en el body (la BD Neon se crea a mano) y no corre migraciones ni siembra el catálogo per-tenant. Automatizar el alta: al crear una Alcaldía, el sistema crea su propia BD en Neon vía API, le aplica el esquema, y siembra roles/estados/tipos/instrumentos/admin. Modelo = BD dedicada por tenant (aislamiento fuerte para datos de NNA/víctimas, alineado con CLAUDE.md). Requiere `NEON_API_KEY` (ya disponible). Fase 1 (routing por subdominio) ya cerrada (entradas 50-52).
+**Decisiones (autónomo, con el usuario):** (1) Topología = **un proyecto Neon por tenant** (no branch) — aislamiento más fuerte, BD recién creada vacía sin riesgo de arrastrar datos de otro tenant. (2) Convención de nombre = `gefa-<sigla>`. (3) Esquema: el proyecto NO usa migraciones (`prisma db push`), así que NO hay `migrate deploy`; se genera el DDL completo (`prisma migrate diff --from-empty`) y se aplica en runtime sentencia por sentencia con `$executeRawUnsafe` sobre la conexión **directa** (Prisma no admite multi-statement; el pooler no es apto para DDL).
+**Investigación de la cuenta Neon (vía API):** la org del control plane (`neon-erin-book`, proyecto `wild-term-69641222`) está **gestionada por Vercel** → la API **no** permite crear proyectos ahí (404 "organization is managed by Vercel"). Sí permite en la org propia `org-fragrant-hat-12076614` (probado: 201). La API key es **org-scoped** (exige `org_id` en cada request). Por eso `NEON_ORG_ID=org-fragrant-hat-12076614`.
+**Hecho:**
+- `src/services/NeonService.ts` (NUEVO) — `createTenantProject(sigla)` (POST a Neon API, espera operaciones, deriva host pooled insertando `-pooler`), `applyTenantSchema(direct)` (lee el `.sql`, parte en sentencias, reintenta conexión y ejecuta), `seedTenantInstrumentos(db)` (réplica de `seed-instrumentos.ts` sobre el cliente del tenant), `deleteTenantProject(id)` (rollback).
+- `prisma/tenant-schema.sql` (NUEVO) — DDL completo del esquema (245 sentencias) generado con `migrate diff --from-empty`; es lo que se aplica a cada BD nueva.
+- `src/app/api/v1/super-admin/tenants/route.ts` — si NO se pasa `databaseUrl`, modo **auto**: crea proyecto Neon + aplica esquema + (tras sembrar roles/tipos/admin) siembra instrumentos. Si se pasa `databaseUrl`, modo manual como antes. `maxDuration=60`. Rollback total (borra proyecto Neon + registros globales) en cualquier fallo, incl. fallo al sembrar instrumentos.
+- `.env`/`.env.example` — `NEON_ORG_ID`, `NEON_PROJECT_REGION` (la key ya estaba).
+- `next.config.js` — `experimental.outputFileTracingIncludes` para empaquetar el `.sql` en la lambda de esa ruta.
+- `src/app/super-admin/page.tsx` — aviso "Base de datos automática" (dejar vacías las URLs = se crea sola) y ayuda actualizada.
+**Verificación (test de integración real contra Neon):** script throwaway creó `gefa-zztest` → aplicó esquema → tablas vacías (tenants=0) → sembró **8 instrumentos / 257 campos** → borró el proyecto. Confirmado end-to-end. Sin proyectos huérfanos (verificado por API). `tsc --noEmit` exit=0; `next lint` solo warnings preexistentes.
+**Caveat operativo:** el alta auto tarda ~10-30s (crear proyecto + 245 sentencias DDL + seed). `maxDuration=60` cubre Vercel Pro; en plan Hobby (10s) podría agotar tiempo → si se observa timeout, mover a un flujo asíncrono (encolar + status). El control plane sigue en la org de Vercel; los tenants nuevos viven en la org propia (`org-fragrant-hat`).
+
 ### 60. Terminar #5 — eliminar en bloque la API legacy de Ventanilla (cases/solicitudes/peticiones-reasignacion)
 **Estado:** COMPLETADO
 **Objetivo:** Cerrar del todo el ítem #5 (limpieza de rastros de personería/Ventanilla). El pase seguro de textos ya se hizo (entrada 59); lo que queda es la Capa 3: la API backend heredada de Ventanilla (`api/v1/cases/*`, `api/v1/solicitudes/*`, `api/v1/peticiones-reasignacion/*`) que concentra los gates con el rol fantasma SUPERVISOR y el dominio de petición. Verificar que estén huérfanas (sin UI viva que las llame, sin dependencia del dominio familia) y eliminarlas en bloque, sin romper ADMIN/DIRECTOR ni el flujo de comisaría.
