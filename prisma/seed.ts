@@ -143,11 +143,12 @@ async function main() {
 
       const cf = c.code.toLowerCase();
       await mkUser(`comisario.${cf}@${sgla}.gov.co`, `Comisario/a ${c.code} ${t.sigla}`, 'DIRECTOR', comisaria.id, { userType: 'Comisario de Familia' });
-      await mkUser(`funcionario.${cf}@${sgla}.gov.co`, `Funcionario ${c.code} ${t.sigla}`, 'FUNCIONARIO', comisaria.id, { userType: 'Equipo interdisciplinario', userTypeDescription: 'Psicología / trabajo social: atiende casos, aplica instrumentos y elabora valoraciones.' });
+      await mkUser(`psicologo.${cf}@${sgla}.gov.co`, `Psicólogo/a ${c.code} ${t.sigla}`, 'FUNCIONARIO', comisaria.id, { userType: 'Psicología', profesion: 'PSICOLOGIA' });
+      await mkUser(`trabajador.social.${cf}@${sgla}.gov.co`, `Trabajador/a Social ${c.code} ${t.sigla}`, 'FUNCIONARIO', comisaria.id, { userType: 'Trabajo social', profesion: 'TRABAJO_SOCIAL' });
       await mkUser(`ventanilla.${cf}@${sgla}.gov.co`, `Ventanilla ${c.code} ${t.sigla}`, 'VENTANILLA_UNICA', comisaria.id);
       await mkUser(`auxiliar.${cf}@${sgla}.gov.co`, `Auxiliar ${c.code} ${t.sigla}`, 'AUXILIAR_ATENCION_USUARIO', comisaria.id);
     }
-    console.log(`   ✅ ${COMISARIAS.length} comisarías × (comisario + funcionario + ventanilla + auxiliar)`);
+    console.log(`   ✅ ${COMISARIAS.length} comisarías × (comisario + psicólogo + trabajador social + ventanilla + auxiliar)`);
   }
 
   // 3. Configuración global mínima del sistema
@@ -165,7 +166,7 @@ async function main() {
   console.log(`\n🔑 Contraseña de todos los usuarios: ${DEFAULT_PASSWORD}`);
   console.log('   Patrón de correos por tenant (sigla en minúscula):');
   console.log('     admin@<sigla>.gov.co · secretaria.gobierno@<sigla>.gov.co');
-  console.log('     comisario.<cf>@<sigla>.gov.co · funcionario.<cf>@<sigla>.gov.co · ventanilla.<cf>@<sigla>.gov.co · auxiliar.<cf>@<sigla>.gov.co');
+  console.log('     comisario.<cf>@<sigla>.gov.co · psicologo.<cf>@<sigla>.gov.co · trabajador.social.<cf>@<sigla>.gov.co · ventanilla.<cf>@<sigla>.gov.co · auxiliar.<cf>@<sigla>.gov.co');
   console.log('   Tenants:', TENANTS.map((t) => `${t.sigla}→${t.domain}`).join(' · '));
   console.log('\n   Recuerda: el catálogo global de instrumentos se siembra con scripts/seed-instrumentos.ts\n');
 }

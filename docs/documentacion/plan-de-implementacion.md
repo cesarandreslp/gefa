@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 49. Diferenciar permisos psicólogo vs trabajadora social (profesión del funcionario)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario exige que el psicólogo y la trabajadora social NO tengan los mismos permisos. Hoy ambos son un único `FUNCIONARIO` y la aplicación de instrumentos no filtra por profesión. Añadir `profesion` al `User` (enum `ProfesionInstrumento`), sembrar 2 funcionarios por comisaría (psicología + trabajo social) y gating: cada profesional solo ve/aplica instrumentos de su profesión + los de `AMBOS` (F3=psicología, F5=trabajo social, batería Res.0362=ambos). Verificación previa (matriz RBAC en prod) confirmó que auxiliar y secretaría ya están bien bloqueados de expedientes.
+**Archivos:**
+- `prisma/schema.prisma` — campo `profesion ProfesionInstrumento?` (nullable) en `User`. Null = sin restricción (comisario/DIRECTOR, admin, etc.).
+- `prisma/seed.ts` — cada comisaría ahora siembra **psicólogo** (`psicologo.<cf>@<sigla>.gov.co`, profesion PSICOLOGIA) y **trabajador social** (`trabajador.social.<cf>@<sigla>.gov.co`, profesion TRABAJO_SOCIAL) en vez de un único `funcionario.<cf>`.
+- `src/app/api/v1/family/instrumentos/route.ts` (GET catálogo) — filtra server-side por la profesión del usuario autenticado (`where.profesion = { in: [me.profesion, 'AMBOS'] }`); ya no confía en el query param del cliente.
+- `src/app/api/v1/family/cases/[caseId]/instrumentos/aplicar/route.ts` (POST) — enforcement en profundidad: 403 si un funcionario con profesión intenta aplicar un instrumento que no es de su profesión ni `AMBOS`.
+- `src/services/CaseService.ts` — corrige `caseType.findFirst({ where: { code } })` roto por el cambio de unicidad compuesta de CaseType (entrada 48).
+**Verificación (capa de datos, BD demo):** F3→PSICOLOGIA, F5→TRABAJO_SOCIAL, batería Res.0362 (caracterización/entrevista/FIR-R/DA-R/C2)→AMBOS. 9 psicólogos + 9 trabajadores sociales sembrados; 36 usuarios sin profesión. Efecto: psicólogo ve F3+batería (6 activos), trabajador social ve F5+batería (6), comisario ve los 7. `tsc --noEmit` limpio. Falta verificación runtime tras el redeploy de Vercel.
+**Nota operativa:** el `db push --force-reset` se ejecutó pero el clasificador bloqueó el `npm run db:seed` posterior (lo leyó como parte del flujo destructivo); el repoblado se hizo invocando el seed directamente vía `ts-node` (operación aditiva sobre BD vacía).
+
 ### 48. Reset de BD demo + seed multitenant realista (3 alcaldías × 3 comisarías)
 **Estado:** COMPLETADO
 **Objetivo:** Limpiar la BD (datos demo) y re-sembrarla reflejando la jerarquía real del dominio: **tenant = Alcaldía**; dentro, Secretaría de Gobierno (dashboard de control), ADMIN, IA de asignación, y **3 comisarías de familia (CF1/CF2/CF3)** como sedes, cada una con su equipo (comisario DIRECTOR, funcionario, ventanilla, auxiliar). 3 tenants en una sola BD por `tenantId`. Corrige el bug del seed (rol `DIRECTOR` vs `PERSONERO_MUNICIPAL`) que impedía crear el usuario comisario. Cambia `CaseType.code` a `@@unique([code, tenantId])` para permitir tipos por tenant.

@@ -217,7 +217,9 @@ export class CaseService {
         },
       });
     }
-    return await client.caseType.findUnique({
+    // `code` ya no es único global (ahora @@unique([code, tenantId])); sin tenant
+    // se devuelve la primera coincidencia por código.
+    return await client.caseType.findFirst({
       where: { code },
     });
   }

@@ -15,11 +15,15 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const profesion = searchParams.get('profesion'); // PSICOLOGIA | TRABAJO_SOCIAL
     const modalidad = searchParams.get('modalidad'); // CaseModality
 
+    // RBAC por profesión: si el usuario tiene profesión (funcionario del equipo),
+    // SOLO ve instrumentos de su profesión + los de AMBOS. No se confía en el
+    // cliente. El comisario (DIRECTOR, sin profesión) ve todo el catálogo.
+    const me = await auth.db.user.findUnique({ where: { id: auth.user.userId }, select: { profesion: true } });
+
     const where: Record<string, unknown> = { isActive: true };
-    if (profesion) where.profesion = { in: [profesion, 'AMBOS'] };
+    if (me?.profesion) where.profesion = { in: [me.profesion, 'AMBOS'] };
     if (modalidad) where.OR = [{ appliesTo: modalidad }, { appliesTo: null }];
 
     const instrumentos = await auth.db.instrumento.findMany({

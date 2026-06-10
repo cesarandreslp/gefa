@@ -48,6 +48,17 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
       return NextResponse.json({ error: 'Instrumento no encontrado o inactivo' }, { status: 404 });
     }
 
+    // RBAC por profesión: un funcionario con profesión solo puede aplicar
+    // instrumentos de su profesión o de AMBOS (psicólogo no aplica F5, ni
+    // viceversa). El comisario (DIRECTOR, sin profesión) no tiene esta restricción.
+    const me = await db.user.findUnique({ where: { id: auth.user.userId }, select: { profesion: true } });
+    if (me?.profesion && instrumento.profesion !== 'AMBOS' && instrumento.profesion !== me.profesion) {
+      return NextResponse.json(
+        { error: `Este instrumento es de ${instrumento.profesion}; su perfil profesional (${me.profesion}) no puede aplicarlo.` },
+        { status: 403 }
+      );
+    }
+
     if (assessedPersonId) {
       const person = await db.person.findFirst({
         where: { id: assessedPersonId, tenantId: auth.user.tenantId },

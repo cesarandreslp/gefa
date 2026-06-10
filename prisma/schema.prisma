@@ -648,6 +648,12 @@ model User {
   // Tipo de usuario y especialidad (para asignación inteligente de IA)
   userType     String? // Tipo/especialidad del funcionario (ej: "Delegatura DDHH y Medio Ambiente", "Director Administrativo")
   userTypeDescription String? @db.Text // Descripción detallada de competencias para asignación IA
+
+  // Profesión del funcionario del equipo interdisciplinario (comisaría de familia).
+  // Restringe qué instrumentos de valoración puede aplicar: PSICOLOGIA → instrumentos
+  // de psicología + AMBOS; TRABAJO_SOCIAL → trabajo social + AMBOS. Null = sin
+  // restricción por profesión (p. ej. el comisario/DIRECTOR).
+  profesion    ProfesionInstrumento?
   
   // Límites y configuración
   maxCaseLoad  Int     @default(50) // Máximo de casos activos
