@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES } from '@/lib/familyApi';
+import { FAMILY_STATS_ROLES } from '@/lib/familyApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Estadísticas agregadas de la comisaría para tableros de política pública.
 export async function GET(request: NextRequest) {
   try {
-    const auth = await protectAPIRoute(request, FAMILY_READ_ROLES);
+    const auth = await protectAPIRoute(request, FAMILY_STATS_ROLES);
     if (!auth.authorized || !auth.user) {
       return auth.response ?? NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

@@ -105,8 +105,9 @@ export default function LoginModal({
 
       if (roleCode === 'SUPER_ADMIN') {
         router.push('/super-admin');
+      } else if (roleCode === 'SECRETARIA_GOBIERNO') {
+        router.push('/admin/seguimiento');
       } else {
-        // Panel unificado de la comisaría
         router.push('/admin');
       }
       setIsLoginModalOpen(false);
@@ -156,8 +157,10 @@ export default function LoginModal({
       const roleLevel = data.user?.role?.level || data.data?.user?.role?.level;
       if (roleCode === 'SUPER_ADMIN') {
         router.push('/super-admin');
+      } else if (roleCode === 'SECRETARIA_GOBIERNO') {
+        router.push('/admin/seguimiento');
+        router.refresh();
       } else {
-        // Panel unificado de la comisaría
         router.push('/admin');
         router.refresh();
       }

@@ -57,6 +57,14 @@ export const FAMILY_CONFIDENTIAL_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 export const FAMILY_AUDIT_ROLES = ['ADMIN', 'DIRECTOR'];
 
 /**
+ * Roles con acceso a ESTADÍSTICAS / seguimiento (tableros agregados, sin PII ni
+ * expedientes). Incluye a la SECRETARIA_GOBIERNO, que supervisa el desempeño de
+ * las comisarías del municipio con datos meramente estadísticos. La Secretaría
+ * NO está en READ/WRITE/CONFIDENTIAL: queda bloqueada de los expedientes.
+ */
+export const FAMILY_STATS_ROLES = ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'];
+
+/**
  * Verifica que un caso exista y pertenezca al tenant del usuario.
  * Devuelve el caso (id) o null. Evita fuga de datos entre comisarías.
  */

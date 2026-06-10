@@ -15,6 +15,9 @@ export default async function AdminLoginRedirect() {
   if (token) {
     try {
       const payload = await authService.verifyToken(token.value);
+      if (payload.roleCode === 'SECRETARIA_GOBIERNO') {
+        redirect('/admin/seguimiento');
+      }
       if (['ADMIN', 'DIRECTOR', 'FUNCIONARIO', 'SUPERVISOR', 'VENTANILLA_UNICA', 'ASIGNACION_DE_CASOS'].includes(payload.roleCode)) {
         redirect('/admin');
       }

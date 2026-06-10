@@ -7,10 +7,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 ## 2026-06-10
 
 ### 36. Jerarquía Municipio → Comisarías → Secretaría de Gobierno (seguimiento estadístico)
-**Estado:** EN CURSO
+**Estado:** COMPLETADO
 **Objetivo:** Modelar que el **tenant es el municipio/administración** con **varias comisarías** (sedes) y una **Secretaría de Gobierno** que hace seguimiento **estadístico** por comisaría (sin acceso a expedientes). Decisión del usuario: tenant = municipio; reconceptualizar CFBUGA → "Municipio de Buga" con 3 comisarías. Fases: (1) modelo `Comisaria` + `comisariaId` en `Case`/`User` (migración aditiva); (2) rol `SECRETARIA_GOBIERNO` (solo estadísticas, bloquea expedientes/valoraciones); (3) tablero de seguimiento con desglose por comisaría + sexo de demandante/demandado (`Person.gender` × `CaseParty.role`) + cumplimiento de medidas; (4) reconceptualizar el tenant demo y repartir datos en 3 comisarías.
 
-**Fase 1 (modelo) — EN CURSO.**
+**Fase 1 (modelo) — HECHA:** modelo `Comisaria` (sede) + `comisariaId` en `Case` y `User`; migración aditiva aplicada (db push). Relación en `Tenant`.
+**Fase 2 (rol) — HECHA:** `FAMILY_STATS_ROLES = ['ADMIN','DIRECTOR','SUPERVISOR','SECRETARIA_GOBIERNO']` en `familyApi`; `family/stats` pasa a ese conjunto. La Secretaría no está en READ/WRITE/CONFIDENTIAL → bloqueada de expedientes.
+**Fase 4 (datos demo) — HECHA:** `scripts/migrate-municipio-demo.ts` reconceptualizó CFBUGA → "Municipio de Guadalajara de Buga", creó 3 comisarías (CF1 Primera, CF2 Segunda, CF3 móvil), repartió los 3 casos (CF1: 2, CF2: 1, CF3: 0), asignó funcionarios a sus sedes y creó el rol + usuario `secretaria.gobierno@buga.gov.co` / `Secretaria2026!`.
+**Fase 3 (seguimiento) — HECHA:** endpoint `GET /api/v1/family/seguimiento` (por comisaría: registros, casos por estado/modalidad, **sexo de demandante** [DENUNCIANTE/VÍCTIMA × `Person.gender`] y **demandado** [AGRESOR], cumplimiento de medidas) protegido por `FAMILY_STATS_ROLES`; pantalla `/admin/seguimiento` con tarjeta comparativa por comisaría + resumen del municipio. `AdminNav`: item "Seguimiento" y filtro especial para `SECRETARIA_GOBIERNO` (solo seguimiento/estadísticas/reportes, nunca expedientes). Login de la Secretaría → `/admin/seguimiento`.
+
+**Pendiente menor:** actualizar `seed-demo-gefa.ts` para crear la estructura municipio+comisarías desde cero (hoy se logra con el script de migración sobre el demo existente).
 
 ### 35. Rebranding visual del tenant: paleta institucional (gov.co/MinTIC), logo y navegación
 **Estado:** COMPLETADO

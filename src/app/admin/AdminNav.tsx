@@ -24,7 +24,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: '⏰ Vencimientos',     path: '/admin/family/vencimientos' },
   { label: '📊 Estadísticas',     path: '/admin/family/stats',  roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   // Dirección y gestión
-  { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'], separatorBefore: true },
+  { label: '📈 Seguimiento',      path: '/admin/seguimiento',   roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'], separatorBefore: true },
+  { label: '👥 Equipo',           path: '/admin/usuarios',      roles: ['ADMIN', 'DIRECTOR'] },
   { label: '📄 Reportes',         path: '/admin/reports',       roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   { label: '🏛️ Entidad',          path: '/admin/entidad',       roles: ['ADMIN', 'DIRECTOR'] },
   { label: '🔧 Configuración',    path: '/admin/settings',      roles: ['ADMIN', 'DIRECTOR'] },
@@ -86,8 +87,12 @@ export default function AdminNav({ userRole }: AdminNavProps) {
     };
   };
 
-  const visible = NAV_ITEMS.filter(
-    item => !item.roles || item.roles.includes(userRole)
+  // La Secretaría de Gobierno solo ve seguimiento/estadísticas; nunca expedientes.
+  const SECRETARIA_PATHS = new Set(['/admin/seguimiento', '/admin/family/stats', '/admin/reports']);
+  const visible = NAV_ITEMS.filter(item =>
+    userRole === 'SECRETARIA_GOBIERNO'
+      ? SECRETARIA_PATHS.has(item.path)
+      : (!item.roles || item.roles.includes(userRole))
   );
 
   return (
