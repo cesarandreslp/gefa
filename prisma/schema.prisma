@@ -1622,6 +1622,18 @@ model Instrumento {
   isActive       Boolean @default(true)
   displayOrder   Int     @default(0)
 
+  // Batería: un instrumento puede agrupar sub-instrumentos (p. ej. Res. 0362/2026
+  // agrupa Caracterización + FIR-R + DA-R + entrevista).
+  parentId        String?
+  parent          Instrumento?  @relation("InstrumentoBateria", fields: [parentId], references: [id])
+  subInstrumentos Instrumento[] @relation("InstrumentoBateria")
+
+  // Configuración de puntuación e interpretación (cortes por nivel de riesgo,
+  // si los ítems críticos remiten a riesgo alto, máximo, etc.). Ej:
+  // { "maxScore": 22, "criticalToHigh": true,
+  //   "cutoffs": [{"level":"BAJO","min":0,"max":10}, ...] }
+  scoringConfig  Json?
+
   campos InstrumentoCampo[]
 
   createdAt DateTime @default(now())
@@ -1629,6 +1641,7 @@ model Instrumento {
 
   @@index([profesion])
   @@index([appliesTo])
+  @@index([parentId])
   @@map("instrumentos")
 }
 
@@ -1647,6 +1660,12 @@ model InstrumentoCampo {
   ayuda     String?   @db.Text
   requerido Boolean   @default(false)
   orden     Int       @default(0)
+
+  // Puntuación: `peso` = puntos cuando la respuesta es afirmativa (ítems BOOLEANO,
+  // p. ej. DA-R P1=4). En SELECCION/ESCALA el puntaje sale del `score` de la opción.
+  // `esCritico` = ítem crítico que por sí solo puede remitir a riesgo alto.
+  peso      Int?
+  esCritico Boolean   @default(false)
 
   @@unique([instrumentoId, code])
   @@index([instrumentoId])

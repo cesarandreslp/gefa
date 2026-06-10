@@ -25,6 +25,21 @@ export interface InstrumentoCampoDef {
   ayuda?: string;
   requerido?: boolean;
   orden: number;
+  peso?: number;       // puntos si afirmativo (ítems BOOLEANO)
+  esCritico?: boolean; // ítem crítico → puede remitir a riesgo alto
+}
+
+export interface ScoringCutoff {
+  level: string; // BAJO | MEDIO | MODERADO | ALTO | EXTREMO
+  min: number;
+  max: number;
+}
+
+export interface ScoringConfig {
+  maxScore?: number;
+  criticalToHigh?: boolean; // un ítem crítico afirmativo remite a riesgo alto
+  highLevel?: string;       // nivel al que remite un crítico (def. ALTO)
+  cutoffs?: ScoringCutoff[];
 }
 
 export interface InstrumentoDef {
@@ -38,6 +53,8 @@ export interface InstrumentoDef {
   description?: string;
   isActive: boolean;
   displayOrder: number;
+  parentCode?: string;          // si pertenece a una batería (code del padre)
+  scoringConfig?: ScoringConfig;
   campos: InstrumentoCampoDef[];
 }
 

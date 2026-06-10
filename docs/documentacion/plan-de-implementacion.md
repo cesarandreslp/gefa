@@ -66,6 +66,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 #### Fase C — Instrumentos de valoración (subsistema)
 
+##### C1.1 — Extensión del motor: puntuación + batería (para el instrumento Res. 0362/2026)
+**Estado:** COMPLETADO (motor; transcripción de sub-instrumentos en etapas siguientes)
+**Contexto:** el PDF oficial (`docs/documentacion/Guia-...feminicidio...pdf`) revela que el instrumento de Minjusticia es una **batería**: Módulo 1 Caracterización (ítems 1–76), Módulo 2 entrevista semiestructurada, **FIR-R** (suma de "Sí" → bajo 0–10/moderado 11–15/alto 16–22; ítems críticos→alto), **DA-R** (18 ítems ponderados P1=4,P2=3,P3–6=2,P7–17=1,P18 cualitativa; máx 26) y concepto técnico. Ver memoria [[instrumento-riesgo-feminicidio-res0362]].
+**Decisiones del usuario:** (1) extender el motor y transcribir por etapas; (2) **incluir el FIR-R** asumiendo que la Res. 0362/2026 lo adopta (anotar el supuesto de IP — derechos del FIR-R son de la Fiscalía); (3) **pre-rellenar** identificación (secciones A/B) desde `Person`/`CaseParty`.
+**Alcance C1.1:** extender `Instrumento` (auto-relación `parent`/`subInstrumentos` para batería; `scoringConfig` Json con cortes/criticalToHigh) e `InstrumentoCampo` (`peso` Int, `esCritico` Bool); actualizar tipos del catálogo y el seeder. Las etapas siguientes transcriben DA-R, FIR-R, Caracterización (con pre-fill) y entrevista/concepto.
+
 ##### C1 — Catálogo + plantillas estructuradas
 **Estado:** COMPLETADO
 **Alcance:** modelo `Instrumento` + `InstrumentoCampo` (motor de plantillas, catálogo global por `code`); catálogo de dominio + seeder idempotente (seguro de correr sin tocar datos demo); endpoint de listado. Sembrar ICBF F3.G16.P (psicológica) y F5.G16.P (socio-familiar) con estructura base **marcada como pendiente de validación oficial**; Minjusticia Res.0362/2026 se siembra **inactivo** hasta confirmar su estructura. UI de diligenciamiento va en C2.
