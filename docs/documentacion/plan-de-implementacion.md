@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 52. VERIFICADO EN VIVO: dominio propio ossgefa.lat operativo (entradas 50 y 51)
+**Estado:** COMPLETADO
+**Objetivo:** Confirmar end-to-end el routing del dominio propio una vez configurado en Vercel + Spaceship.
+**Config infra hecha por el usuario:** dominio `ossgefa.lat` registrado en Spaceship; nameservers cambiados a `ns1.vercel-dns.com` / `ns2.vercel-dns.com` (el wildcard `*.ossgefa.lat` obliga a usar Vercel DNS para emitir el certificado comodín); dominios `ossgefa.lat` + `*.ossgefa.lat` agregados en Vercel con "Redirect apex to www" activo.
+**Verificación runtime (curl, prod):** DNS apunta a Vercel (216.198.79.x). Apex `ossgefa.lat` → 200, redirige a `www.ossgefa.lat`, muestra `GefaLanding` (landing del producto). `buga.ossgefa.lat` → 200 = Comisaría de Guadalajara de Buga; `tulua.ossgefa.lat` → 200 = Tuluá; `palmira.ossgefa.lat` → 200 = Palmira (¡PALMIRA por fin alcanzable — el wildcard resuelve el dolor del alias manual de raíz!). Funcionó **sin** setear `TENANT_BASE_DOMAIN` (default del código) y **sin** cambiar el campo `domain` de los tenants (resolución por `sigla`). Fase 1 (routing) del alta automática CERRADA y validada. Fase 2 (provisioning de BD por branch Neon) sigue pendiente.
+
 ### 51. El apex ossgefa.lat debe dirigir a la página principal de GEFA
 **Estado:** COMPLETADO
 **Objetivo:** `ossgefa.lat` (apex, sin subdominio) debe mostrar la página principal/landing de GEFA que ya existe; los subdominios `<sigla>.ossgefa.lat` siguen yendo a cada tenant (entrada 50). Investigar cómo enruta hoy la raíz cuando no hay tenant resuelto y asegurar que el apex caiga en la landing y no en un error/redirección de tenant.
