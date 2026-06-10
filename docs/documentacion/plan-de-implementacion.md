@@ -6,6 +6,29 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 60. Terminar #5 — eliminar en bloque la API legacy de Ventanilla (cases/solicitudes/peticiones-reasignacion)
+**Estado:** COMPLETADO
+**Objetivo:** Cerrar del todo el ítem #5 (limpieza de rastros de personería/Ventanilla). El pase seguro de textos ya se hizo (entrada 59); lo que queda es la Capa 3: la API backend heredada de Ventanilla (`api/v1/cases/*`, `api/v1/solicitudes/*`, `api/v1/peticiones-reasignacion/*`) que concentra los gates con el rol fantasma SUPERVISOR y el dominio de petición. Verificar que estén huérfanas (sin UI viva que las llame, sin dependencia del dominio familia) y eliminarlas en bloque, sin romper ADMIN/DIRECTOR ni el flujo de comisaría.
+**Auditoría (estado real, corrige memoria desactualizada):** ya habían desaparecido en sesiones previas: el panel `/home/*` (Ventanilla), `general-request`, `transparencia`, `folios`, `api/v1/contact` y `src/domain/types/CaseTypes.ts`. `LoginModal` ya no redirige a `/home` (va a `/admin` o `/super-admin`). Lo que sobrevivía era solo la API backend de petición.
+**Verificación de orfandad (antes de borrar):** cero referencias desde `.tsx` (grep `/api/v1/cases/...` solo arroja el endpoint vivo de documentos); cero `fetch` desde el portal público `comisaria-en-linea`; cero imports cruzados (`from '@/app/api/v1/...'`); cron único = `family-vencimientos` (no dispara nada legacy); `CaseService`/`AIAssignmentService`/`rateLimit`/`next.config` solo matchean por comentarios, mensajes o el redirect de página `/admin/solicitudes`→`/admin/family`.
+**Hallazgo crítico (evitó romper producción):** `src/app/admin/family/[caseId]/CaseDocuments.tsx` (dominio FAMILIA) llama a `/api/v1/cases/[caseId]/documents` (GET+POST) — ese endpoint NO es legacy, es infra compartida ya migrada (importa `FAMILY_CONFIDENTIAL_ROLES`). Si se borraba `cases/` entero se rompía la carga de documentos del expediente. → Se conservó `cases/[id]/documents/route.ts` y se borró el resto quirúrgicamente.
+**Borrado (24 archivos, autorizado por el usuario):**
+- Carpetas completas: `api/v1/solicitudes/` (bandeja PQRS, estados, cierres), `api/v1/peticiones-reasignacion/`, `api/v1/reasignaciones/` (operaba sobre `citizen`/`caseType` viejos).
+- De `api/v1/cases/`: `filing/`, `public/`, y bajo `[id]/`: `assign`, `assignment-history`, `available-states`, `status`, `notes`, `citizen-response`, `documents/public`. **Conservado:** `cases/[id]/documents/route.ts` (vivo).
+**Efecto:** elimina el grueso de los 61 strings del rol fantasma `SUPERVISOR` (estaban concentrados aquí) y todo el dominio de petición residual.
+**Verificación:** `tsc --noEmit` exit=0 (tras limpiar caché `.next` con types stale de las rutas borradas); `next lint` solo warnings preexistentes. #5 cerrado de verdad (no solo el pase de textos de la entrada 59).
+
+### 59. Limpieza de rastros de personería/Ventanilla en el panel (textos y rol fantasma SUPERVISOR)
+**Estado:** COMPLETADO (pase seguro; resto mapeado para eliminación en bloque)
+**Objetivo:** GEFA es comisaría de familia, no personería. Quedan rastros heredados de Ventanilla Única: el rol `SUPERVISOR` se referencia en gates/nav pero NO existe en el seed de GEFA (gate muerto), y pueden quedar textos de "personería/personero/PQRS/tutela/derecho de petición" en el panel. Auditar y limpiar los rastros seguros (textos de UI, rol fantasma) sin tocar lógica de núcleo riesgosa.
+**Auditoría (hallazgo):** la UI del panel ya está casi limpia (la cara pública se había limpiado antes). Solo había **textos visibles** mal heredados en el form del superadmin. Los términos personería en el resto son (a) genéricos ("petición/solicitud") o (b) están en **módulos legacy de Ventanilla** (`solicitudes`, `peticiones-reasignacion`, `cases` viejo) que deben eliminarse EN BLOQUE, no línea a línea.
+**Rol fantasma SUPERVISOR:** confirmado que NO se crea en ningún seed ni se usa en la lógica de niveles de `auth.ts` (`LEVEL_TO_BASE_ROLES`). Son 61 strings muertos en `allowedRoles`, concentrados en los módulos legacy. Se dejan intactos: removerlos uno a uno es churn alto y bajo valor; desaparecerán al eliminar los módulos legacy.
+**Hecho (pase seguro):**
+- `src/app/super-admin/page.tsx` — placeholders del alta de tenant: "Ej: Personería de Yumbo" → "Ej: Alcaldía de Yumbo"; sigla "Ej: PMYUM" → "Ej: YUMBO".
+- `prisma/schema.prisma` — comentarios de ejemplo del modelo `Tenant` actualizados a alcaldía (`Alcaldía de Buga` / `BUGA` / `buga.ossgefa.lat`); solo comentarios, sin DDL.
+**Pendiente (separado, mayor):** eliminación en bloque de los módulos heredados de petición (`Case`/`CaseType`/`Citizen` viejos, `solicitudes`, `peticiones-reasignacion`, `transparencia`, `folios`) — es el ítem grande de `MIGRACION-PENDIENTE`, no un pase de textos.
+**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes.
+
 ### 58. "Nada más" literal para la Secretaría: cerrar GETs de metadatos y reasignaciones legacy
 **Estado:** COMPLETADO
 **Objetivo:** Completar la entrada 54: `SECRETARIA_GOBIERNO` solo debe tocar estadística/reportes. Quedaban GETs sin gate de rol (`/users`, `/roles`, `/comisarias`) y 2 endpoints legacy de reasignación (`casos/[caseId]/proponer-reasignacion`, `reasignar`) que cualquier autenticado podía invocar. Bloquear a la Secretaría de todos ellos (y gatear las reasignaciones a roles con potestad) sin romper a ADMIN/DIRECTOR ni los flujos operativos.

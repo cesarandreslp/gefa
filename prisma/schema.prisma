@@ -35,9 +35,9 @@ model Tenant {
   id                  String   @id @default(uuid())
 
   // Identificación
-  name                String   // Ej: "Personería Municipal de Guadalajara de Buga"
-  sigla               String   @unique // Ej: "PMBUGA"
-  domain              String?  @unique // Ej: "personeria-buga.gov.co"
+  name                String   // Ej: "Alcaldía de Guadalajara de Buga"
+  sigla               String   @unique // Ej: "BUGA"
+  domain              String?  @unique // Ej: "buga.ossgefa.lat"
 
   // Contacto y Branding
   logoUrl             String?

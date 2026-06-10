@@ -370,11 +370,11 @@ export default function SuperAdminDashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '0.9rem' }}>Nombre Institucional</label>
-                    <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }} placeholder="Ej: Personería de Yumbo" />
+                    <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }} placeholder="Ej: Alcaldía de Yumbo" />
                   </div>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '0.9rem' }}>Sigla Única</label>
-                    <input required value={formData.sigla} onChange={e => setFormData({...formData, sigla: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }} placeholder="Ej: PMYUM" />
+                    <input required value={formData.sigla} onChange={e => setFormData({...formData, sigla: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }} placeholder="Ej: YUMBO" />
                   </div>
                 </div>
 
