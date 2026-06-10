@@ -71,3 +71,11 @@ backups/
 # Media / Context Docs
 docs/promt/
 .env*
+
+# Archivos temporales de Office
+~$*
+*.tmp
+
+# Artefactos de extraccion de PDF
+docs/documentacion/guia.txt
+docs/documentacion/_*.png
