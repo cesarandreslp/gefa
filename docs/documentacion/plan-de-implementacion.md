@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 64. Rediseño de la cara pública del tenant (look gov.co institucional)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario muestra que la landing del tenant (imagen 1) se ve pobre y pide unificar el criterio visual de dos sitios gov.co de referencia (imágenes 2 y 3: cabecera con logo+nombre+tagline, barra de contacto, nav, hero con degradado y badge, tarjetas de servicios). Adoptar ESE look profesional pero con contenido de COMISARÍA DE FAMILIA, sin reintroducir dominio de personería (Transparencia/PQRS/Información Pública/Normatividad) — principio rector. Mejorar `src/app/page.tsx` (hero+tarjetas+contacto) y `src/app/ClientLayout.tsx` (cabecera institucional + barra de contacto).
+**Hecho:**
+- `src/app/ClientLayout.tsx` — se retira el logo flotante fijo (se veía suelto) y se construye una **cabecera institucional**: (1) barra de contacto bajo gov.co (teléfono/email del tenant, o fallback "Atención integral a la familia · ciudad", + enlaces Privacidad/Accesibilidad); (2) banda con la marca = logo (o caja con ícono ShieldCheck en degradado si no hay logo) + nombre de la entidad + tagline "Comisaría de Familia en línea", y la nav alineada a la derecha (`justify-content: space-between`). Borde inferior 3px del color primario.
+- `src/app/page.tsx` — **hero con degradado** (primary-dark→primary→primary-light) + patrón de puntos sutil + badge pill ("● Atención y protección integral a la familia") + título grande blanco (`clamp`) + subtítulo + 2 CTAs (blanco sólido / outline blanco). Debajo, **4 tarjetas de acceso rápido** superpuestas al hero (Medidas de protección, Custodia/alimentos/visitas, Restablecimiento de derechos NNA, Consultar mi caso). Contacto: ya NO muestra "No configurado" (renderiza solo lo que existe; fallback amable si no hay datos).
+- `src/app/styles/utilities.css` — clase `.cards-overlap` (margen negativo en desktop, normal en móvil vía media query) y `a.card` sin subrayado en hover.
+**Contenido 100% comisaría** (denuncia VIF, medidas, PARD, conciliación) — cero rastros de personería, fiel al principio rector. Aplica a los 3 tenants (BUGA/TULUA/PALMIRA).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings ni errores en los archivos tocados. Pendiente: revisión visual del usuario (deploy o build local).
+
 ### 63. Crear el SUPER_ADMIN SaaS (faltaba en producción)
 **Estado:** COMPLETADO
 **Objetivo:** Al auditar las credenciales (a pedido del usuario) se detectó que en la BD de producción NO existe ningún usuario SUPER_ADMIN: el `db push --force-reset` + `prisma/seed.ts` (seed activo, 3 alcaldías, pass `Gefa2026!`) borró el super admin que creaba `seed-superadmin.ts` y no lo recrea. Sin él no se puede entrar al panel `/super-admin` (necesario para probar el alta automática de Fase 2). Crear `superadmin@system.local` (rol SUPER_ADMIN global, tenantId null) con contraseña fuerte.

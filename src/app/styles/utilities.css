@@ -178,6 +178,20 @@
   flex-wrap: wrap;
 }
 
+/* Tarjetas-enlace: sin subrayado en hover */
+a.card, a.card:hover { text-decoration: none; }
+
+/* Tarjetas de acceso rápido superpuestas al hero (efecto institucional gov.co) */
+.cards-overlap {
+  margin-top: -5rem;
+}
+
+@media (max-width: 768px) {
+  .cards-overlap {
+    margin-top: var(--spacing-md);
+  }
+}
+
 /* Badges */
 .badge {
   display: inline-block;

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ShieldCheck, Phone, Mail } from 'lucide-react';
 import './globals.css';
 import './styles/utilities.css';
 import SkipLink from './components/SkipLink';
@@ -136,30 +137,7 @@ export default function ClientLayout({
         )}
       </head>
       <body>
-        {/* Logo flotante en esquina superior izquierda */}
-        <div className="main-logo-container" style={{
-          position: 'fixed',
-          top: '45px',
-          left: '1rem',
-          zIndex: 2000,
-          display: mobileMenuOpen ? 'none' : 'block'
-        }}>
-          {logoUrl && !logoUrl.endsWith('/logo.png') ? (
-            <Image
-              src={logoUrl}
-              alt={tenantName}
-              width={200}
-              height={50}
-              className="main-logo-img"
-              style={{ maxHeight: '40px', objectFit: 'contain', width: 'auto' }}
-              priority
-            />
-          ) : (
-            <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '0.95rem', maxWidth: 280, display: 'inline-block', lineHeight: 1.15 }}>
-              {tenantName}
-            </span>
-          )}
-        </div>        {/* Skip link para accesibilidad WCAG 2.1 AA */}
+        {/* Skip link para accesibilidad WCAG 2.1 AA */}
         <SkipLink />
 
         {/* Contenedor sticky para top bar y header */}
@@ -167,20 +145,56 @@ export default function ClientLayout({
           {/* Barra superior oficial de Gov.co */}
           <GovCoTopBar />
 
+          {/* Barra de contacto institucional */}
+          <div style={{ backgroundColor: 'var(--color-gray-50)', borderBottom: '1px solid var(--color-border)' }}>
+            <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', padding: '0.4rem var(--spacing-md)', fontSize: '0.8rem', color: 'var(--color-text-light)' }}>
+              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                {contactData?.phone && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Phone size={14} /> {contactData.phone}</span>
+                )}
+                {contactData?.institutionalEmail && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Mail size={14} /> {contactData.institutionalEmail}</span>
+                )}
+                {!contactData?.phone && !contactData?.institutionalEmail && (
+                  <span>Atención integral a la familia{city ? ` · ${city}` : ''}</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <a href="/privacidad" style={{ color: 'var(--color-text-light)', textDecoration: 'none' }}>Privacidad</a>
+                <a href="/accesibilidad" style={{ color: 'var(--color-text-light)', textDecoration: 'none' }}>Accesibilidad</a>
+              </div>
+            </div>
+          </div>
+
           <header>
           {/* Navegación principal */}
-          <nav 
-            style={{ 
-              padding: '1rem 0', 
-              backgroundColor: 'white', 
+          <nav
+            style={{
+              padding: '0.75rem 0',
+              backgroundColor: 'white',
               color: 'var(--color-primary)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              borderBottom: '2px solid var(--color-primary)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+              borderBottom: '3px solid var(--color-primary)'
             }}
             role="navigation"
             aria-label="Navegación principal"
           >
-            <div className="container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              {/* Marca institucional: logo + nombre + tagline */}
+              <a href="/" className="brand-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', flexShrink: 0 }}>
+                {logoUrl && !logoUrl.endsWith('/logo.png') ? (
+                  <Image src={logoUrl} alt={tenantName} width={200} height={50} className="main-logo-img" style={{ maxHeight: '46px', objectFit: 'contain', width: 'auto' }} priority />
+                ) : (
+                  <div style={{ width: '46px', height: '46px', borderRadius: '10px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                    <ShieldCheck size={26} />
+                  </div>
+                )}
+                <div>
+                  <h1 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-primary)', lineHeight: 1.15, fontWeight: 700 }}>{tenantName}</h1>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-light)', fontWeight: 500 }}>Comisaría de Familia en línea</p>
+                </div>
+              </a>
+
               {/* Botón hamburguesa (solo móvil) */}
               <button 
                 className="mobile-menu-button"

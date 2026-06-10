@@ -48,9 +48,9 @@ export default async function HomePage() {
     ? `${institutionTypeName} de ${rawName}`
     : rawName;
   const entityName = institutionLabel;
-  const entityAddress = settings?.address || tenant.address || 'Dirección no configurada';
-  const entityPhone = settings?.phone || tenant.phone || 'No configurado';
-  const entityEmail = settings?.institutionalEmail || tenant.institutionalEmail || 'No configurado';
+  const entityAddress = settings?.address || tenant.address || null;
+  const entityPhone = settings?.phone || tenant.phone || null;
+  const entityEmail = settings?.institutionalEmail || tenant.institutionalEmail || null;
   
   // Parsear horarios (puede ser JSON o string plano)
   let entityHoursFormatted = '';
@@ -83,39 +83,77 @@ export default async function HomePage() {
 
   const enabledServices = landingConfig.services.filter(s => s.enabled);
 
+  // Accesos rápidos a los servicios de la comisaría (siempre visibles).
+  const quickAccess = [
+    { icon: Shield, title: 'Medidas de protección', text: 'Solicita protección frente a la violencia intrafamiliar.', href: '/comisaria-en-linea' },
+    { icon: Scale, title: 'Custodia, alimentos y visitas', text: 'Concilia la custodia, la cuota alimentaria y el régimen de visitas.', href: '/comisaria-en-linea' },
+    { icon: Baby, title: 'Restablecimiento de derechos', text: 'Protección integral de niñas, niños y adolescentes (PARD).', href: '/comisaria-en-linea' },
+    { icon: Search, title: 'Consultar mi caso', text: 'Revisa el estado de tu denuncia o solicitud con tu radicado.', href: '/comisaria-en-linea?tab=consultar' },
+  ];
+
   return (
     <main>
       {/* Hero Section */}
       <section style={{
-        backgroundColor: '#e8f0f8',
-        backgroundImage: 'linear-gradient(180deg, #e8f0f8 0%, #f5f9fc 100%)',
+        background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 55%, var(--color-primary-light) 100%)',
+        color: 'white',
         padding: 'var(--spacing-3xl) 0',
-        textAlign: 'center',
-        borderBottom: '1px solid var(--color-border)'
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div className="container">
+        {/* Patrón decorativo sutil */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0, opacity: 0.10,
+          backgroundImage: 'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
+          backgroundSize: '26px 26px',
+        }} />
+        <div className="container" style={{ position: 'relative', maxWidth: '860px', textAlign: 'center' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.35)',
+            padding: '0.4rem 1rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: 600,
+            marginBottom: 'var(--spacing-lg)', backdropFilter: 'blur(4px)',
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#5ee0a0', display: 'inline-block' }} />
+            Atención y protección integral a la familia
+          </span>
           <h1 style={{
-            fontSize: '3rem',
-            fontWeight: '700',
-            marginBottom: 'var(--spacing-md)',
-            color: 'var(--color-primary-dark)'
+            fontSize: 'clamp(2rem, 5vw, 3.25rem)', fontWeight: 700,
+            marginBottom: 'var(--spacing-md)', color: 'white', lineHeight: 1.1,
           }}>
             {entityName}
           </h1>
           <p style={{
-            fontSize: '1.25rem',
-            marginBottom: 'var(--spacing-xl)',
-            color: 'var(--color-text-light)'
+            fontSize: '1.2rem', marginBottom: 'var(--spacing-xl)',
+            color: 'rgba(255,255,255,0.92)', maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto',
           }}>
             {landingConfig.heroSubtitle}
           </p>
           <div className="hero-actions">
-            <Link href="/comisaria-en-linea" className="btn btn-secondary btn-lg">
+            <Link href="/comisaria-en-linea" className="btn btn-lg" style={{ backgroundColor: 'white', color: 'var(--color-primary)', border: '2px solid white' }}>
               Radicar denuncia o solicitud
             </Link>
-            <Link href="/comisaria-en-linea?tab=consultar" className="btn btn-outline btn-lg">
+            <Link href="/comisaria-en-linea?tab=consultar" className="btn btn-lg" style={{ backgroundColor: 'transparent', color: 'white', border: '2px solid white' }}>
               Consultar mi caso
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Accesos rápidos — tarjetas de servicios de la comisaría */}
+      <section className="section" style={{ paddingTop: 'var(--spacing-2xl)', paddingBottom: 'var(--spacing-2xl)' }}>
+        <div className="container">
+          <div className="grid grid-cols-4 cards-overlap" style={{ position: 'relative', zIndex: 2 }}>
+            {quickAccess.map((q) => {
+              const Icon = q.icon;
+              return (
+                <Link href={q.href} key={q.title} className="card" style={{ textDecoration: 'none', display: 'block' }}>
+                  <div className="card-icon"><Icon size={28} /></div>
+                  <h3 className="card-title">{q.title}</h3>
+                  <p className="card-text" style={{ marginBottom: 0 }}>{q.text}</p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -169,20 +207,32 @@ export default async function HomePage() {
 
             <div>
               <h2 style={{ marginBottom: 'var(--spacing-lg)' }}>Contacto</h2>
-              <p style={{ fontSize: '1.125rem', lineHeight: '1.8' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <MapPin size={20} />
-                  <strong>Dirección:</strong> {entityAddress}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Phone size={20} />
-                  <strong>Teléfono:</strong> {entityPhone}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={20} />
-                  <strong>Email:</strong> {entityEmail}
-                </span>
-              </p>
+              {(entityAddress || entityPhone || entityEmail) ? (
+                <p style={{ fontSize: '1.125rem', lineHeight: '1.8' }}>
+                  {entityAddress && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <MapPin size={20} />
+                      <span><strong>Dirección:</strong> {entityAddress}</span>
+                    </span>
+                  )}
+                  {entityPhone && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <Phone size={20} />
+                      <span><strong>Teléfono:</strong> {entityPhone}</span>
+                    </span>
+                  )}
+                  {entityEmail && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Mail size={20} />
+                      <span><strong>Email:</strong> {entityEmail}</span>
+                    </span>
+                  )}
+                </p>
+              ) : (
+                <p style={{ fontSize: '1.05rem', color: 'var(--color-text-light)' }}>
+                  Acércate a nuestras sedes en horario de atención o radica y consulta tu caso en línea.
+                </p>
+              )}
             </div>
           </div>
         </div>
