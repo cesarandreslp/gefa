@@ -91,6 +91,15 @@ export const RISK_LEVEL_LABELS: Record<string, string> = {
   EXTREMO: 'Extremo',
 };
 
+export const TIPO_DECLARANTE_LABELS: Record<string, string> = {
+  VICTIMA: 'Víctima',
+  DENUNCIANTE: 'Denunciante',
+  AGRESOR: 'Presunto agresor (descargos)',
+  TESTIGO: 'Testigo',
+  INTERVINIENTE: 'Interviniente',
+  NNA: 'NNA (con representante legal)',
+};
+
 /** Valores de enum como arrays (para selects/checkboxes). */
 export const PARTY_ROLES = Object.keys(PARTY_ROLE_LABELS);
 export const VIOLENCE_TYPES = Object.keys(VIOLENCE_TYPE_LABELS);

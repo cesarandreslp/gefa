@@ -174,6 +174,7 @@ async function main() {
   // ───────────────────────────────────────────────────── 7. Limpiar datos demo
   console.log('🧹 7. Limpiando datos de dominio previos del tenant demo');
   await prisma.actionLog.deleteMany({ where: { tenantId: tenant.id } });
+  await prisma.declaracion.deleteMany({ where: { tenantId: tenant.id } });
   await prisma.assessment.deleteMany({ where: { tenantId: tenant.id } });
   await prisma.hearing.deleteMany({ where: { tenantId: tenant.id } });
   await prisma.restorationProcess.deleteMany({ where: { tenantId: tenant.id } });
@@ -247,6 +248,16 @@ async function main() {
 
     const aud = await prisma.hearing.create({ data: { tenantId: tenant.id, caseId: c.id, hearingType: 'DESCARGOS', scheduledAt: new Date(`${YEAR}-05-20T09:00:00`), location: 'Despacho de la Comisaría — Sala 1', presidedByUserId: users.comisaria, wasHeld: false } });
     await audit(users.comisaria, 'comisaria@cfbuga.gov.co', 'DIRECTOR', 'FAMILY_HEARING_SCHEDULED', 'Hearing', aud.id, c.id, new Date(`${YEAR}-05-06T15:40:00`), { type: 'DESCARGOS' });
+
+    // Declaración con peso procesal — la toma y firma el Comisario (DIRECTOR)
+    const decl = await prisma.declaracion.create({ data: {
+      tenantId: tenant.id, caseId: c.id, declaranteId: pVictima.id, tipoDeclarante: 'VICTIMA',
+      tomadaPorUserId: users.comisaria,
+      contenido: 'La declarante ratifica los hechos de violencia física y psicológica denunciados, describe el episodio más reciente y manifiesta temor por su integridad. Se le informan sus derechos y las rutas de atención.',
+      takenAt: new Date(`${YEAR}-05-06T14:30:00`), isSigned: true, signedAt: new Date(`${YEAR}-05-06T14:45:00`),
+    } });
+    await audit(users.comisaria, 'comisaria@cfbuga.gov.co', 'DIRECTOR', 'FAMILY_DECLARATION_TAKEN', 'Declaracion', decl.id, c.id, new Date(`${YEAR}-05-06T14:30:00`), { tipoDeclarante: 'VICTIMA', signed: true });
+
     console.log(`   ✅ ${c.filingNumber} — VIF (medida vigente, riesgo ALTO)`);
   }
 

@@ -86,6 +86,7 @@ model Tenant {
   hearings            Hearing[]
   assessments         Assessment[]
   comisarias          Comisaria[]
+  declaraciones       Declaracion[]
 
   @@index([sigla])
   @@index([isActive])
@@ -296,6 +297,7 @@ model Case {
   restorationProcesses RestorationProcess[]
   hearings            Hearing[]
   assessments         Assessment[]
+  declaraciones       Declaracion[]
 
   // Comisaría (sede) del municipio a la que pertenece el caso
   comisariaId    String?
@@ -639,6 +641,7 @@ model User {
   presidedHearings     Hearing[]
   conductedAssessments Assessment[]
   managedRestorations  RestorationProcess[]
+  tomadasDeclaraciones Declaracion[] @relation("DeclaracionTomadaPor")
 
   // Relación recursiva para conectar Auxiliares con el Oficial que los creó
   supervisorId String?
@@ -1319,6 +1322,9 @@ model CaseParty {
 
   notes    String? @db.Text
 
+  // Declaraciones rendidas por esta parte (peso procesal — las toma el Comisario)
+  declaraciones Declaracion[]
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1463,6 +1469,9 @@ model Hearing {
   nextHearingAt   DateTime?
   nextHearingType HearingType?
 
+  // Declaraciones rendidas dentro de esta audiencia
+  declaraciones Declaracion[]
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1514,6 +1523,62 @@ model Assessment {
   @@index([conductedAt])
   @@index([isConfidential])
   @@map("assessments")
+}
+
+/// Declaración / testimonio con PESO PROCESAL, tomada por la autoridad.
+/// Principio rector: solo el Comisario (rol DIRECTOR) puede tomarla. Lo que
+/// recaban los demás funcionarios (valoraciones, entrevistas, hechos) o aportan
+/// las partes (acervo probatorio) es insumo del expediente, NO la declaración
+/// procesalmente vinculante.
+model Declaracion {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  caseId String
+  case   Case   @relation(fields: [caseId], references: [id])
+
+  // Quién declara (parte del caso) y en qué calidad
+  declaranteId   String
+  declarante     CaseParty      @relation(fields: [declaranteId], references: [id])
+  tipoDeclarante TipoDeclarante
+
+  // Autoridad que la toma — SOLO Comisario/DIRECTOR (RBAC). Da el peso procesal.
+  tomadaPorUserId String
+  tomadaPor       User   @relation("DeclaracionTomadaPor", fields: [tomadaPorUserId], references: [id])
+
+  // Si se rindió dentro de una audiencia (opcional: puede tomarse fuera de ella)
+  hearingId String?
+  hearing   Hearing? @relation(fields: [hearingId], references: [id])
+
+  // Acta / contenido de lo declarado
+  contenido String   @db.Text
+  takenAt   DateTime @default(now())
+
+  // Firma de la autoridad: la declaración queda en firme al firmarse
+  isSigned Boolean   @default(false)
+  signedAt DateTime?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([declaranteId])
+  @@index([tomadaPorUserId])
+  @@index([takenAt])
+  @@map("declaraciones")
+}
+
+/// Calidad en la que una parte rinde declaración.
+enum TipoDeclarante {
+  VICTIMA
+  DENUNCIANTE
+  AGRESOR        // descargos del presunto agresor
+  TESTIGO
+  INTERVINIENTE
+  NNA            // a través de su representante legal
 }
 
 // ============================================================================

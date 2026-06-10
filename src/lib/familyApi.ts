@@ -49,6 +49,15 @@ export const FAMILY_WRITE_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 export const FAMILY_CONFIDENTIAL_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 
 /**
+ * Roles que pueden TOMAR/FIRMAR una declaración con peso procesal.
+ * Principio rector: solo el Comisario (DIRECTOR) es la autoridad que la toma;
+ * lo que recaban los funcionarios o aportan las partes es insumo del expediente,
+ * NO la declaración vinculante. Un FUNCIONARIO no puede ser autor. (Ni ADMIN, que
+ * es administrador del sistema, no autoridad procesal.)
+ */
+export const FAMILY_DECLARATION_AUTHOR_ROLES = ['DIRECTOR'];
+
+/**
  * Roles con acceso al VISOR DE AUDITORÍA (trazabilidad del expediente).
  * Es una herramienta de control interno: expone IPs y quién accedió a datos
  * confidenciales. Se limita a la dirección/administración, no al funcionario

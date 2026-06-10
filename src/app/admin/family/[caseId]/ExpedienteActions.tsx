@@ -5,7 +5,7 @@ import { Plus, X, UserPlus, Trash2, ShieldCheck, ShieldAlert, History, RefreshCw
 import {
   PROTECTION_MEASURE_TYPE_LABELS, MEASURE_STATUS_LABELS,
   HEARING_TYPE_LABELS, ASSESSMENT_TYPE_LABELS, RISK_LEVEL_LABELS,
-  PARD_STAGE_LABELS,
+  PARD_STAGE_LABELS, TIPO_DECLARANTE_LABELS, PARTY_ROLE_LABELS,
 } from '@/domain/catalogs/familyLabels';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -412,6 +412,148 @@ export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: bool
   );
 }
 
+// ── Declaraciones (peso procesal — solo el Comisario las toma) ───────────────
+// Sección autocontenida: carga su propia lista y se auto-oculta si el rol no
+// tiene acceso de lectura (ventanilla/Secretaría reciben 403). La toma/firma la
+// valida el backend como exclusiva del DIRECTOR.
+export function DeclaracionesSection({ caseId, parties, hearings }: { caseId: string; parties: any[]; hearings: any[] }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [items, setItems] = useState<any[] | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [declaranteId, setDeclaranteId] = useState('');
+  const [tipoDeclarante, setTipoDeclarante] = useState('VICTIMA');
+  const [hearingId, setHearingId] = useState('');
+  const [contenido, setContenido] = useState('');
+  const [signNow, setSignNow] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/declaraciones`);
+      if (res.status === 401 || res.status === 403) { setDenied(true); return; }
+      if (res.ok) setItems((await res.json()).data ?? []);
+    } catch { /* noop */ }
+  }, [caseId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (denied) return null;
+
+  const submit = async () => {
+    setError(null);
+    if (!declaranteId) { setError('Seleccione el declarante.'); return; }
+    if (!contenido.trim()) { setError('El acta / contenido es obligatorio.'); return; }
+    setSaving(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/declaraciones`, {
+      declaranteId, tipoDeclarante, contenido: contenido.trim(),
+      hearingId: hearingId || undefined, sign: signNow,
+    });
+    setSaving(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false); setContenido(''); setDeclaranteId(''); setSignNow(false); setHearingId('');
+    load();
+  };
+
+  const sign = async (id: string) => {
+    setBusyId(id);
+    await patch(`/api/v1/family/declaraciones/${id}`, { sign: true });
+    setBusyId(null);
+    load();
+  };
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0 }}>Declaraciones ({items?.length ?? 0})</h2>
+        <ToggleButton open={open} onClick={() => setOpen(!open)} label="Tomar declaración" />
+      </div>
+
+      {open && (
+        <div style={formBox}>
+          <ErrorBox msg={error} />
+          <div style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: '0.6rem' }}>
+            Solo el Comisario(a) de Familia puede tomar y firmar declaraciones: es el acto con peso procesal.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <div>
+              <label style={label}>Declarante *</label>
+              <select value={declaranteId} onChange={(e) => setDeclaranteId(e.target.value)} style={input}>
+                <option value="">Seleccionar…</option>
+                {parties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.person?.firstName} {p.person?.firstLastName} — {PARTY_ROLE_LABELS[p.role] ?? p.role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={label}>Calidad en que declara *</label>
+              <select value={tipoDeclarante} onChange={(e) => setTipoDeclarante(e.target.value)} style={input}>
+                {Object.entries(TIPO_DECLARANTE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+          </div>
+          {hearings.length > 0 && (
+            <div style={{ marginTop: '0.6rem' }}>
+              <label style={label}>Rendida en audiencia (opcional)</label>
+              <select value={hearingId} onChange={(e) => setHearingId(e.target.value)} style={input}>
+                <option value="">— Fuera de audiencia —</option>
+                {hearings.map((h) => (
+                  <option key={h.id} value={h.id}>{HEARING_TYPE_LABELS[h.hearingType] ?? h.hearingType} · {new Date(h.scheduledAt).toLocaleDateString('es-CO')}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div style={{ marginTop: '0.6rem' }}>
+            <label style={label}>Acta / contenido de lo declarado *</label>
+            <textarea value={contenido} onChange={(e) => setContenido(e.target.value)} style={{ ...input, minHeight: '90px', resize: 'vertical' }} />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.6rem', fontSize: '0.84rem', color: '#374151' }}>
+            <input type="checkbox" checked={signNow} onChange={(e) => setSignNow(e.target.checked)} />
+            Firmar al guardar (queda en firme, no editable)
+          </label>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+            <button onClick={submit} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando…' : 'Tomar declaración'}</button>
+            <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {!items || items.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin declaraciones registradas.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.6rem' }}>
+          {items.map((d) => (
+            <div key={d.id} style={{ border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.7rem 0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <b>{d.declarante?.person?.firstName} {d.declarante?.person?.firstLastName}</b>
+                  <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.82rem' }}>{TIPO_DECLARANTE_LABELS[d.tipoDeclarante] ?? d.tipoDeclarante}</span>
+                </div>
+                <span style={{ background: d.isSigned ? '#ecfdf5' : '#fef9c3', color: d.isSigned ? '#047857' : '#854d0e', borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.76rem', fontWeight: 600 }}>
+                  {d.isSigned ? 'Firmada (en firme)' : 'Borrador'}
+                </span>
+              </div>
+              <p style={{ margin: '0.45rem 0 0', fontSize: '0.88rem', color: '#374151', whiteSpace: 'pre-wrap' }}>{d.contenido}</p>
+              <div style={{ fontSize: '0.76rem', color: '#9ca3af', marginTop: '0.35rem' }}>
+                Tomada por {d.tomadaPor?.fullName ?? 'la autoridad'} · {new Date(d.takenAt).toLocaleString('es-CO')}
+              </div>
+              {!d.isSigned && (
+                <button onClick={() => sign(d.id)} disabled={busyId === d.id} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', marginTop: '0.45rem', color: '#047857', borderColor: '#6ee7b7' }}>
+                  {busyId === d.id ? 'Firmando…' : 'Firmar'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {
@@ -432,6 +574,9 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_ASSESSMENT_CREATED: 'Valoración registrada',
   FAMILY_ASSESSMENT_UPDATED: 'Valoración actualizada',
   FAMILY_ASSESSMENT_ACCESSED: 'Acceso a valoración (confidencial)',
+  FAMILY_DECLARATION_TAKEN: 'Declaración tomada',
+  FAMILY_DECLARATION_UPDATED: 'Declaración corregida',
+  FAMILY_DECLARATION_SIGNED: 'Declaración firmada (en firme)',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del

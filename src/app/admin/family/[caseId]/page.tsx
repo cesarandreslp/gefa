@@ -14,6 +14,7 @@ import {
   AddHearingForm, HearingOutcomeControl,
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
+  DeclaracionesSection,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -255,6 +256,9 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
       </div>
+
+      {/* Declaraciones (peso procesal — solo el Comisario) */}
+      <DeclaracionesSection caseId={data.id} parties={data.caseParties} hearings={data.hearings} />
 
       {/* Valoraciones (confidencial) */}
       <div style={{ ...card, borderColor: '#fde68a', background: '#fffbeb' }}>

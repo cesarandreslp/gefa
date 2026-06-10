@@ -6,6 +6,64 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 38. Bloque de dominio — peso procesal (declaración), acervo probatorio e instrumento de valoración
+**Estado:** EN CURSO
+**Objetivo:** Recopilar e implementar lo identificado en la sesión (a partir de "¿a quién le corresponde tomar las declaraciones?") para que el expediente sea conforme a la norma. Principio rector ya guardado: solo la declaración del Comisario (`DIRECTOR`) tiene peso procesal; lo que aportan partes y funcionarios es insumo del expediente cuyo valor probatorio fija el comisario.
+
+**Backlog a mejorar/implementar:**
+
+1. **Modelo `Declaracion` (nuevo).** Hoy NO existe. Diligencia con peso procesal.
+   - Campos: `caseId`, `declaranteId` (→ `CaseParty`/`Person`), `tipoDeclarante` (víctima / denunciante / agresor=descargos / testigo / interviniente), `tomadaPorUserId` (**solo `DIRECTOR`**), `fecha`, `contenido`/acta, `hearingId?` (si se rindió en audiencia).
+   - RBAC: crear/firmar exclusivo del `DIRECTOR`; un `FUNCIONARIO` no puede ser autor. Auditar en `ActionLog`.
+   - Decisión de diseño: modelo propio (no `hearingType`), porque la autoría exclusiva y el peso procesal deben ser explícitos y la declaración puede tomarse fuera de audiencia.
+
+2. **`Document` → acervo probatorio (mejoras).** Base ya existe (`fileHash` SHA-256, `documentType: EVIDENCE`, `uploadedByType: CITIZEN`, `mimeType`).
+   - Añadir `aportanteId` (→ `CaseParty`): quién la aporta como **parte**, no solo quién la subió.
+   - Añadir **valoración probatoria del `DIRECTOR`**: estado (ADMITIDA / RECHAZADA / PENDIENTE), valor probatorio, `valoradaPorUserId`, `valoradaAt`. Hoy no existe.
+   - Añadir confidencialidad reforzada (`isConfidential`/nivel) para contenido sensible (lesiones, audios de amenaza, NNA); hoy solo hay `isInternal`.
+
+3. **Subsistema de instrumentos de valoración (NUEVO, el grande).** Decisión del usuario: no es un campo; es un flujo completo dentro de la plataforma.
+   - **Catálogo de instrumentos con plantillas estructuradas** (campos/secciones por formato). Referentes: VIF/feminicidio → **Resolución 0362 de 2026** Minjusticia (Ley 2126/2021; complementos: protocolo Medicina Legal, FIR Fiscalía); PARD/NNA → ICBF **F3.G16.P** (psicológica) y **F5.G16.P** (socio-familiar). Res. 0362/2026 es reciente (marzo/2026): confirmar estructura contra texto oficial antes de sembrarla.
+   - El profesional (psicólogo/trabajador social) **escoge y diligencia** el formato en la plataforma; se calcula el resultado/nivel de riesgo según el formato.
+   - La **IA genera un informe preliminar** por cada instrumento diligenciado (borrador editable por el profesional).
+   - Cuando todos están diligenciados, la IA produce un **pre-informe consolidado**.
+   - El **comisario (`DIRECTOR`) revisa y aprueba** el pre-informe; ahí adquiere validez (la IA solo produce borradores, nunca peso procesal → coherente con el principio rector).
+
+4. **RBAC/auditoría transversal.** Autoría de declaración, valoración de prueba y aprobación de pre-informe exclusivas del `DIRECTOR`; acceso restringido a pruebas confidenciales y a valoraciones psicosociales (`Assessment.isConfidential` ya lo trae).
+
+**Infra IA heredada (verificada):** proveedor **GROQ** (`groq-sdk`, modelo `llama-3.3-70b-versatile`); config por tenant en `TenantSettings.groqApiKey` (fallback `GROQ_API_KEY`); patrón reusable en `src/services/AIAssignmentService.ts` (cliente cacheado por key, `chat.completions.create` con `response_format: json_object`). El subsistema de informes reusa esta infra; NO hace falta campo nuevo en el tenant.
+
+**Decisiones del usuario:** (1) declaración = **modelo propio** (no `hearingType`); (2) instrumentos = **subsistema con plantillas + IA** (ver punto 3); (3) **solo planear las fases** ahora, implementar después.
+
+**Plan por fases (a ejecutar en sesiones siguientes):**
+- **Fase A — Declaración con peso procesal:** modelo `Declaracion` + enum tipo de declarante; RBAC autor = solo `DIRECTOR`; UI registrar/firmar en expediente; `ActionLog`; ejemplo en seed.
+- **Fase B — Acervo probatorio:** extender `Document` (`aportanteId` → `CaseParty`; estado probatorio ADMITIDA/RECHAZADA/PENDIENTE + `valoradaPor`/`valoradaAt`; confidencialidad reforzada); RBAC valoración = `DIRECTOR`; UI cargar prueba con aportante + bandeja del comisario.
+- **Fase C — Instrumentos de valoración (subsistema), sub-fases:**
+  - C1 catálogo + plantillas estructuradas (modelo de instrumento y sus campos; sembrar Res.0362/2026, F3.G16.P, F5.G16.P contra texto oficial).
+  - C2 diligenciamiento en plataforma vinculado a `Assessment` (respuestas + cálculo de resultado).
+  - C3 informe preliminar por IA por instrumento (reusa infra GROQ; borrador editable).
+  - C4 pre-informe consolidado por IA cuando todos están diligenciados.
+  - C5 revisión y aprobación del `DIRECTOR` (estados BORRADOR→EN_REVISIÓN→APROBADO; firma).
+- **Fase D — Endurecimiento RBAC/auditoría** (transversal; cierre).
+
+**Decisiones de protección de datos (para Fase C/D):**
+- **IA multiproveedor:** la config del tenant debe permitir GROQ **y otros proveedores** (no atarse a GROQ). Implica generalizar `groqApiKey` a una config de proveedor IA por tenant.
+- **Anonimizar** los datos sensibles/NNA antes de enviarlos a la IA.
+- Confirmar estructura oficial de Res. 0362/2026 antes de C1 (acordado).
+
+**Ejecución:** orden A→B→C→D, confirmado por el usuario.
+
+#### Fase A — Declaración con peso procesal
+**Estado:** COMPLETADO
+**Alcance:** modelo `Declaracion` + enum tipo de declarante; RBAC autor = solo `DIRECTOR`; UI registrar/firmar en el expediente; `ActionLog`; ejemplo en seed.
+**Hecho:**
+- Schema: modelo `Declaracion` (declarante→`CaseParty`, `tipoDeclarante`, `tomadaPor`→`User` rel. `DeclaracionTomadaPor`, `hearing?` opcional, `contenido`, `isSigned`/`signedAt`) + enum `TipoDeclarante` (VICTIMA/DENUNCIANTE/AGRESOR/TESTIGO/INTERVINIENTE/NNA); relaciones inversas en `Tenant`/`Case`/`CaseParty`/`User`/`Hearing`. Aplicado con `db push`.
+- RBAC: `FAMILY_DECLARATION_AUTHOR_ROLES = ['DIRECTOR']` en `familyApi` (ni FUNCIONARIO ni ADMIN pueden tomarla). Lectura con `FAMILY_WRITE_ROLES` (sin ventanilla/Secretaría).
+- API: `GET`/`POST /api/v1/family/cases/[caseId]/declaraciones` (POST solo DIRECTOR, valida que el declarante sea parte del caso y la audiencia sea del caso) y `PATCH /api/v1/family/declaraciones/[id]` (corrige/firma; bloquea edición si ya está firmada). Auditoría `FAMILY_DECLARATION_TAKEN/UPDATED/SIGNED`.
+- UI: `DeclaracionesSection` en el expediente (se auto-oculta si el rol no tiene lectura; toma/firma con aviso de exclusividad del Comisario). Labels `TIPO_DECLARANTE_LABELS`.
+- Seed: declaración de ejemplo (víctima del CASO 1, firmada por la comisaria) + limpieza idempotente. type-check verde.
+- Nota: el seed NO se re-ejecutó (evitar borrar datos demo vigentes); la tabla ya existe vía `db push`.
+
 ### 37. Seed demo crea municipio + comisarías + Secretaría desde cero
 **Estado:** COMPLETADO
 **Objetivo:** Cerrar el pendiente menor de la entrada 36: que `seed-demo-gefa.ts` genere la estructura jerárquica (tenant = "Municipio de Guadalajara de Buga", 3 comisarías, rol + usuario de Secretaría de Gobierno, casos y funcionarios asignados a su sede) sin depender del script de migración posterior.
