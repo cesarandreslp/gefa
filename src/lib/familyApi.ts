@@ -43,10 +43,12 @@ export const FAMILY_WRITE_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 
 /**
  * Roles autorizados a ver/registrar VALORACIONES (datos sensibles, confidenciales).
- * Hardening Ley 1581/2012 + Ley 1098/2006: solo el equipo que opera el caso.
- * NUNCA ventanilla ni auxiliar de atención.
+ * Hardening Ley 1581/2012 + Ley 1098/2006: SOLO el equipo clínico que opera el caso
+ * (Comisario + funcionario psicosocial/jurídico). Se excluye ADMIN deliberadamente
+ * (administra usuarios/config, no es parte del equipo clínico ni autoridad procesal;
+ * minimización de datos de NNA/víctimas). NUNCA ventanilla ni auxiliar de atención.
  */
-export const FAMILY_CONFIDENTIAL_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
+export const FAMILY_CONFIDENTIAL_ROLES = ['DIRECTOR', 'FUNCIONARIO'];
 
 /**
  * Roles que pueden TOMAR/FIRMAR una declaración con peso procesal.

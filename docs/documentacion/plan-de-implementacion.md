@@ -6,6 +6,11 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 47. Retirar ADMIN del acceso a valoraciones confidenciales (decisión de política)
+**Estado:** COMPLETADO
+**Objetivo:** Por decisión del usuario (recomendación de la Fase D): minimizar el acceso a datos sensibles de NNA/víctimas retirando `ADMIN` de `FAMILY_CONFIDENTIAL_ROLES`. El equipo clínico (DIRECTOR + FUNCIONARIO) conserva el acceso; ADMIN sigue administrando usuarios/config pero no lee/escribe valoraciones psicosociales.
+**Hecho:** `FAMILY_CONFIDENTIAL_ROLES = ['DIRECTOR', 'FUNCIONARIO']` (antes incluía ADMIN). Esto aplica de forma transversal a todas las rutas que usan ese grupo: valoraciones (GET/POST/PATCH), aplicar instrumento, informe IA por instrumento, catálogo de instrumentos y pre-informe (POST/PATCH/estado) — ADMIN deja de leer/escribir valoraciones psicosociales. Comentario del grupo actualizado. type-check verde. Archivo: `src/lib/familyApi.ts`.
+
 ### 46. Fase D — Endurecimiento RBAC/auditoría transversal (cierre)
 **Estado:** COMPLETADO
 **Objetivo:** Auditar y endurecer el control de acceso y la trazabilidad de todo el dominio familia (datos sensibles de NNA y víctimas, Ley 1581/2012 + Ley 1098/2006): verificar aislamiento por tenant, RBAC consistente, autoría exclusiva del DIRECTOR donde corresponde, y auditoría de accesos/escrituras a datos confidenciales. Cerrar los huecos detectados.
