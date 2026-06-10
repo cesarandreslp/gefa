@@ -52,6 +52,7 @@ const nextConfig = {
       { source: '/admin/solicitudes/:path*', destination: '/admin/family', permanent: false },
       { source: '/admin/cases/:path*', destination: '/admin/family', permanent: false },
       { source: '/admin/cases', destination: '/admin/family', permanent: false },
+      { source: '/admin/home', destination: '/admin', permanent: false },
     ];
   },
 

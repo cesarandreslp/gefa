@@ -263,7 +263,7 @@ export default function RegistroEntidadPage() {
                   name="nombre"
                   value={form.nombre}
                   onChange={handleChange}
-                  placeholder="Ej: Entidad Institucional de Cali"
+                  placeholder="Ej: Comisaría de Familia de Cali"
                   style={inputStyle}
                   autoFocus
                 />

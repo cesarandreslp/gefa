@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     if (result.user.role.code === 'SUPER_ADMIN') {
       response.headers.set('X-Redirect-To', '/super-admin');
     } else {
-      response.headers.set('X-Redirect-To', '/admin/home');
+      response.headers.set('X-Redirect-To', '/admin');
     }
     
     return response;

@@ -51,7 +51,7 @@ export interface ReportData {
 
 export class ReportService {
   private static readonly LEGAL_NOTE =
-    'Este reporte es un documento oficial de la Entidad Institucional. ' +
+    'Este reporte es un documento oficial de la Comisaría de Familia. ' +
     'La información contenida es auténtica y verificable. Generado automáticamente por el GEFA — Gestión Familiar. ' +
     'Ley 1712/2014 (Transparencia y Acceso a la Información Pública).';
 

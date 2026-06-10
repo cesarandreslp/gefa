@@ -44,7 +44,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
       <body>
         <div class="container">
           <div class="header">
-            <h1>Entidad Institucional</h1>
+            <h1>Comisaría de Familia</h1>
           </div>
           <div class="content">
             <p>Estimado(a) {{citizenName}},</p>
@@ -56,7 +56,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
               <p><strong>Fecha límite de respuesta:</strong> {{dueDate}}</p>
             </div>
             <p>Puede consultar el estado de su solicitud en cualquier momento a través de nuestro portal web.</p>
-            <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
+            <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
             <p>Este es un mensaje automático del sistema GEFA — Gestión Familiar</p>
@@ -105,7 +105,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
             </div>
           </div>
           <div class="footer">
-            <p>GEFA — Gestión Familiar - Entidad Institucional</p>
+            <p>GEFA — Gestión Familiar - Comisaría de Familia</p>
           </div>
         </div>
       </body>
@@ -145,7 +145,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
               {{/if}}
             </div>
             <p>Puede consultar más detalles en nuestro portal web.</p>
-            <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
+            <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
             <p>GEFA — Gestión Familiar</p>
@@ -184,7 +184,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
               <p>{{responseMessage}}</p>
             </div>
             <p>Puede descargar los documentos oficiales desde nuestro portal web.</p>
-            <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
+            <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
             <p>GEFA — Gestión Familiar</p>
@@ -264,7 +264,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
               <p>{{requiredInformation}}</p>
             </div>
             <p>Por favor, responda a la mayor brevedad posible para continuar con el trámite.</p>
-            <p>Cordialmente,<br><strong>Entidad Institucional</strong></p>
+            <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
             <p>GEFA — Gestión Familiar</p>
@@ -276,7 +276,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
   },
 
   GENERIC: {
-    subject: 'Notificación - Entidad Institucional',
+    subject: 'Notificación - Comisaría de Familia',
     html: `
       <!DOCTYPE html>
       <html>
@@ -293,7 +293,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
       <body>
         <div class="container">
           <div class="header">
-            <h1>Entidad Institucional</h1>
+            <h1>Comisaría de Familia</h1>
           </div>
           <div class="content">
             <p>{{message}}</p>

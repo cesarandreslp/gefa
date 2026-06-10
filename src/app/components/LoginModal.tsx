@@ -283,7 +283,7 @@ export default function LoginModal({
                   marginBottom: '1.5rem',
                 }}
               >
-                Acceso exclusivo para funcionarios de la Entidad Institucional
+                Acceso exclusivo para funcionarios de la Comisaría de Familia
               </p>
 
               {/* Mensaje de error */}
@@ -473,7 +473,7 @@ export default function LoginModal({
                 <img src={logoUrl} alt={tenantName || 'Login'} style={{ maxHeight: '60px', marginBottom: '1rem' }} />
               ) : (
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)', marginBottom: '1rem', textAlign: 'center' }}>
-                  {tenantName || 'Entidad Institucional'}
+                  {tenantName || 'Comisaría de Familia'}
                 </h2>
               )}
               <h3

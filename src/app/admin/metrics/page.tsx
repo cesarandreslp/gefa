@@ -544,8 +544,8 @@ export default function MetricsPage() {
                   controlar la gestión de las entidades públicas.
                 </p>
                 <p>
-                  Estos indicadores permiten a la Entidad Institucional evidenciar la
-                  eficiencia, eficacia y transparencia de su gestión ante órganos de control
+                  Estos indicadores permiten a la comisaría de familia evidenciar la
+                  eficiencia, eficacia y transparencia de su gestión ante los órganos de control
                   y la ciudadanía.
                 </p>
                 <p>

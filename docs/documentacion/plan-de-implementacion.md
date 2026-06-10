@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-09
 
+### 34. Revisar páginas transversales del menú admin (rastros de Ventanilla)
+**Estado:** COMPLETADO
+**Objetivo:** Las páginas transversales del menú (`/admin/reports`, `/admin/entidad`, `/admin/settings`, `/admin/notifications`, `/admin/system`) son heredadas; revisar y sanear vocabulario/contenido de personería/Ventanilla visible al usuario.
+
+**Hallazgo:** las páginas del menú son **administración genérica** (Entidad/contacto/branding/SMTP, Notificaciones, Sistema, Reportes) que aplica igual a una comisaría — sin contenido de personería. Único rastro real: el placeholder **"Entidad Institucional"**.
+
+**Hecho:**
+- Reemplazo "Entidad Institucional" → "Comisaría de Familia" en 6 archivos (incluye `metrics`, `LoginModal`, `registro-entidad`, y los fallbacks/plantillas de `ReportService`, `TemplateService`, `SystemSettingsService` — correos al ciudadano y reportes).
+- `auth/login` `X-Redirect-To` → `/admin` (antes `/admin/home`).
+- Retirado `/admin/home` (dashboard heredado, duplica el Tablero), con redirect en `next.config.js` → `/admin`. Type-check en verde.
+
 ### 33. Gestión documental en el expediente de familia (portar desde /admin/cases)
 **Estado:** COMPLETADO
 **Objetivo:** El expediente de familia (`/admin/family/[caseId]`) no permite subir/ver documentos; `/admin/cases/[id]` sí (`UploadDocumentForm` + endpoint `cases/[id]/documents`). Portar la gestión documental al expediente de familia (listar + subir, con tipos de comisaría) reutilizando el endpoint existente, para completar el expediente y poder retirar `/admin/cases`.
@@ -28,7 +39,8 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Objetivo:** Puntos 3 y 4 de la propuesta del panel admin. (3) Crear un **Tablero de inicio** de la comisaría (resumen: casos por estado/modalidad, vencimientos próximos, medidas vigentes, audiencias) y que el login caiga ahí. (4) Retirar/redirigir las páginas heredadas de Ventanilla (`/admin/inbox`, `/admin/cases`, `/admin/solicitudes`) hacia el módulo de comisaría, como se hizo con `/home`.
 
 ### 30. Fix: error server-side en /atencion-ciudadano/consultar (portal consolidado)
-**Estado:** PENDIENTE (pospuesto por #31)
+**Estado:** NO REPRODUCIBLE — probable deploy stale
+**Diagnóstico:** `npm run build` compila limpio (los "Dynamic server usage" son benignos, rutas API con cookies). Reproducción local con `next start`: `/atencion-ciudadano/consultar` y la landing devuelven **HTTP 200 sin errores**, tanto con `tenant=null` (localhost) como simulando `Host: gefa-cfbuga.vercel.app` (tenant CFBUGA). El código está correcto. `prisma.ts` usa `PrismaClient` estándar (sin adaptador Neon serverless), pero Prisma funciona en Vercel (el panel carga). **Conclusión:** el error que se vio en Vercel corresponde casi seguro a un deploy desactualizado al momento de añadir el dominio (la versión previa de `consultar` era la de Ventanilla). Pendiente: retest en el deploy actual; si persiste, capturar el log de la función (digest 2438100093). Mejora futura sugerida: adaptador `@prisma/adapter-neon` para robustez en serverless.
 **Objetivo:** En el deploy de Vercel (`gefa-cfbuga.vercel.app/atencion-ciudadano/consultar`) aparece "Application error: a server-side exception has occurred" (digest 2438100093). La ruta renderiza `<ComisariaPortal initialTab="consultar"/>`. Sin accesos inseguros evidentes en el portal; falta el log de Vercel para el digest. Se retoma tras #31.
 
 ### 31. Panel del administrador del tenant: menú de comisaría y login a Casos de Familia
