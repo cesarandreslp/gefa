@@ -32,6 +32,7 @@ interface Expediente {
   violenceTypes: string[];
   caseType: { code: string; name: string } | null;
   state: { code: string; name: string; color: string | null } | null;
+  comisaria: { id: string; code: string; name: string } | null;
   caseParties: any[];
   protectionMeasures: any[];
   restorationProcesses: any[];
@@ -61,6 +62,30 @@ export default function ExpedienteFamiliaPage() {
   const [comment, setComment] = useState('');
   const [changing, setChanging] = useState(false);
   const [transError, setTransError] = useState<string | null>(null);
+  const [comisarias, setComisarias] = useState<Array<{ id: string; code: string; name: string }>>([]);
+  const [savingComisaria, setSavingComisaria] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/v1/comisarias')
+      .then((r) => (r.ok ? r.json() : { comisarias: [] }))
+      .then((d) => setComisarias((d.comisarias ?? []).filter((c: { isActive: boolean }) => c.isActive)))
+      .catch(() => setComisarias([]));
+  }, []);
+
+  const reassignComisaria = async (comisariaId: string) => {
+    setSavingComisaria(true);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comisariaId: comisariaId || null }),
+      });
+      if (res.ok) await load();
+      else { const d = await res.json(); alert(d.error || 'No se pudo reasignar la comisaría'); }
+    } finally {
+      setSavingComisaria(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -125,10 +150,26 @@ export default function ExpedienteFamiliaPage() {
           </div>
           <span style={pill(data.state?.color ?? '#6b7280')}>{data.state?.name ?? '—'}</span>
         </div>
-        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem', fontSize: '0.85rem', color: '#374151' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem', fontSize: '0.85rem', color: '#374151', alignItems: 'center' }}>
           <span>📅 Radicado: <b>{new Date(data.filedAt).toLocaleDateString('es-CO')}</b></span>
           <span>⏰ Vence: <b>{new Date(data.dueDate).toLocaleDateString('es-CO')}</b></span>
           <span>🔢 Prioridad: <b>{data.priority}</b></span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            🏢 Comisaría:
+            {comisarias.length > 0 ? (
+              <select
+                value={data.comisaria?.id ?? ''}
+                disabled={savingComisaria}
+                onChange={(e) => reassignComisaria(e.target.value)}
+                style={{ padding: '0.3rem 0.5rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.82rem' }}
+              >
+                <option value="">Sin asignar</option>
+                {comisarias.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
+              </select>
+            ) : (
+              <b>{data.comisaria ? `${data.comisaria.code} — ${data.comisaria.name}` : 'Sin asignar'}</b>
+            )}
+          </span>
         </div>
         {data.violenceTypes.length > 0 && (
           <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>

@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 56. Asignar un caso a su comisaría (sede) en la radicación y gestión
+**Estado:** COMPLETADO
+**Objetivo:** El modelo ya tiene `Case.comisariaId` pero no hay forma de elegir la comisaría (sede) que atiende un caso. Permitir seleccionar la comisaría al radicar (y poder cambiarla luego), validando que pertenezca al tenant. Es el complemento natural de la gestión de comisarías (entrada 53).
+**Hecho:**
+- `src/app/api/v1/family/cases/route.ts` — POST de radicación acepta `comisariaId` (valida que sea comisaría activa del tenant) y lo guarda en el caso; GET de listado incluye la `comisaria`.
+- `src/app/api/v1/family/cases/[caseId]/route.ts` — GET incluye la `comisaria`; nuevo **PATCH** (gated `FAMILY_WRITE_ROLES`) para reasignar/quitar la comisaría del caso, con validación de tenant y auditoría `FAMILY_CASE_UPDATED`.
+- `src/app/admin/family/nuevo/page.tsx` — selector "Comisaría (sede) que atiende el caso" en la radicación (carga las activas; opcional).
+- `src/app/admin/family/[caseId]/page.tsx` — el encabezado del expediente muestra la comisaría y permite reasignarla con un selector inline (PATCH + recarga).
+- `src/app/admin/family/page.tsx` — nueva columna "Comisaría" en el listado de casos.
+**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. Runtime tras redeploy pendiente.
+
 ### 55. Cupo de comisarías por tenant (las "contratadas"): el superadmin lo fija, el tenant no lo excede
 **Estado:** COMPLETADO
 **Objetivo:** Al crear el tenant (Alcaldía), el superadmin debe poder fijar cuántas comisarías puede tener ("las contratadas"). Desde el tenant, el ADMIN no debe poder crear (ni reactivar) más comisarías que ese cupo. Añadir `maxComisarias` al `Tenant`, aceptarlo en el alta de superadmin, y forzar el límite en el POST/PUT de comisarías + reflejarlo en la UI (X de Y usadas).

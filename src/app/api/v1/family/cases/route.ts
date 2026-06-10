@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
         include: {
           caseType: { select: { code: true, name: true } },
           state: { select: { code: true, name: true, color: true } },
+          comisaria: { select: { id: true, code: true, name: true } },
           caseParties: { include: { person: { select: { id: true, firstName: true, firstLastName: true, isMinor: true } } } },
         },
         orderBy: { filedAt: 'desc' },
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       caseTypeCode, subject, description, channel,
-      violenceTypes, modality, priority, folios,
+      violenceTypes, modality, priority, folios, comisariaId,
     } = body;
     const parties: PartyInput[] = Array.isArray(body.parties) ? body.parties : [];
 
@@ -165,6 +166,21 @@ export async function POST(request: NextRequest) {
         { error: `Tipo de caso no encontrado: ${caseTypeCode}` },
         { status: 404 }
       );
+    }
+
+    // --- Comisaría (sede) que atiende el caso: opcional, pero si viene debe ser
+    //     una comisaría activa del tenant ---
+    if (comisariaId) {
+      const comisaria = await db.comisaria.findFirst({
+        where: { id: comisariaId, tenantId, isActive: true },
+        select: { id: true },
+      });
+      if (!comisaria) {
+        return NextResponse.json(
+          { error: 'La comisaría seleccionada no existe o no está activa en la entidad' },
+          { status: 400 }
+        );
+      }
     }
 
     // Modalidad: explícita o derivada del código base del tipo de caso
@@ -326,6 +342,7 @@ export async function POST(request: NextRequest) {
           legalTermDays: caseType.defaultLegalTermDays,
           caseModality,
           violenceTypes: validViolence,
+          comisariaId: comisariaId || null,
           metadata: { radicadoPor: auth.user!.userId, origen: 'family_intake' },
         },
       });
@@ -367,6 +384,7 @@ export async function POST(request: NextRequest) {
       include: {
         caseType: { select: { code: true, name: true } },
         state: { select: { code: true, name: true } },
+        comisaria: { select: { id: true, code: true, name: true } },
         caseParties: { include: { person: true } },
       },
     });

@@ -14,6 +14,7 @@ interface FamilyCaseRow {
   priority: number;
   caseType: { code: string; name: string } | null;
   state: { code: string; name: string; color: string | null } | null;
+  comisaria: { id: string; code: string; name: string } | null;
   caseParties: { id: string; person: { firstName: string; firstLastName: string; isMinor: boolean } }[];
 }
 
@@ -112,6 +113,7 @@ export default function FamilyCasesPage() {
                 <th style={{ padding: '0.75rem 1rem' }}>Radicado</th>
                 <th style={{ padding: '0.75rem 1rem' }}>Asunto</th>
                 <th style={{ padding: '0.75rem 1rem' }}>Modalidad</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Comisaría</th>
                 <th style={{ padding: '0.75rem 1rem' }}>Partes</th>
                 <th style={{ padding: '0.75rem 1rem' }}>Estado</th>
                 <th style={{ padding: '0.75rem 1rem' }}>Radicado el</th>
@@ -127,6 +129,7 @@ export default function FamilyCasesPage() {
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600, fontFamily: 'monospace' }}>{c.filingNumber}</td>
                   <td style={{ padding: '0.75rem 1rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.subject}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>{c.caseModality ? (CASE_MODALITY_LABELS[c.caseModality] ?? c.caseModality) : '—'}</td>
+                  <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: c.comisaria ? '#374151' : '#9ca3af' }}>{c.comisaria ? c.comisaria.code : '—'}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#6b7280' }}>
                       <Users size={14} /> {c.caseParties.length}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, UserPlus } from 'lucide-react';
 import { FAMILY_CASE_TYPES } from '@/domain/catalogs/familyCaseTypes';
@@ -50,6 +50,15 @@ export default function NuevoFamilyCasePage() {
   const [channel, setChannel] = useState('PRESENCIAL');
   const [violence, setViolence] = useState<string[]>([]);
   const [parties, setParties] = useState<PartyForm[]>([emptyParty('VICTIMA')]);
+  const [comisarias, setComisarias] = useState<Array<{ id: string; code: string; name: string }>>([]);
+  const [comisariaId, setComisariaId] = useState('');
+
+  useEffect(() => {
+    fetch('/api/v1/comisarias')
+      .then((r) => (r.ok ? r.json() : { comisarias: [] }))
+      .then((d) => setComisarias((d.comisarias ?? []).filter((c: { isActive: boolean }) => c.isActive)))
+      .catch(() => setComisarias([]));
+  }, []);
 
   const toggleViolence = (v: string) =>
     setViolence((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
@@ -86,6 +95,7 @@ export default function NuevoFamilyCasePage() {
         subject: subject.trim(),
         description: description.trim(),
         channel,
+        comisariaId: comisariaId || undefined,
         violenceTypes: violence,
         parties: parties.map((p) => ({
           role: p.role,
@@ -156,6 +166,17 @@ export default function NuevoFamilyCasePage() {
               </select>
             </div>
           </div>
+          {comisarias.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <label style={labelStyle}>Comisaría (sede) que atiende el caso</label>
+              <select value={comisariaId} onChange={(e) => setComisariaId(e.target.value)} style={inputStyle}>
+                <option value="">Sin asignar</option>
+                {comisarias.map((c) => (
+                  <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div style={{ marginTop: '1rem' }}>
             <label style={labelStyle}>Asunto *</label>
             <input value={subject} onChange={(e) => setSubject(e.target.value)} style={inputStyle} placeholder="Resumen breve del caso" />
