@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 36. Jerarquía Municipio → Comisarías → Secretaría de Gobierno (seguimiento estadístico)
+**Estado:** EN CURSO
+**Objetivo:** Modelar que el **tenant es el municipio/administración** con **varias comisarías** (sedes) y una **Secretaría de Gobierno** que hace seguimiento **estadístico** por comisaría (sin acceso a expedientes). Decisión del usuario: tenant = municipio; reconceptualizar CFBUGA → "Municipio de Buga" con 3 comisarías. Fases: (1) modelo `Comisaria` + `comisariaId` en `Case`/`User` (migración aditiva); (2) rol `SECRETARIA_GOBIERNO` (solo estadísticas, bloquea expedientes/valoraciones); (3) tablero de seguimiento con desglose por comisaría + sexo de demandante/demandado (`Person.gender` × `CaseParty.role`) + cumplimiento de medidas; (4) reconceptualizar el tenant demo y repartir datos en 3 comisarías.
+
+**Fase 1 (modelo) — EN CURSO.**
+
 ### 35. Rebranding visual del tenant: paleta institucional (gov.co/MinTIC), logo y navegación
 **Estado:** COMPLETADO
 

@@ -85,6 +85,7 @@ model Tenant {
   restorationProcesses RestorationProcess[]
   hearings            Hearing[]
   assessments         Assessment[]
+  comisarias          Comisaria[]
 
   @@index([sigla])
   @@index([isActive])
@@ -295,8 +296,13 @@ model Case {
   restorationProcesses RestorationProcess[]
   hearings            Hearing[]
   assessments         Assessment[]
-  
+
+  // Comisaría (sede) del municipio a la que pertenece el caso
+  comisariaId    String?
+  comisaria      Comisaria? @relation(fields: [comisariaId], references: [id])
+
   @@index([filingNumber])
+  @@index([comisariaId])
   @@index([citizenId])
   @@index([caseTypeId])
   @@index([stateId])
@@ -638,7 +644,11 @@ model User {
   supervisorId String?
   supervisor   User?   @relation("UserToSupervisor", fields: [supervisorId], references: [id])
   auxiliaries  User[]  @relation("UserToSupervisor")
-  
+
+  // Comisaría (sede) del municipio a la que pertenece el funcionario
+  comisariaId  String?
+  comisaria    Comisaria? @relation(fields: [comisariaId], references: [id])
+
   @@unique([email, tenantId])
   @@unique([documentNumber, tenantId])
   @@index([email])
@@ -1504,6 +1514,38 @@ model Assessment {
   @@index([conductedAt])
   @@index([isConfidential])
   @@map("assessments")
+}
+
+// ============================================================================
+// JERARQUÍA TERRITORIAL: el tenant es el municipio/administración, que opera
+// una o varias comisarías de familia (sedes). La Secretaría de Gobierno hace
+// seguimiento estadístico por comisaría (rol SECRETARIA_GOBIERNO).
+// ============================================================================
+
+/// Comisaría de familia (sede) dentro del municipio (tenant).
+model Comisaria {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  name     String   // ej: "Comisaría de Familia Primera"
+  code     String   // ej: "CF1" (único por municipio)
+  address  String?
+  phone    String?
+  isMobile Boolean  @default(false) // unidad móvil
+  isActive Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cases Case[]
+  users User[]
+
+  @@unique([code, tenantId])
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("comisarias")
 }
 
 // ============================================================================
