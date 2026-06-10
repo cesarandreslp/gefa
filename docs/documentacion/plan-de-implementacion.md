@@ -6,6 +6,11 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 37. Seed demo crea municipio + comisarías + Secretaría desde cero
+**Estado:** COMPLETADO
+**Objetivo:** Cerrar el pendiente menor de la entrada 36: que `seed-demo-gefa.ts` genere la estructura jerárquica (tenant = "Municipio de Guadalajara de Buga", 3 comisarías, rol + usuario de Secretaría de Gobierno, casos y funcionarios asignados a su sede) sin depender del script de migración posterior.
+**Hecho:** En `scripts/seed-demo-gefa.ts` — tenant renombrado a "Municipio de Guadalajara de Buga"; rol `SECRETARIA_GOBIERNO` añadido a `roleDefs`; nueva sección "3b. Comisarías" crea CF1/CF2/CF3 (idempotente); `userDefs` gana campo `com` (comisaría) + usuario `secretaria.gobierno@buga.gov.co` (nivel municipio); cada caso nace con `comisariaId` (VIF→CF1, PARD→CF1, CAV→CF2 ⇒ CF1: 2, CF2: 1, CF3: 0); resumen final actualizado. El bucle de usuarios ahora hace upsert del `comisariaId` para que el re-seed reasigne sedes. `migrate-municipio-demo.ts` queda como ruta de migración para BD demo ya sembradas (pre-jerarquía); para entornos nuevos basta el seed. type-check verde.
+
 ### 36. Jerarquía Municipio → Comisarías → Secretaría de Gobierno (seguimiento estadístico)
 **Estado:** COMPLETADO
 **Objetivo:** Modelar que el **tenant es el municipio/administración** con **varias comisarías** (sedes) y una **Secretaría de Gobierno** que hace seguimiento **estadístico** por comisaría (sin acceso a expedientes). Decisión del usuario: tenant = municipio; reconceptualizar CFBUGA → "Municipio de Buga" con 3 comisarías. Fases: (1) modelo `Comisaria` + `comisariaId` en `Case`/`User` (migración aditiva); (2) rol `SECRETARIA_GOBIERNO` (solo estadísticas, bloquea expedientes/valoraciones); (3) tablero de seguimiento con desglose por comisaría + sexo de demandante/demandado (`Person.gender` × `CaseParty.role`) + cumplimiento de medidas; (4) reconceptualizar el tenant demo y repartir datos en 3 comisarías.

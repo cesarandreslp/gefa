@@ -1,15 +1,18 @@
 /**
- * SEED DEMO — GEFA (Comisaría de Familia)
+ * SEED DEMO — GEFA (Municipio → Comisarías de Familia)
  * ---------------------------------------------------------------------------
  * Deja el entorno listo para probar de extremo a extremo:
  *   1. SUPER_ADMIN del control plane (SaaS).
- *   2. Un tenant de ejemplo: Comisaría de Familia de Guadalajara de Buga (CFBUGA).
- *      Vive en la BD global (databaseUrl = null), así que el patrón
- *      `dbUrl ? getTenantPrisma(dbUrl) : mainPrisma` lo resuelve a la BD principal.
- *   3. Roles del tenant (incl. DIRECTOR = comisaria), usuarios por rol, estados,
- *      tipos de caso de familia y TenantSettings.
- *   4. Tres expedientes con partes, medidas, audiencia, valoraciones (confidenciales),
- *      PARD, equipo asignado, historial de estados y auditoría encadenada (ActionLog).
+ *   2. Un tenant de ejemplo: Municipio de Guadalajara de Buga (CFBUGA), con
+ *      3 comisarías de familia (sedes). Vive en la BD global (databaseUrl = null),
+ *      así que el patrón `dbUrl ? getTenantPrisma(dbUrl) : mainPrisma` lo resuelve
+ *      a la BD principal.
+ *   3. Roles del tenant (incl. DIRECTOR = comisaria y SECRETARIA_GOBIERNO de
+ *      seguimiento estadístico), usuarios por rol asignados a su comisaría,
+ *      estados, tipos de caso de familia y TenantSettings.
+ *   4. Tres expedientes (repartidos CF1: 2, CF2: 1, CF3: 0) con partes, medidas,
+ *      audiencia, valoraciones (confidenciales), PARD, equipo asignado, historial
+ *      de estados y auditoría encadenada (ActionLog).
  *
  * Idempotente: borra SOLO los datos de dominio del tenant demo antes de re-sembrar.
  *
@@ -39,7 +42,7 @@ function checksum(input: { action: string; userId?: string | null; entityType: s
 }
 
 async function main() {
-  console.log('🌱 Seed DEMO GEFA — Comisaría de Familia\n');
+  console.log('🌱 Seed DEMO GEFA — Municipio → Comisarías de Familia\n');
 
   // ───────────────────────────────────────────────────────── 1. SUPER_ADMIN
   console.log('🔐 1. SUPER_ADMIN (control plane)');
@@ -56,9 +59,9 @@ async function main() {
   console.log('🏢 2. Tenant de ejemplo');
   const tenant = await prisma.tenant.upsert({
     where: { sigla: SIGLA },
-    update: { name: 'Comisaría de Familia de Guadalajara de Buga', isActive: true },
+    update: { name: 'Municipio de Guadalajara de Buga', isActive: true },
     create: {
-      name: 'Comisaría de Familia de Guadalajara de Buga',
+      name: 'Municipio de Guadalajara de Buga',
       sigla: SIGLA,
       domain: 'gefa-cfbuga.vercel.app',
       institutionalEmail: 'comisaria1@buga.gov.co',
@@ -92,6 +95,7 @@ async function main() {
     { code: 'DIRECTOR', name: 'Comisario(a) de Familia', description: 'Máxima autoridad de la comisaría. Adopta medidas de protección, preside audiencias y supervisa el equipo interdisciplinario. Único rol con acceso al visor de trazabilidad.', level: 100, permissions: ['*:*:*'], canApprove: true, canReassign: true, canSign: true },
     { code: 'FUNCIONARIO', name: 'Equipo Interdisciplinario', description: 'Profesional del equipo (psicología, trabajo social, jurídica). Opera el expediente y registra valoraciones.', level: 85, permissions: ['cases:read:*', 'cases:update:assigned'], canApprove: true, canReassign: false, canSign: true },
     { code: 'VENTANILLA_UNICA', name: 'Recepción / Ventanilla', description: 'Recibe y radica solicitudes y denuncias en el mostrador.', level: 80, permissions: ['cases:*:*', 'users:read:*'], canApprove: false, canReassign: true, canSign: false },
+    { code: 'SECRETARIA_GOBIERNO', name: 'Secretaría de Gobierno', description: 'Dependencia de la administración municipal que hace seguimiento estadístico al desempeño de las comisarías de familia. Acceso solo a tableros agregados; sin acceso a expedientes ni datos personales.', level: 95, permissions: ['stats:read:*'], canApprove: false, canReassign: false, canSign: false },
   ];
   const roles: Record<string, string> = {};
   for (const r of roleDefs) {
@@ -99,6 +103,24 @@ async function main() {
     const role = existing ?? await prisma.role.create({ data: { ...r, tenantId: tenant.id, isActive: true } });
     roles[r.code] = role.id;
     console.log(`   ✅ ${r.code} — ${r.name}`);
+  }
+  console.log('');
+
+  // ──────────────────────────────────────────────── 3b. Comisarías (sedes)
+  console.log('🏛️  3b. Comisarías del municipio');
+  const comisariaDefs = [
+    { code: 'CF1', name: 'Comisaría de Familia Primera', address: 'Calle 6 No. 11-40, Centro' },
+    { code: 'CF2', name: 'Comisaría de Familia Segunda', address: 'Carrera 14 No. 4-22, Barrio La Merced' },
+    { code: 'CF3', name: 'Comisaría de Familia Tercera (móvil)', address: 'Unidad móvil — zona rural', isMobile: true },
+  ];
+  const comisarias: Record<string, string> = {};
+  for (const c of comisariaDefs) {
+    const existing = await prisma.comisaria.findFirst({ where: { code: c.code, tenantId: tenant.id } });
+    const com = existing
+      ? await prisma.comisaria.update({ where: { id: existing.id }, data: { name: c.name, address: c.address, isMobile: c.isMobile ?? false, isActive: true } })
+      : await prisma.comisaria.create({ data: { tenantId: tenant.id, code: c.code, name: c.name, address: c.address, isMobile: c.isMobile ?? false, isActive: true } });
+    comisarias[c.code] = com.id;
+    console.log(`   ✅ ${c.code} — ${c.name}`);
   }
   console.log('');
 
@@ -127,20 +149,25 @@ async function main() {
 
   // ───────────────────────────────────────────────────────── 6. Usuarios
   console.log('👥 6. Usuarios del tenant');
+  // `com` = código de comisaría a la que pertenece el funcionario; null = nivel municipio (admin / Secretaría)
   const userDefs = [
-    { key: 'admin', email: 'admin@cfbuga.gov.co', pass: 'Admin2026!', fullName: 'Administrador del Sistema', doc: '16110011', role: 'ADMIN', userType: 'Administrador' },
-    { key: 'comisaria', email: 'comisaria@cfbuga.gov.co', pass: 'Comisaria2026!', fullName: 'Marta Lucía Rodríguez', doc: '31920022', role: 'DIRECTOR', userType: 'Comisaria de Familia' },
-    { key: 'psicologa', email: 'psicologa@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Diana Carolina Gómez', doc: '29655033', role: 'FUNCIONARIO', userType: 'Psicología' },
-    { key: 'trabajosocial', email: 'trabajo.social@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Luz Helena Vargas', doc: '66877044', role: 'FUNCIONARIO', userType: 'Trabajo Social' },
-    { key: 'abogada', email: 'abogada@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Sandra Milena Ortiz', doc: '38455055', role: 'FUNCIONARIO', userType: 'Jurídica' },
-    { key: 'ventanilla', email: 'ventanilla@cfbuga.gov.co', pass: 'Ventanilla2026!', fullName: 'Carlos Andrés Mejía', doc: '94233066', role: 'VENTANILLA_UNICA', userType: 'Recepción' },
+    { key: 'admin', email: 'admin@cfbuga.gov.co', pass: 'Admin2026!', fullName: 'Administrador del Sistema', doc: '16110011', role: 'ADMIN', userType: 'Administrador', com: null },
+    { key: 'comisaria', email: 'comisaria@cfbuga.gov.co', pass: 'Comisaria2026!', fullName: 'Marta Lucía Rodríguez', doc: '31920022', role: 'DIRECTOR', userType: 'Comisaria de Familia', com: 'CF1' },
+    { key: 'psicologa', email: 'psicologa@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Diana Carolina Gómez', doc: '29655033', role: 'FUNCIONARIO', userType: 'Psicología', com: 'CF1' },
+    { key: 'trabajosocial', email: 'trabajo.social@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Luz Helena Vargas', doc: '66877044', role: 'FUNCIONARIO', userType: 'Trabajo Social', com: 'CF2' },
+    { key: 'abogada', email: 'abogada@cfbuga.gov.co', pass: 'Equipo2026!', fullName: 'Sandra Milena Ortiz', doc: '38455055', role: 'FUNCIONARIO', userType: 'Jurídica', com: 'CF1' },
+    { key: 'ventanilla', email: 'ventanilla@cfbuga.gov.co', pass: 'Ventanilla2026!', fullName: 'Carlos Andrés Mejía', doc: '94233066', role: 'VENTANILLA_UNICA', userType: 'Recepción', com: 'CF1' },
+    { key: 'secretaria', email: 'secretaria.gobierno@buga.gov.co', pass: 'Secretaria2026!', fullName: 'Secretaría de Gobierno Municipal', doc: '14820099', role: 'SECRETARIA_GOBIERNO', userType: 'Secretaría de Gobierno', com: null },
   ];
   const users: Record<string, string> = {};
   for (const u of userDefs) {
+    const comisariaId = u.com ? comisarias[u.com] : null;
     const existing = await prisma.user.findFirst({ where: { email: u.email, tenantId: tenant.id } });
-    const user = existing ?? await prisma.user.create({ data: { tenantId: tenant.id, email: u.email, passwordHash: await bcrypt.hash(u.pass, 10), fullName: u.fullName, documentType: 'CC', documentNumber: u.doc, roleId: roles[u.role], userType: u.userType, isActive: true, mustChangePassword: false } });
+    const user = existing
+      ? await prisma.user.update({ where: { id: existing.id }, data: { comisariaId } })
+      : await prisma.user.create({ data: { tenantId: tenant.id, email: u.email, passwordHash: await bcrypt.hash(u.pass, 10), fullName: u.fullName, documentType: 'CC', documentNumber: u.doc, roleId: roles[u.role], userType: u.userType, comisariaId, isActive: true, mustChangePassword: false } });
     users[u.key] = user.id;
-    console.log(`   ✅ ${u.email} / ${u.pass}  (${u.userType})`);
+    console.log(`   ✅ ${u.email} / ${u.pass}  (${u.userType}${u.com ? ` · ${u.com}` : ''})`);
   }
   console.log('');
 
@@ -188,7 +215,7 @@ async function main() {
     const citizen = await mkCitizen({ doc: victima.documentNumber, first: victima.firstName, last1: victima.firstLastName, phone: '3104445566' });
 
     const c = await prisma.case.create({ data: {
-      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['VIF'], stateId: stateIds['MEDIDA_ADOPTADA'],
+      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['VIF'], stateId: stateIds['MEDIDA_ADOPTADA'], comisariaId: comisarias.CF1,
       channel: 'PRESENCIAL', subject: 'Denuncia por violencia física y psicológica de la pareja',
       description: 'La denunciante manifiesta agresiones físicas reiteradas y amenazas por parte de su compañero permanente durante los últimos seis meses. Solicita medida de protección.',
       priority: 80, legalTermDays: 10, filedAt, dueDate: new Date(`${YEAR}-05-18T17:00:00`),
@@ -231,7 +258,7 @@ async function main() {
     const citizen = await mkCitizen({ doc: denunciante.documentNumber, first: denunciante.firstName, last1: denunciante.firstLastName, phone: '3158889900' });
 
     const c = await prisma.case.create({ data: {
-      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['PARD'], stateId: stateIds['EN_SEGUIMIENTO'],
+      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['PARD'], stateId: stateIds['EN_SEGUIMIENTO'], comisariaId: comisarias.CF1,
       channel: 'PRESENCIAL', subject: 'Presunta negligencia y abandono de niño de 9 años',
       description: 'La abuela materna reporta que el NNA permanece solo largas jornadas, con inasistencia escolar reiterada y signos de desnutrición. Se abre proceso de restablecimiento de derechos.',
       priority: 90, legalTermDays: 80, filedAt, dueDate: new Date(`${YEAR}-07-04T17:00:00`),
@@ -272,7 +299,7 @@ async function main() {
     const citizen = await mkCitizen({ doc: madre.documentNumber, first: madre.firstName, last1: madre.firstLastName, phone: '3001112233' });
 
     const c = await prisma.case.create({ data: {
-      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['CAV'], stateId: stateIds['EN_AUDIENCIA'],
+      tenantId: tenant.id, filingNumber: filing(), citizenId: citizen.id, caseTypeId: typeIds['CAV'], stateId: stateIds['EN_AUDIENCIA'], comisariaId: comisarias.CF2,
       channel: 'WEB', subject: 'Solicitud de conciliación de custodia, alimentos y visitas',
       description: 'Los padres, separados, solicitan conciliación para fijar custodia, cuota alimentaria y régimen de visitas de su hija de 7 años. Sin hechos de violencia reportados.',
       priority: 40, legalTermDays: 30, filedAt, dueDate: new Date(`${YEAR}-07-15T17:00:00`),
@@ -305,9 +332,10 @@ async function main() {
   console.log('✅ SEED DEMO COMPLETO');
   console.log('══════════════════════════════════════════════════════════');
   console.log('SUPER ADMIN (SaaS):  superadmin@system.local / superadmin123');
-  console.log(`TENANT: ${tenant.name} (${SIGLA})  ·  dominio cf-buga.gov.co`);
+  console.log(`TENANT: ${tenant.name} (${SIGLA})  ·  3 comisarías (CF1, CF2, CF3)`);
+  console.log('Casos: CF1: 2 · CF2: 1 · CF3: 0');
   console.log('Usuarios del tenant:');
-  for (const u of userDefs) console.log(`  • ${u.email.padEnd(30)} ${u.pass.padEnd(16)} ${u.userType}`);
+  for (const u of userDefs) console.log(`  • ${u.email.padEnd(34)} ${u.pass.padEnd(16)} ${u.userType}${u.com ? ` · ${u.com}` : ''}`);
   console.log('══════════════════════════════════════════════════════════');
 }
 
