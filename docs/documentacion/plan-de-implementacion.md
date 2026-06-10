@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 48. Reset de BD demo + seed multitenant realista (3 alcaldías × 3 comisarías)
+**Estado:** COMPLETADO
+**Objetivo:** Limpiar la BD (datos demo) y re-sembrarla reflejando la jerarquía real del dominio: **tenant = Alcaldía**; dentro, Secretaría de Gobierno (dashboard de control), ADMIN, IA de asignación, y **3 comisarías de familia (CF1/CF2/CF3)** como sedes, cada una con su equipo (comisario DIRECTOR, funcionario, ventanilla, auxiliar). 3 tenants en una sola BD por `tenantId`. Corrige el bug del seed (rol `DIRECTOR` vs `PERSONERO_MUNICIPAL`) que impedía crear el usuario comisario. Cambia `CaseType.code` a `@@unique([code, tenantId])` para permitir tipos por tenant.
+**Hecho:**
+- Schema: `CaseType.code` ya no es `@unique` global → `@@unique([code, tenantId])` (permite los mismos tipos por tenant; `getCaseTypeByCode` ya filtraba por tenant).
+- `prisma/seed.ts` reescrito: estados globales (7) + por cada tenant (BUGA/TULUA/PALMIRA) → 7 roles, 7 tipos de caso, usuarios de alcaldía (ADMIN, SECRETARIA_GOBIERNO, IA) y 3 comisarías (CF1/CF2/CF3) cada una con comisario(DIRECTOR)/funcionario/ventanilla/auxiliar. Rol DIRECTOR ahora existe (corrige el bug). Dominios: BUGA→gefa-cfbuga, TULUA→gefa-black, PALMIRA→gefa-palmira.vercel.app.
+- Ejecutado: `prisma db push --force-reset` (BD demo vaciada, autorizado) + `seed.ts` + `scripts/seed-instrumentos.ts` (catálogo global 7 instrumentos).
+- **Verificado en producción (runtime):** login real en `gefa-cfbuga.vercel.app` como `comisario.cf1@buga.gov.co` → rol DIRECTOR ✅; GET `/api/v1/family/instrumentos` → 7 instrumentos con campos 42/58/68/15/22/18/34 ✅.
+- Credenciales demo: contraseña única `Gefa2026!`. Correos `admin@<sigla>.gov.co`, `secretaria.gobierno@<sigla>.gov.co`, `comisario.<cf>@<sigla>.gov.co`, `funcionario.<cf>@<sigla>.gov.co`, `ventanilla.<cf>@<sigla>.gov.co`, `auxiliar.<cf>@<sigla>.gov.co` (sigla = buga/tulua/palmira; cf = cf1/cf2/cf3).
+- Pendiente menor: el alias Vercel `gefa-palmira.vercel.app` no se creó (bloqueado por el clasificador: cambia routing de producción). BUGA y TULUA ya son alcanzables; PALMIRA requiere crear ese alias o probarse por header `x-tenant-domain`.
+- Archivos: `prisma/schema.prisma`, `prisma/seed.ts`.
+
 ### 47. Retirar ADMIN del acceso a valoraciones confidenciales (decisión de política)
 **Estado:** COMPLETADO
 **Objetivo:** Por decisión del usuario (recomendación de la Fase D): minimizar el acceso a datos sensibles de NNA/víctimas retirando `ADMIN` de `FAMILY_CONFIDENTIAL_ROLES`. El equipo clínico (DIRECTOR + FUNCIONARIO) conserva el acceso; ADMIN sigue administrando usuarios/config pero no lee/escribe valoraciones psicosociales.

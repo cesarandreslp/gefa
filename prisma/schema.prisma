@@ -348,7 +348,7 @@ model CaseType {
   tenant             Tenant   @relation(fields: [tenantId], references: [id])
 
   // Identificación
-  code               String  @unique // DP, TUT, QD, VIC, PQRS_P, etc.
+  code               String  // VIF, MP, PARD, etc. (único por tenant)
   name               String
   description        String  @db.Text
   
@@ -375,6 +375,7 @@ model CaseType {
   cases Case[]
   slaConfig CaseSLAConfig?
   
+  @@unique([code, tenantId])
   @@index([code])
   @@index([isActive])
   @@map("case_types")

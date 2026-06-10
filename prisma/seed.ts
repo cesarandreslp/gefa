@@ -1,6 +1,25 @@
 /**
- * SEED PRINCIPAL - Sistema Ventanilla Única
- * Ejecuta todos los seeds necesarios para inicializar el sistema
+ * SEED PRINCIPAL — GEFA (Gestión Familiar)
+ * ---------------------------------------------------------------------------
+ * Siembra una BD demo multitenant que refleja la jerarquía real del dominio:
+ *
+ *   TENANT = ALCALDÍA (municipio)
+ *     ├─ ADMIN ................. administra usuarios/config del municipio
+ *     ├─ ASIGNACION_DE_CASOS ... agente IA de asignación
+ *     ├─ SECRETARIA_GOBIERNO ... dashboard de control (estadísticas, sin expedientes)
+ *     └─ COMISARÍAS (sedes CF1/CF2/CF3), cada una con su equipo:
+ *           ├─ DIRECTOR ............... el/la Comisario/a (autoridad: firma, aprueba)
+ *           ├─ FUNCIONARIO ........... equipo interdisciplinario (psico/trabajo social)
+ *           ├─ VENTANILLA_UNICA ...... recibe y radica
+ *           └─ AUXILIAR_ATENCION_USUARIO
+ *
+ * 3 tenants en una sola BD (separados por tenantId). Los estados de caso son
+ * globales (sin tenantId). El catálogo de instrumentos es global y se siembra
+ * con `scripts/seed-instrumentos.ts`.
+ *
+ * Uso: npx prisma db push --force-reset --accept-data-loss  (limpia)
+ *      npx ts-node --compiler-options "{\"module\":\"CommonJS\"}" prisma/seed.ts
+ * ---------------------------------------------------------------------------
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -9,372 +28,148 @@ import { FAMILY_CASE_TYPES } from '../src/domain/catalogs/familyCaseTypes';
 
 const prisma = new PrismaClient();
 
+const DEFAULT_PASSWORD = 'Gefa2026!';
+
+const ROLES = [
+  { code: 'ADMIN', name: 'Administrador', level: 100, permissions: ['*:*:*'], canApprove: true, canReassign: true, canSign: true,
+    description: 'Administrador del municipio (Alcaldía): gestiona usuarios y configuración. No es autoridad procesal ni equipo clínico.' },
+  { code: 'DIRECTOR', name: 'Comisario/a de Familia', level: 100, permissions: ['*:*:*'], canApprove: true, canReassign: true, canSign: true,
+    description: 'Autoridad de la comisaría de familia. Toma declaraciones, valora pruebas y aprueba/firma los informes; sus actos tienen peso procesal.' },
+  { code: 'SECRETARIA_GOBIERNO', name: 'Secretaría de Gobierno', level: 95, permissions: ['stats:read:*'], canApprove: false, canReassign: false, canSign: false,
+    description: 'Supervisión municipal: tablero de control con estadísticas agregadas de todas las comisarías. No accede a expedientes ni a datos confidenciales.' },
+  { code: 'ASIGNACION_DE_CASOS', name: 'Asignación de Casos (IA)', level: 90, permissions: ['cases:assign:*', 'cases:read:*'], canApprove: false, canReassign: true, canSign: false,
+    description: 'Agente de IA para la asignación inteligente de casos entre funcionarios.' },
+  { code: 'FUNCIONARIO', name: 'Funcionario (equipo interdisciplinario)', level: 85, permissions: ['cases:read:*', 'cases:update:assigned'], canApprove: true, canReassign: false, canSign: true,
+    description: 'Equipo interdisciplinario de la comisaría (psicología / trabajo social): atiende casos, aplica instrumentos y elabora valoraciones.' },
+  { code: 'VENTANILLA_UNICA', name: 'Ventanilla Única', level: 80, permissions: ['cases:*:*', 'users:read:*'], canApprove: false, canReassign: true, canSign: false,
+    description: 'Recibe y radica las solicitudes ciudadanas en la comisaría.' },
+  { code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', level: 75, permissions: ['cases:read:*', 'citizens:read:*'], canApprove: false, canReassign: false, canSign: false,
+    description: 'Apoyo en la atención directa al usuario en la comisaría.' },
+];
+
+const STATES = [
+  { code: 'RADICADO', name: 'Radicado', description: 'Solicitud recibida y radicada oficialmente', isInitial: true, isFinal: false, requiresComment: false, color: '#3B82F6', displayOrder: 1 },
+  { code: 'EN_ESTUDIO', name: 'En Estudio', description: 'El funcionario está analizando el caso', isInitial: false, isFinal: false, requiresComment: false, color: '#F59E0B', displayOrder: 2 },
+  { code: 'REQUIERE_INFORMACION', name: 'Requiere Información', description: 'Se necesita información adicional', isInitial: false, isFinal: false, requiresComment: true, color: '#EAB308', displayOrder: 3 },
+  { code: 'ESCALADO_A_OTRA_DEPENDENCIA', name: 'Escalado a Otra Dependencia', description: 'Enviado a otra dependencia', isInitial: false, isFinal: false, requiresComment: true, color: '#9333EA', displayOrder: 4 },
+  { code: 'REMITIDO_A_ENTIDAD_EXTERNA', name: 'Remitido a Entidad Externa', description: 'Remitido a una entidad externa', isInitial: false, isFinal: false, requiresComment: true, color: '#0891B2', displayOrder: 5 },
+  { code: 'REMITIDO_POR_COMPETENCIA', name: 'Rechazado por Improcedencia', description: 'No es competencia de la comisaría', isInitial: false, isFinal: true, requiresComment: true, color: '#DC2626', displayOrder: 6 },
+  { code: 'CERRADO', name: 'Cerrado', description: 'Trámite finalizado definitivamente', isInitial: false, isFinal: true, requiresComment: true, color: '#6B7280', displayOrder: 7 },
+];
+
+const TENANTS = [
+  { sigla: 'BUGA', name: 'Alcaldía de Guadalajara de Buga', domain: 'gefa-cfbuga.vercel.app' },
+  { sigla: 'TULUA', name: 'Alcaldía de Tuluá', domain: 'gefa-black.vercel.app' },
+  { sigla: 'PALMIRA', name: 'Alcaldía de Palmira', domain: 'gefa-palmira.vercel.app' },
+];
+
+const COMISARIAS = [
+  { code: 'CF1', name: 'Comisaría de Familia Primera' },
+  { code: 'CF2', name: 'Comisaría de Familia Segunda' },
+  { code: 'CF3', name: 'Comisaría de Familia Tercera' },
+];
+
 async function main() {
-  console.log('🌱 Iniciando seed del sistema...\n');
+  console.log('🌱 Seed GEFA — BD demo multitenant\n');
 
-  // 0. Seed de Tenant
-  console.log('🏢 0. Seeding Tenant...');
-  const defaultTenant = await prisma.tenant.upsert({
-    where: { sigla: 'PMBUGA' },
-    update: {},
-    create: {
-      name: 'Personería Municipal de Guadalajara de Buga',
-      sigla: 'PMBUGA',
-      isActive: true,
+  // 1. Estados de caso (GLOBALES, sin tenantId)
+  console.log('📋 Estados de caso (globales)…');
+  for (const s of STATES) {
+    await prisma.caseState.upsert({ where: { code: s.code }, update: {}, create: s });
+  }
+  console.log(`   ✅ ${STATES.length} estados`);
+
+  const credenciales: string[] = [];
+  let firstAdminId = '';
+
+  // 2. Por cada TENANT (alcaldía)
+  for (const t of TENANTS) {
+    console.log(`\n🏛️  Tenant: ${t.name} [${t.sigla}] (${t.domain})`);
+    const tenant = await prisma.tenant.upsert({
+      where: { sigla: t.sigla },
+      update: { name: t.name, domain: t.domain, isActive: true },
+      create: { name: t.name, sigla: t.sigla, domain: t.domain, isActive: true },
+    });
+
+    // 2a. Roles (por tenant)
+    const roleId: Record<string, string> = {};
+    for (const r of ROLES) {
+      const existing = await prisma.role.findFirst({ where: { code: r.code, tenantId: tenant.id } });
+      const role = existing
+        ? await prisma.role.update({ where: { id: existing.id }, data: { name: r.name, description: r.description, level: r.level, permissions: r.permissions, canApprove: r.canApprove, canReassign: r.canReassign, canSign: r.canSign, isActive: true } })
+        : await prisma.role.create({ data: { ...r, tenantId: tenant.id, isActive: true } });
+      roleId[r.code] = role.id;
     }
-  });
+    console.log(`   ✅ ${ROLES.length} roles`);
 
-  // 1. Seed de roles
-  console.log('👔 1. Seeding roles...');
-  const roles = [
-    {
-      code: 'ADMIN',
-      name: 'Administrador',
-      description: 'Administrador del sistema con acceso total a todas las funcionalidades',
-      level: 100,
-      permissions: ['*:*:*'],
-      canApprove: true,
-      canReassign: true,
-      canSign: true,
-      isActive: true,
-    },
-    {
-      code: 'PERSONERO_MUNICIPAL',
-      name: 'Personero Municipal',
-      description: 'Máxima autoridad de la Personería Municipal. Responsable de dirigir, coordinar y supervisar la gestión institucional, garantizando la defensa del interés público, la protección de los derechos fundamentales y la correcta atención de las solicitudes ciudadanas. Atiende casos críticos, tutelas y asuntos de alto impacto.',
-      level: 100,
-      permissions: ['*:*:*'],
-      canApprove: true,
-      canReassign: true,
-      canSign: true,
-      isActive: true,
-    },
-    {
-      code: 'VENTANILLA_UNICA',
-      name: 'Ventanilla Única',
-      description: 'Personal de ventanilla única encargado de recibir, radicar y gestionar solicitudes ciudadanas',
-      level: 80,
-      permissions: ['cases:*:*', 'users:read:*'],
-      canApprove: false,
-      canReassign: true,
-      canSign: false,
-      isActive: true,
-    },
-    {
-      code: 'ASIGNACION_DE_CASOS',
-      name: 'Asignación de Casos',
-      description: 'Agente de IA especializado en la asignación inteligente y distribución equilibrada de casos entre los funcionarios disponibles',
-      level: 90,
-      permissions: ['cases:assign:*', 'users:read:*', 'cases:read:*'],
-      canApprove: false,
-      canReassign: true,
-      canSign: false,
-      isActive: true,
-    },
-    {
-      code: 'FUNCIONARIO',
-      name: 'Funcionario',
-      description: 'Personal técnico y profesional de la Personería. Cada funcionario tiene un tipo específico (Delegatura, Director, Coordinador, etc.) que define su área de especialización. La IA asigna casos según la especialidad del funcionario.',
-      level: 85,
-      permissions: ['cases:read:*', 'cases:update:assigned'],
-      canApprove: true,
-      canReassign: false,
-      canSign: true,
-      isActive: true,
-    },
-    {
-      code: 'AUXILIAR_ATENCION_USUARIO',
-      name: 'Auxiliar de Atención al Usuario',
-      description: 'Personal auxiliar encargado de la atención directa al usuario. Tiene acceso a una tabla de registro de atenciones realizadas.',
-      level: 75,
-      permissions: ['cases:read:*', 'citizens:read:*'],
-      canApprove: false,
-      canReassign: false,
-      canSign: false,
-      isActive: true,
-    },
-  ];
+    // 2b. Tipos de caso (por tenant)
+    for (const ct of FAMILY_CASE_TYPES) {
+      const existing = await prisma.caseType.findFirst({ where: { code: ct.code, tenantId: tenant.id } });
+      if (existing) await prisma.caseType.update({ where: { id: existing.id }, data: { defaultLegalTermDays: ct.defaultLegalTermDays } });
+      else await prisma.caseType.create({ data: { ...ct, tenantId: tenant.id, isActive: true } });
+    }
+    console.log(`   ✅ ${FAMILY_CASE_TYPES.length} tipos de caso`);
 
-  for (const roleData of roles) {
-    const existing = await prisma.role.findFirst({ where: { code: roleData.code, tenantId: defaultTenant.id } });
-    const role = existing
-      ? await prisma.role.update({ where: { id: existing.id }, data: {} })
-      : await prisma.role.create({ data: { ...roleData, tenantId: defaultTenant.id } });
-    console.log(`   ✅ ${role.code} - ${role.name}`);
-  }
+    const sgla = t.sigla.toLowerCase();
+    let doc = 1000;
+    const pass = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
-  // 2. Seed de estados de casos
-  console.log('\n📋 2. Seeding estados de casos...');
-  const states = [
-    {
-      code: 'RADICADO',
-      name: 'Radicado',
-      description: 'Solicitud recibida y radicada oficialmente',
-      isInitial: true,
-      isFinal: false,
-      requiresComment: false,
-      color: '#3B82F6',
-      displayOrder: 1,
-    },
-    {
-      code: 'EN_ESTUDIO',
-      name: 'En Estudio',
-      description: 'Funcionario está analizando el caso',
-      isInitial: false,
-      isFinal: false,
-      requiresComment: false,
-      color: '#F59E0B',
-      displayOrder: 2,
-    },
-    {
-      code: 'REQUIERE_INFORMACION',
-      name: 'Requiere Información',
-      description: 'Se necesita información adicional del ciudadano',
-      isInitial: false,
-      isFinal: false,
-      requiresComment: true,
-      color: '#EAB308',
-      displayOrder: 3,
-    },
-    {
-      code: 'ESCALADO_A_OTRA_DEPENDENCIA',
-      name: 'Escalado a Otra Dependencia',
-      description: 'El caso fue enviado a una dependencia de la Alcaldía para su resolución',
-      isInitial: false,
-      isFinal: false,
-      requiresComment: true,
-      color: '#9333EA',
-      displayOrder: 4,
-    },
-    {
-      code: 'REMITIDO_A_ENTIDAD_EXTERNA',
-      name: 'Remitido a Entidad Externa',
-      description: 'El caso fue remitido a una entidad externa (EPS, empresa de servicios públicos, autoridad ambiental, etc.)',
-      isInitial: false,
-      isFinal: false,
-      requiresComment: true,
-      color: '#0891B2',
-      displayOrder: 5,
-    },
-    {
-      code: 'REMITIDO_POR_COMPETENCIA',
-      name: 'Rechazado por Improcedencia',
-      description: 'El caso no es competencia de la Personería',
-      isInitial: false,
-      isFinal: true,
-      requiresComment: true,
-      color: '#DC2626',
-      displayOrder: 6,
-    },
-    {
-      code: 'CERRADO',
-      name: 'Cerrado',
-      description: 'Trámite finalizado definitivamente',
-      isInitial: false,
-      isFinal: true,
-      requiresComment: true,
-      color: '#6B7280',
-      displayOrder: 7,
-    },
-  ];
+    const mkUser = async (email: string, fullName: string, code: string, comisariaId: string | null, opts: Record<string, unknown> = {}) => {
+      const existing = await prisma.user.findFirst({ where: { email, tenantId: tenant.id } });
+      const data = {
+        email, fullName, tenantId: tenant.id, roleId: roleId[code], comisariaId,
+        documentType: 'CC', documentNumber: String(doc++),
+        passwordHash: pass, isActive: true, mustChangePassword: false, ...opts,
+      };
+      const u = existing ? await prisma.user.update({ where: { id: existing.id }, data }) : await prisma.user.create({ data });
+      if (!firstAdminId && code === 'ADMIN') firstAdminId = u.id;
+      return u;
+    };
 
-  for (const state of states) {
-    const result = await prisma.caseState.upsert({
-      where: { code: state.code },
-      update: {},
-      create: state,
+    // 2c. Usuarios a nivel ALCALDÍA
+    await mkUser(`admin@${sgla}.gov.co`, `Administrador ${t.sigla}`, 'ADMIN', null);
+    await mkUser(`secretaria.gobierno@${sgla}.gov.co`, `Secretaría de Gobierno ${t.sigla}`, 'SECRETARIA_GOBIERNO', null);
+    await mkUser(`ia.asignacion@${sgla}.interno`, `Agente IA — Asignación`, 'ASIGNACION_DE_CASOS', null, {
+      passwordHash: await bcrypt.hash(`ia-internal-${tenant.id}`, 10), documentType: 'SISTEMA', maxCaseLoad: 999999,
     });
-    console.log(`   ✅ ${result.code} - ${result.name}`);
+    credenciales.push(`[${t.sigla}] admin@${sgla}.gov.co · secretaria.gobierno@${sgla}.gov.co`);
+
+    // 2d. Comisarías (sedes) + su equipo
+    for (const c of COMISARIAS) {
+      const existing = await prisma.comisaria.findFirst({ where: { code: c.code, tenantId: tenant.id } });
+      const comisaria = existing
+        ? await prisma.comisaria.update({ where: { id: existing.id }, data: { name: c.name, isActive: true } })
+        : await prisma.comisaria.create({ data: { code: c.code, name: c.name, tenantId: tenant.id, isActive: true } });
+
+      const cf = c.code.toLowerCase();
+      await mkUser(`comisario.${cf}@${sgla}.gov.co`, `Comisario/a ${c.code} ${t.sigla}`, 'DIRECTOR', comisaria.id, { userType: 'Comisario de Familia' });
+      await mkUser(`funcionario.${cf}@${sgla}.gov.co`, `Funcionario ${c.code} ${t.sigla}`, 'FUNCIONARIO', comisaria.id, { userType: 'Equipo interdisciplinario', userTypeDescription: 'Psicología / trabajo social: atiende casos, aplica instrumentos y elabora valoraciones.' });
+      await mkUser(`ventanilla.${cf}@${sgla}.gov.co`, `Ventanilla ${c.code} ${t.sigla}`, 'VENTANILLA_UNICA', comisaria.id);
+      await mkUser(`auxiliar.${cf}@${sgla}.gov.co`, `Auxiliar ${c.code} ${t.sigla}`, 'AUXILIAR_ATENCION_USUARIO', comisaria.id);
+    }
+    console.log(`   ✅ ${COMISARIAS.length} comisarías × (comisario + funcionario + ventanilla + auxiliar)`);
   }
 
-  // 3. Seed de usuarios administrativos
-  console.log('\n👥 3. Seeding usuarios iniciales...');
-
-  // Obtener IDs de roles
-  const adminRole = await prisma.role.findFirst({ where: { code: 'ADMIN', tenantId: defaultTenant.id } });
-
-  // 4. Seed de tipos de caso (catálogo canónico de comisaría de familia)
-  console.log('\n📋 4. Seeding tipos de caso...');
-  for (const caseType of FAMILY_CASE_TYPES) {
-    const result = await prisma.caseType.upsert({
-      where: { code: caseType.code },
-      update: { defaultLegalTermDays: caseType.defaultLegalTermDays },
-      create: { ...caseType, isActive: true, tenantId: defaultTenant.id },
-    });
-    console.log(`   ✅ ${result.code} - ${result.name}`);
-  }
-
-  // Continuar con usuarios
-  console.log('\n👥 Seeding usuarios iniciales...');
-
-  // Obtener roles
-  const aiRole = await prisma.role.findFirst({ where: { code: 'ASIGNACION_DE_CASOS', tenantId: defaultTenant.id } });
-  const funcionarioRole = await prisma.role.findFirst({ where: { code: 'FUNCIONARIO', tenantId: defaultTenant.id } });
-  const personeroRole = await prisma.role.findFirst({ where: { code: 'DIRECTOR', tenantId: defaultTenant.id } });
-
-  const users = [
-    {
-      email: 'admin@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Admin2026!', 10),
-      fullName: 'Administrador Sistema',
-      documentType: 'CC',
-      documentNumber: '00000000',
-      roleId: adminRole!.id,
-      isActive: true,
-      mustChangePassword: false,
-    },
-    {
-      email: 'ia.asignacion@pmbuga.sistema.interno',
-      passwordHash: await bcrypt.hash(`ia-internal-${defaultTenant.id}`, 10),
-      fullName: 'Agente IA - Asignación Automática',
-      documentType: 'SISTEMA',
-      documentNumber: 'IA-PMBUGA',
-      roleId: aiRole!.id,
-      department: 'Sistema',
-      position: 'Inteligencia Artificial',
-      isActive: true,
-      mustChangePassword: false,
-      maxCaseLoad: 999999,
-    },
-    {
-      email: 'personero@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Personero2026!', 10),
-      fullName: 'Personero Municipal',
-      documentType: 'CC',
-      documentNumber: '99999999',
-      roleId: personeroRole!.id,
-      userType: 'Personero Municipal',
-      userTypeDescription: 'Máxima autoridad. Atiende casos críticos, tutelas, asuntos de alto impacto institucional, vulneración grave de derechos fundamentales y cualquier caso que requiera la intervención de la máxima autoridad.',
-      isActive: true,
-      mustChangePassword: false,
-    },
-    {
-      email: 'delegado.participacion@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Func2026!', 10),
-      fullName: 'Delegado Participación Ciudadana',
-      documentType: 'CC',
-      documentNumber: '88888888',
-      roleId: funcionarioRole!.id,
-      userType: 'Delegatura Participación Ciudadana',
-      userTypeDescription: 'Responsable de promover la participación ciudadana, defender el interés público y atender solicitudes relacionadas con mecanismos de participación, veedurías, control social, rendición de cuentas y participación democrática.',
-      isActive: true,
-      mustChangePassword: false,
-    },
-    {
-      email: 'delegada.salud@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Func2026!', 10),
-      fullName: 'Delegada Rama Judicial y Salud',
-      documentType: 'CC',
-      documentNumber: '77777777',
-      roleId: funcionarioRole!.id,
-      userType: 'Delegatura Rama Judicial y Salud',
-      userTypeDescription: 'Encargada de atender asuntos ante la rama judicial, defender el derecho a la salud (EPS, IPS, medicamentos, tratamientos), acciones de cumplimiento, habeas corpus y juzgamiento disciplinario en primera instancia. NO atiende tutelas (van al Personero).',
-      isActive: true,
-      mustChangePassword: false,
-    },
-    {
-      email: 'delegado.vigilancia@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Func2026!', 10),
-      fullName: 'Delegado Vigilancia Conducta Oficial',
-      documentType: 'CC',
-      documentNumber: '66666666',
-      roleId: funcionarioRole!.id,
-      userType: 'Delegatura Vigilancia Conducta Oficial',
-      userTypeDescription: 'Responsable de vigilar la conducta oficial de servidores públicos, supervisar la contratación estatal, denuncias de corrupción, prestación de servicios públicos domiciliarios y asuntos relacionados con la administración pública.',
-      isActive: true,
-      mustChangePassword: false,
-    },
-    {
-      email: 'delegada.ddhh@personeria.gov.co',
-      passwordHash: await bcrypt.hash('Func2026!', 10),
-      fullName: 'Delegada Derechos Humanos y Medio Ambiente',
-      documentType: 'CC',
-      documentNumber: '55555555',
-      roleId: funcionarioRole!.id,
-      userType: 'Delegatura DDHH y Medio Ambiente',
-      userTypeDescription: 'Encargada de promover y defender los derechos humanos fundamentales, proteger poblaciones vulnerables, defender el derecho a un medio ambiente sano, protección de recursos naturales y sostenibilidad ambiental.',
-      isActive: true,
-      mustChangePassword: false,
-    },
-  ];
-
-  for (const userData of users) {
-    const existing = await prisma.user.findFirst({ where: { email: userData.email, tenantId: defaultTenant.id } });
-    const user = existing
-      ? await prisma.user.update({ where: { id: existing.id }, data: {} })
-      : await prisma.user.create({ data: { ...userData, tenantId: defaultTenant.id } });
-    console.log(`   ✅ ${user.email} (${user.fullName})`);
-  }
-
-  // 5. Configuración del sistema
-  console.log('\n⚙️  5. Seeding configuración del sistema...');
-
-  // Obtener el primer usuario admin creado
-  const adminUser = await prisma.user.findFirst({ where: { email: 'admin@personeria.gov.co', tenantId: defaultTenant.id } });
-
-  const systemSettings: Array<{
-    key: 'INSTITUTION_NAME' | 'INSTITUTION_ADDRESS' | 'INSTITUTION_PHONE' | 'MAX_CASE_LOAD' | 'AUTO_ASSIGNMENT_ENABLED';
-    value: string | number | boolean;
-    description: string;
-    updatedByUserId: string;
-  }> = [
-      {
-        key: 'INSTITUTION_NAME',
-        value: 'Personería Municipal de Guadalajara de Buga',
-        description: 'Nombre oficial de la institución',
-        updatedByUserId: adminUser!.id,
-      },
-      {
-        key: 'INSTITUTION_ADDRESS',
-        value: 'Carrera 13 No. 6-45',
-        description: 'Dirección física de la institución',
-        updatedByUserId: adminUser!.id,
-      },
-      {
-        key: 'INSTITUTION_PHONE',
-        value: '(+57) 2 2363636',
-        description: 'Teléfono de contacto',
-        updatedByUserId: adminUser!.id,
-      },
-      {
-        key: 'MAX_CASE_LOAD',
-        value: 50,
-        description: 'Carga máxima de casos por funcionario',
-        updatedByUserId: adminUser!.id,
-      },
-      {
-        key: 'AUTO_ASSIGNMENT_ENABLED',
-        value: true,
-        description: 'Asignación automática de casos habilitada',
-        updatedByUserId: adminUser!.id,
-      },
+  // 3. Configuración global mínima del sistema
+  if (firstAdminId) {
+    const settings: Array<{ key: 'MAX_CASE_LOAD' | 'AUTO_ASSIGNMENT_ENABLED'; value: number | boolean; description: string }> = [
+      { key: 'MAX_CASE_LOAD', value: 50, description: 'Carga máxima de casos por funcionario' },
+      { key: 'AUTO_ASSIGNMENT_ENABLED', value: true, description: 'Asignación automática de casos habilitada' },
     ];
-
-  for (const setting of systemSettings) {
-    const result = await prisma.systemSetting.upsert({
-      where: { key: setting.key },
-      update: { value: setting.value },
-      create: {
-        key: setting.key,
-        value: setting.value,
-        description: setting.description,
-        updatedByUserId: setting.updatedByUserId,
-      },
-    });
-    console.log(`   ✅ ${result.key}: ${JSON.stringify(result.value)}`);
+    for (const s of settings) {
+      await prisma.systemSetting.upsert({ where: { key: s.key }, update: { value: s.value }, create: { key: s.key, value: s.value, description: s.description, updatedByUserId: firstAdminId } });
+    }
   }
 
-  console.log('\n✅ ¡Seed completado exitosamente!\n');
-  console.log('📝 Usuario creado:');
-  console.log('   • admin@personeria.gov.co / Admin2026!');
-  console.log('\n🚀 El sistema está listo para usarse\n');
+  console.log('\n✅ Seed completado.');
+  console.log(`\n🔑 Contraseña de todos los usuarios: ${DEFAULT_PASSWORD}`);
+  console.log('   Patrón de correos por tenant (sigla en minúscula):');
+  console.log('     admin@<sigla>.gov.co · secretaria.gobierno@<sigla>.gov.co');
+  console.log('     comisario.<cf>@<sigla>.gov.co · funcionario.<cf>@<sigla>.gov.co · ventanilla.<cf>@<sigla>.gov.co · auxiliar.<cf>@<sigla>.gov.co');
+  console.log('   Tenants:', TENANTS.map((t) => `${t.sigla}→${t.domain}`).join(' · '));
+  console.log('\n   Recuerda: el catálogo global de instrumentos se siembra con scripts/seed-instrumentos.ts\n');
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Error durante el seed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error('❌ Error durante el seed:', e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });
