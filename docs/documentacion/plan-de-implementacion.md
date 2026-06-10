@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 50. Routing por subdominio para dominio propio ossgefa.lat (Fase 1 del alta automática)
+**Estado:** COMPLETADO (Fase 1: routing)
+**Objetivo:** Hoy crear una alcaldía (tenant) es manual. Al tener el dominio propio `ossgefa.lat` queremos que el alta sea automática. **Decisión del usuario:** modelo = **BD/branch Neon por tenant** (aislamiento fuerte, alineado con CLAUDE.md); **alcance inicial = solo routing por subdominio**.
+**Diagnóstico del flujo actual:** `POST /super-admin/tenants` ya siembra roles/estados/tipos/admin/IA, pero (a) recibe `databaseUrl`/`databaseUrlDirect` en el body → la BD Neon se crea a mano; (b) no corre `prisma migrate deploy` sobre la BD nueva; (c) no siembra el catálogo de instrumentos per-tenant; (d) en `*.vercel.app` no hay wildcard → cada tenant necesita alias manual (dolor PALMIRA).
+**Hecho en esta fase (routing, código listo):**
+- `src/lib/tenantResolver.ts` — nueva resolución por subdominio: si el host es `<sigla>.<TENANT_BASE_DOMAIN>` se toma el primer label como `sigla` del tenant (igual que ya hacía con `.localhost`), con fallback a match exacto por `domain`. Helper exportado `siglaFromBaseDomain()`. Dominio base parametrizado por env `TENANT_BASE_DOMAIN` (default `ossgefa.lat`). Retrocompatible: los `*.vercel.app` actuales caen al match por `domain` como antes.
+- `.env.example` — documenta `TENANT_BASE_DOMAIN`.
+**Verificación:** `tsc --noEmit` limpio; test del algoritmo de extracción de sigla (apex→null, multinivel→null, www/puerto→sigla, vercel.app/gov.co→null) todos OK. Test runtime end-to-end queda pendiente hasta que el dominio `ossgefa.lat` esté vivo.
+**Pendiente — config infra (la hace el usuario al tener el dominio):** (1) registrar `ossgefa.lat`; (2) DNS wildcard `*.ossgefa.lat` (CNAME → Vercel); (3) agregar dominio wildcard `*.ossgefa.lat` en el proyecto Vercel; (4) setear `TENANT_BASE_DOMAIN=ossgefa.lat` en Vercel; (5) actualizar el campo `domain` de los tenants existentes a `<sigla>.ossgefa.lat` (o confiar en la resolución por sigla).
+**Pendiente — Fase 2 (provisioning de BD, NO incluida aquí):** integrar API de Neon (crear branch por tenant) + `prisma migrate deploy` + seed completo (incl. instrumentos) disparados desde el endpoint de alta; requiere `NEON_API_KEY`.
+
 ### 49. Diferenciar permisos psicólogo vs trabajadora social (profesión del funcionario)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario exige que el psicólogo y la trabajadora social NO tengan los mismos permisos. Hoy ambos son un único `FUNCIONARIO` y la aplicación de instrumentos no filtra por profesión. Añadir `profesion` al `User` (enum `ProfesionInstrumento`), sembrar 2 funcionarios por comisaría (psicología + trabajo social) y gating: cada profesional solo ve/aplica instrumentos de su profesión + los de `AMBOS` (F3=psicología, F5=trabajo social, batería Res.0362=ambos). Verificación previa (matriz RBAC en prod) confirmó que auxiliar y secretaría ya están bien bloqueados de expedientes.

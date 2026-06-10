@@ -24,6 +24,26 @@ export function normalizeHost(rawHost: string | null): string {
 }
 
 /**
+ * Dominio base propio bajo el que viven los subdominios de cada tenant
+ * (p. ej. ossgefa.lat → buga.ossgefa.lat, tulua.ossgefa.lat). Configurable por
+ * env para no hardcodearlo y soportar staging. Con un wildcard `*.ossgefa.lat`
+ * en DNS + Vercel, cualquier subdominio nuevo resuelve sin config adicional:
+ * el subdominio es la `sigla` del tenant.
+ */
+const TENANT_BASE_DOMAIN = (process.env.TENANT_BASE_DOMAIN || 'ossgefa.lat').toLowerCase();
+
+/** Si el host es `<sigla>.<dominio-base>`, devuelve la sigla; si no, null. */
+export function siglaFromBaseDomain(host: string): string | null {
+  if (!TENANT_BASE_DOMAIN) return null;
+  const suffix = `.${TENANT_BASE_DOMAIN}`;
+  if (!host.endsWith(suffix)) return null;
+  const sub = host.slice(0, -suffix.length);
+  // Solo un nivel de subdominio (la sigla). El apex (sub === '') no es tenant.
+  if (!sub || sub.includes('.')) return null;
+  return sub;
+}
+
+/**
  * Retrieves the tenant by the normalized domain, using memory cache.
  * For localhost/dev environments, uses DEFAULT_TENANT_SIGLA env var or first available tenant.
  */
@@ -69,6 +89,17 @@ export async function resolveTenantByHost(rawHost: string | null): Promise<Tenan
           ]
         }
       });
+    }
+  } else if (siglaFromBaseDomain(host)) {
+    // 3a. Subdominio del dominio propio (wildcard `*.ossgefa.lat`): el primer
+    // label es la sigla del tenant. Resuelve solo, sin alias por tenant. Si no
+    // hay match por sigla, cae al match exacto por domain (dominios a medida).
+    const sigla = siglaFromBaseDomain(host)!;
+    tenant = await prisma.tenant.findFirst({
+      where: { sigla: { equals: sigla, mode: 'insensitive' } }
+    });
+    if (!tenant) {
+      tenant = await prisma.tenant.findFirst({ where: { domain: host } });
     }
   } else {
     // 3. Database Lookup leniente (Intenta la URL exacta tipiádola en la bbdd, o la normalizada)
