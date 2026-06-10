@@ -6,6 +6,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 55. Cupo de comisarías por tenant (las "contratadas"): el superadmin lo fija, el tenant no lo excede
+**Estado:** COMPLETADO
+**Objetivo:** Al crear el tenant (Alcaldía), el superadmin debe poder fijar cuántas comisarías puede tener ("las contratadas"). Desde el tenant, el ADMIN no debe poder crear (ni reactivar) más comisarías que ese cupo. Añadir `maxComisarias` al `Tenant`, aceptarlo en el alta de superadmin, y forzar el límite en el POST/PUT de comisarías + reflejarlo en la UI (X de Y usadas).
+**Hecho:**
+- `prisma/schema.prisma` — `Tenant.maxComisarias Int?` (null = sin límite). Aplicado al demo con `prisma db push` aditivo (sin reset).
+- `src/app/api/v1/super-admin/tenants/route.ts` — el alta acepta `maxComisarias` (normaliza vacío/0/negativo → null) y lo guarda en el control plane y en la réplica del Tenant en la BD del tenant.
+- `src/app/api/v1/comisarias/route.ts` — POST: si `maxComisarias != null` y las comisarías ACTIVAS ya llegan al cupo → **409** con mensaje claro. GET ahora devuelve `{ comisarias, maxComisarias, activeCount }`.
+- `src/app/api/v1/comisarias/[id]/route.ts` — PUT: **reactivar** (inactiva→activa) también consume cupo; bloquea con 409 si está lleno.
+- `src/app/super-admin/page.tsx` — campo "Comisarías contratadas" en el form de alta de tenant.
+- `src/app/admin/comisarias/page.tsx` — indicador "X de Y comisarías contratadas en uso", botón "Crear" deshabilitado al alcanzar el cupo. Ajustado al nuevo shape del GET.
+- `src/app/admin/usuarios/page.tsx` — `loadComisarias` ajustado al nuevo shape (`data.comisarias`).
+**Decisión de diseño:** el cupo limita las comisarías **ACTIVAS** (desactivar una libera un cupo; reactivar lo vuelve a consumir). `null`/vacío = sin límite (compat. con tenants existentes).
+**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. Runtime tras redeploy pendiente.
+
 ### 54. Auditar/endurecer a la Secretaría de Gobierno: SOLO estadística y reportes agregados
 **Estado:** COMPLETADO
 **Objetivo:** El usuario reitera que `SECRETARIA_GOBIERNO` es una dependencia que única y exclusivamente ve información estadística y genera reportes estadísticos — nada más (no ve ni ingresa expedientes ni datos de víctimas/NNA). Auditar TODO lo que ese rol puede alcanzar (nav + endpoints que abren esas pantallas, en especial `/admin/reports`) y confirmar/forzar que los reportes y vistas sean exclusivamente agregados/anonimizados, sin filtración de datos de caso.
@@ -15,7 +29,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - ❌→✅ **Gap corregido (reportes):** los reportes (`MONTHLY_MANAGEMENT/SLA_COMPLIANCE/WORKLOAD/QUALITY/HISTORICAL`) son agregados/estadísticos (vía `MetricsService`, sin datos de caso individual), pero los 3 endpoints `/api/v1/reports*` estaban restringidos a `['ADMIN','SUPERVISOR']` — la Secretaría veía el enlace en el nav pero recibía 403. **Fix:** añadido `SECRETARIA_GOBIERNO` a `reports`, `reports/generate` y `reports/download/[id]`. Ahora puede generar/listar/descargar reportes estadísticos, que es justo su función.
 **Archivos:** `src/app/api/v1/reports/route.ts`, `reports/generate/route.ts`, `reports/download/[id]/route.ts`.
 **Residuos NO sensibles (sin datos de víctima/NNA, anotados, no bloqueados aquí):** GETs genéricos sin gate de rol (`/users`, `/roles`, `/comisarias`) exponen metadatos de personal/sedes; y los endpoints legacy `casos/[caseId]/proponer-reasignacion` y `reasignar` no tienen gate de rol. Ninguno expone expedientes ni datos de caso. Pendiente de decisión si se quiere un "nada más" literal que los bloquee también.
-**Verificación:** `tsc --noEmit` limpio. Runtime tras redeploy pendiente.
+**Verificación:** `tsc --noEmit` limpio. **Runtime en prod (secretaria.gobierno@buga.gov.co):** stats 200, seguimiento 200, reportes 200 (antes 403), **listar casos 403** (bloqueado), generar reporte estadístico 200. Matrix confirmado: la Secretaría genera reportes estadísticos y NO accede a expedientes.
 
 ### 53. Gestión de comisarías desde el panel del tenant (CRUD + asignar usuario a sede)
 **Estado:** COMPLETADO

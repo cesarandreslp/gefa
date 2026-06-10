@@ -21,6 +21,8 @@ export default function ComisariasPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [comisarias, setComisarias] = useState<Comisaria[]>([]);
+  const [cap, setCap] = useState<number | null>(null);
+  const [activeCount, setActiveCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<Comisaria | null>(null);
   const [form, setForm] = useState(EMPTY);
@@ -39,7 +41,12 @@ export default function ComisariasPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/v1/comisarias');
-      if (res.ok) setComisarias(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setComisarias(data.comisarias ?? []);
+        setCap(data.maxComisarias ?? null);
+        setActiveCount(data.activeCount ?? 0);
+      }
     } catch (e) {
       console.error('Error cargando comisarías:', e);
     } finally {
@@ -104,6 +111,8 @@ export default function ComisariasPage() {
     }
   };
 
+  const atCap = cap != null && activeCount >= cap;
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.75rem', fontSize: '0.875rem', border: '1px solid #d1d5db', borderRadius: '8px',
   };
@@ -132,11 +141,18 @@ export default function ComisariasPage() {
                 <p style={{ color: '#6b7280', marginTop: '0.25rem', fontSize: '0.875rem' }}>
                   Sedes de la Alcaldía. Crea y administra las comisarías a las que pertenecen el personal y los casos.
                 </p>
+                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', fontWeight: 600, color: atCap ? '#b91c1c' : '#2563eb' }}>
+                  {cap == null
+                    ? `${activeCount} comisaría(s) activa(s) · sin límite contratado`
+                    : `${activeCount} de ${cap} comisarías contratadas en uso${atCap ? ' · cupo alcanzado' : ''}`}
+                </p>
               </div>
             </div>
             <button
               onClick={() => openModal()}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+              disabled={atCap}
+              title={atCap ? 'Cupo de comisarías contratadas alcanzado' : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: atCap ? '#9ca3af' : '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: atCap ? 'not-allowed' : 'pointer' }}
             >
               <Plus size={18} /> Crear Comisaría
             </button>
@@ -153,8 +169,10 @@ export default function ComisariasPage() {
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <Building2 size={64} style={{ margin: '0 auto 1rem', color: '#d1d5db' }} />
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '0.5rem' }}>Aún no hay comisarías</h3>
-            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Crea la primera sede de la Alcaldía para asignarle personal y casos.</p>
-            <button onClick={() => openModal()} style={{ padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              {atCap ? 'La entidad no tiene cupo de comisarías contratado. Solicite ampliación al administrador del sistema.' : 'Crea la primera sede de la Alcaldía para asignarle personal y casos.'}
+            </p>
+            <button onClick={() => openModal()} disabled={atCap} style={{ padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: atCap ? '#9ca3af' : '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: atCap ? 'not-allowed' : 'pointer' }}>
               Crear Primera Comisaría
             </button>
           </div>

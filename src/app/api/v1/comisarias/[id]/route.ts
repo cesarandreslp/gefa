@@ -45,6 +45,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (body.isMobile !== undefined) data.isMobile = Boolean(body.isMobile);
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
 
+    // Reactivar consume cupo: si se pasa de inactiva a activa, respetar maxComisarias.
+    if (body.isActive === true && !existing.isActive) {
+      const tenant = await auth.db.tenant.findUnique({
+        where: { id: auth.user.tenantId },
+        select: { maxComisarias: true },
+      });
+      if (tenant?.maxComisarias != null) {
+        const activas = await auth.db.comisaria.count({
+          where: { tenantId: auth.user.tenantId, isActive: true },
+        });
+        if (activas >= tenant.maxComisarias) {
+          return NextResponse.json(
+            { error: `Cupo de comisarías alcanzado: la entidad contrató ${tenant.maxComisarias}. Desactive otra o solicite ampliación.` },
+            { status: 409 }
+          );
+        }
+      }
+    }
+
     const updated = await auth.db.comisaria.update({ where: { id }, data });
 
     await auditService.log({

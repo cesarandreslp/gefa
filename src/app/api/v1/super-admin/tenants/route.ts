@@ -48,8 +48,14 @@ export async function POST(request: NextRequest) {
     const {
       name, sigla, domain, logoUrl, faviconUrl,
       institutionTypeId, institutionalEmail, phone, address,
-      groqApiKey, databaseUrl, databaseUrlDirect
+      groqApiKey, databaseUrl, databaseUrlDirect, maxComisarias
     } = body;
+
+    // Cupo de comisarías contratadas (opcional). null/0/negativo => sin límite.
+    const comisariasCap =
+      maxComisarias === undefined || maxComisarias === null || maxComisarias === ''
+        ? null
+        : Math.max(0, parseInt(String(maxComisarias), 10)) || null;
 
     if (!name || !sigla || !domain) {
       return NextResponse.json({ success: false, error: 'Nombre, sigla y dominio son obligatorios' }, { status: 400 });
@@ -96,6 +102,7 @@ export async function POST(request: NextRequest) {
           phone,
           address,
           isActive: true,
+          maxComisarias: comisariasCap,
           databaseUrl: databaseUrl || null,
           databaseUrlDirect: databaseUrlDirect || null,
         } as any
@@ -139,6 +146,7 @@ export async function POST(request: NextRequest) {
               phone,
               address,
               isActive: true,
+              maxComisarias: comisariasCap,
               databaseUrl,
               databaseUrlDirect: databaseUrlDirect || null,
             } as any

@@ -51,6 +51,11 @@ model Tenant {
   // Estado
   isActive            Boolean  @default(true)
 
+  // Cupo de comisarías (sedes) contratadas por la Alcaldía. Lo fija el superadmin
+  // al crear/editar el tenant; el ADMIN del municipio no puede crear ni reactivar
+  // más comisarías activas que este número. null = sin límite.
+  maxComisarias       Int?
+
   // Base de datos independiente por tenant
   databaseUrl         String?  // Connection string (pooled) de la BD propia del tenant
   databaseUrlDirect   String?  // Connection string directo (sin pooler, para migraciones)

@@ -14,13 +14,25 @@ export async function GET(request: NextRequest) {
       return auth.response ?? NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const comisarias = await auth.db.comisaria.findMany({
-      where: { tenantId: auth.user.tenantId },
-      orderBy: [{ isActive: 'desc' }, { code: 'asc' }],
-      include: { _count: { select: { users: true, cases: true } } },
-    });
+    const [comisarias, tenant] = await Promise.all([
+      auth.db.comisaria.findMany({
+        where: { tenantId: auth.user.tenantId },
+        orderBy: [{ isActive: 'desc' }, { code: 'asc' }],
+        include: { _count: { select: { users: true, cases: true } } },
+      }),
+      auth.db.tenant.findUnique({
+        where: { id: auth.user.tenantId },
+        select: { maxComisarias: true },
+      }),
+    ]);
 
-    return NextResponse.json(comisarias);
+    const activeCount = comisarias.filter((c) => c.isActive).length;
+
+    return NextResponse.json({
+      comisarias,
+      maxComisarias: tenant?.maxComisarias ?? null,
+      activeCount,
+    });
   } catch (error) {
     console.error('Error listando comisarías:', error);
     return NextResponse.json({ error: 'Error al listar las comisarías' }, { status: 500 });
@@ -52,6 +64,24 @@ export async function POST(request: NextRequest) {
     });
     if (existing) {
       return NextResponse.json({ error: `Ya existe una comisaría con el código ${code}` }, { status: 400 });
+    }
+
+    // Cupo contratado: el tenant no puede tener más comisarías ACTIVAS que maxComisarias
+    // (lo fija el superadmin). null = sin límite.
+    const tenant = await auth.db.tenant.findUnique({
+      where: { id: auth.user.tenantId },
+      select: { maxComisarias: true },
+    });
+    if (tenant?.maxComisarias != null) {
+      const activas = await auth.db.comisaria.count({
+        where: { tenantId: auth.user.tenantId, isActive: true },
+      });
+      if (activas >= tenant.maxComisarias) {
+        return NextResponse.json(
+          { error: `Cupo de comisarías alcanzado: la entidad contrató ${tenant.maxComisarias}. Para crear más, solicite ampliación al administrador del sistema.` },
+          { status: 409 }
+        );
+      }
     }
 
     const comisaria = await auth.db.comisaria.create({

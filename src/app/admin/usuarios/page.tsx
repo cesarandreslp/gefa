@@ -96,7 +96,8 @@ export default function UsersPage() {
       const response = await fetch('/api/v1/comisarias');
       if (response.ok) {
         const data = await response.json();
-        setComisarias(data.filter((c: Comisaria & { isActive: boolean }) => c.isActive));
+        const list: Array<Comisaria & { isActive: boolean }> = data.comisarias ?? [];
+        setComisarias(list.filter((c) => c.isActive));
       }
     } catch (error) {
       console.error('Error cargando comisarías:', error);
