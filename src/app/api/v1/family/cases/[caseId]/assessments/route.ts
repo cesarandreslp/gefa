@@ -15,7 +15,10 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
     }
 
     const db = auth.db;
-    const caseRow = await findCaseInTenant(db, params.caseId, auth.user.tenantId);
+    const caseRow = await db.case.findFirst({
+      where: { id: params.caseId, tenantId: auth.user.tenantId },
+      select: { id: true, preInformeConsolidado: true, preInformeGeneradoAt: true },
+    });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
     }
@@ -33,7 +36,10 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
     // Acceso a datos confidenciales: queda auditado (Ley 1581/2012 + Ley 1098/2006)
     await auditFamily(db, request, auth.user, 'FAMILY_ASSESSMENT_ACCESSED', 'Assessment', params.caseId, { caseId: params.caseId, metadata: { count: assessments.length } });
 
-    return NextResponse.json({ data: assessments });
+    return NextResponse.json({
+      data: assessments,
+      preInforme: { texto: caseRow.preInformeConsolidado, generadoAt: caseRow.preInformeGeneradoAt },
+    });
   } catch (error) {
     console.error('Error listando valoraciones:', error);
     return NextResponse.json({ error: 'Error al listar las valoraciones' }, { status: 500 });

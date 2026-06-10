@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 40. Fase C4 — Pre-informe consolidado por IA del caso
+**Estado:** COMPLETADO
+**Objetivo:** Cuando un caso tiene varias valoraciones/instrumentos diligenciados, la IA integra sus borradores en un pre-informe consolidado del caso (borrador editable), que luego pasa a la aprobación del `DIRECTOR` (C5). Reusa `aiClient` (multiproveedor) y `anonymize`; la IA solo produce borradores, sin peso procesal.
+**Hecho:**
+- Schema: `Case` += `preInformeConsolidado` (`@db.Text`) + `preInformeGeneradoAt`. `db push` aplicado.
+- Servicio: `src/services/ConsolidatedReportService.ts` (`generateConsolidatedReport`) — toma las valoraciones con `instrumentoId`, arma bloques (instrumento + puntaje/nivel/riesgo + informe preliminar C3 si existe, si no los `findings`), anonimiza nombres de las partes y pide a la IA un BORRADOR consolidado (síntesis integral / nivel de riesgo consolidado / factores / recomendaciones). Si no hay instrumentos aplicados, devuelve aviso claro.
+- API: `POST /api/v1/family/cases/[caseId]/pre-informe` (genera + guarda en `Case` + audita `FAMILY_CASE_REPORT_CONSOLIDATED`) y `PATCH` (edita el borrador, audita `FAMILY_CASE_REPORT_UPDATED`). RBAC `FAMILY_CONFIDENTIAL_ROLES`.
+- Exposición: el GET confidencial de valoraciones (`cases/[caseId]/assessments`) devuelve `preInforme {texto, generadoAt}` junto a `data` — NO se expone en el GET del caso (lo leen roles sin acceso confidencial, p.ej. ventanilla).
+- UI: `ConsolidatedReportSection` en la tarjeta Valoraciones (debajo de la lista) — generar/regenerar/editar el borrador consolidado; se auto-oculta si no hay instrumentos aplicados. Etiquetas de auditoría añadidas. type-check verde.
+- Principio: la IA solo produce borradores; la validez la dará la aprobación de la autoridad (Fase C5).
+
 ### 39. Quitar API key de GROQ versionada en documentación
 **Estado:** COMPLETADO
 **Objetivo:** Eliminar una API key real de GROQ que estaba en texto plano dentro de un archivo versionado (riesgo de exposición del secreto).

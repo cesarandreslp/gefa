@@ -282,6 +282,12 @@ model Case {
   violenceTypes  ViolenceType[]
   caseModality   CaseModality?
 
+  // Pre-informe consolidado por IA (Fase C4): integra los informes preliminares
+  // de los instrumentos diligenciados en un BORRADOR único del caso. Sin peso
+  // procesal: lo edita el equipo y lo aprueba la autoridad (Fase C5).
+  preInformeConsolidado String?   @db.Text
+  preInformeGeneradoAt  DateTime?
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

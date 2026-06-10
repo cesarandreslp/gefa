@@ -498,6 +498,82 @@ export function InstrumentReportControl({ assessment, onDone }: { assessment: an
   );
 }
 
+export function ConsolidatedReportSection({ caseId, assessments, preInforme, onDone }: { caseId: string; assessments: any[]; preInforme?: { texto?: string | null; generadoAt?: string | null } | null; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(preInforme?.texto ?? '');
+
+  const conInstrumento = assessments.filter((a) => a.instrumento).length;
+  const tiene = !!preInforme?.texto;
+
+  useEffect(() => { setText(preInforme?.texto ?? ''); }, [preInforme?.texto]);
+
+  const generate = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/pre-informe`, { method: 'POST' });
+      const d = await res.json();
+      if (!res.ok) { setError(d.error || 'No se pudo generar el pre-informe.'); return; }
+      setText(d.preInformeConsolidado ?? ''); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
+  const save = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/pre-informe`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preInformeConsolidado: text }) });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'No se pudo guardar.'); return; }
+      setEditing(false); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
+
+  if (conInstrumento === 0) return null;
+
+  return (
+    <div style={{ marginTop: '0.85rem', border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.82rem', color: '#6d28d9', fontWeight: 700 }}>
+          🧩 Pre-informe consolidado del caso (IA)
+        </div>
+        <div style={{ fontSize: '0.74rem', color: '#7c3aed' }}>
+          {conInstrumento} instrumento{conInstrumento === 1 ? '' : 's'} diligenciado{conInstrumento === 1 ? '' : 's'}
+          {preInforme?.generadoAt && <> · generado {new Date(preInforme.generadoAt).toLocaleDateString('es-CO')}</>}
+        </div>
+      </div>
+      <div style={{ fontSize: '0.74rem', color: '#7c3aed', margin: '0.2rem 0 0.55rem' }}>
+        Borrador integrado de los instrumentos; sin peso procesal — requiere revisión y aprobación de la autoridad.
+      </div>
+      <ErrorBox msg={error} />
+      {!tiene && !editing ? (
+        <button onClick={generate} disabled={busy} style={{ ...primaryBtn, background: '#7c3aed', fontSize: '0.82rem' }}>
+          {busy ? 'Consolidando…' : '✨ Generar pre-informe consolidado'}
+        </button>
+      ) : (
+        <div>
+          {editing ? (
+            <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', minHeight: '220px', padding: '0.55rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+          ) : (
+            <p style={{ fontSize: '0.86rem', color: '#374151', whiteSpace: 'pre-wrap', margin: 0 }}>{preInforme?.texto}</p>
+          )}
+          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.55rem', flexWrap: 'wrap' }}>
+            {editing ? (
+              <>
+                <button onClick={save} disabled={busy} style={{ ...primaryBtn, background: '#7c3aed', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>{busy ? 'Guardando…' : 'Guardar'}</button>
+                <button onClick={() => { setEditing(false); setText(preInforme?.texto ?? ''); }} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Cancelar</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setEditing(true)} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Editar</button>
+                <button onClick={generate} disabled={busy} style={{ ...ghostBtn, fontSize: '0.8rem', padding: '0.3rem 0.8rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>{busy ? 'Consolidando…' : 'Regenerar'}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Equipo asignado al caso ──────────────────────────────────────────────────
 export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: boolean }) {
   const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
@@ -765,6 +841,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_EVIDENCE_VALUED: 'Prueba valorada (admitida/rechazada)',
   FAMILY_INSTRUMENT_APPLIED: 'Instrumento de valoración aplicado',
   FAMILY_INSTRUMENT_REPORT_GENERATED: 'Informe preliminar generado (IA)',
+  FAMILY_CASE_REPORT_CONSOLIDATED: 'Pre-informe consolidado generado (IA)',
+  FAMILY_CASE_REPORT_UPDATED: 'Pre-informe consolidado corregido',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del
