@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 54. Auditar/endurecer a la Secretaría de Gobierno: SOLO estadística y reportes agregados
+**Estado:** COMPLETADO
+**Objetivo:** El usuario reitera que `SECRETARIA_GOBIERNO` es una dependencia que única y exclusivamente ve información estadística y genera reportes estadísticos — nada más (no ve ni ingresa expedientes ni datos de víctimas/NNA). Auditar TODO lo que ese rol puede alcanzar (nav + endpoints que abren esas pantallas, en especial `/admin/reports`) y confirmar/forzar que los reportes y vistas sean exclusivamente agregados/anonimizados, sin filtración de datos de caso.
+**Auditoría (resultado):**
+- ✅ **Expedientes blindados:** todos los endpoints de casos (listar, detalle, partes, medidas, audiencias, valoraciones, declaraciones, pre-informe, auditoría) exigen `FAMILY_READ/WRITE/CONFIDENTIAL_ROLES`. `SECRETARIA_GOBIERNO` solo está en `FAMILY_STATS_ROLES` → no puede ni listar casos (403). Confirmado por código y por el matrix runtime previo.
+- ✅ **Vistas agregadas:** `family/stats` y `family/seguimiento` son puramente agregados (conteos/groupBy; el único nombre propio es el del **funcionario** para carga de trabajo, nunca de víctimas/NNA).
+- ❌→✅ **Gap corregido (reportes):** los reportes (`MONTHLY_MANAGEMENT/SLA_COMPLIANCE/WORKLOAD/QUALITY/HISTORICAL`) son agregados/estadísticos (vía `MetricsService`, sin datos de caso individual), pero los 3 endpoints `/api/v1/reports*` estaban restringidos a `['ADMIN','SUPERVISOR']` — la Secretaría veía el enlace en el nav pero recibía 403. **Fix:** añadido `SECRETARIA_GOBIERNO` a `reports`, `reports/generate` y `reports/download/[id]`. Ahora puede generar/listar/descargar reportes estadísticos, que es justo su función.
+**Archivos:** `src/app/api/v1/reports/route.ts`, `reports/generate/route.ts`, `reports/download/[id]/route.ts`.
+**Residuos NO sensibles (sin datos de víctima/NNA, anotados, no bloqueados aquí):** GETs genéricos sin gate de rol (`/users`, `/roles`, `/comisarias`) exponen metadatos de personal/sedes; y los endpoints legacy `casos/[caseId]/proponer-reasignacion` y `reasignar` no tienen gate de rol. Ninguno expone expedientes ni datos de caso. Pendiente de decisión si se quiere un "nada más" literal que los bloquee también.
+**Verificación:** `tsc --noEmit` limpio. Runtime tras redeploy pendiente.
+
 ### 53. Gestión de comisarías desde el panel del tenant (CRUD + asignar usuario a sede)
 **Estado:** COMPLETADO
 **Objetivo:** Hoy las comisarías (sedes) de una Alcaldía solo existen vía seed; no hay forma de crearlas/editarlas desde el panel ni de asignar un usuario a su comisaría (`POST /api/v1/users` no acepta `comisariaId`). Construir el corazón del modelo tenant=Alcaldía: (1) CRUD `/api/v1/comisarias` scopeado al tenant y restringido a ADMIN; (2) agregar `comisariaId` al alta/edición de usuarios (API + form); (3) pantalla admin para gestionar sedes.

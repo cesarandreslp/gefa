@@ -24,7 +24,7 @@ export async function GET(
 ) {
   try {
     // 1. Verificar autenticación y autorización
-    const auth = await protectAPIRoute(req, ['ADMIN', 'SUPERVISOR']);
+    const auth = await protectAPIRoute(req, ['ADMIN', 'SUPERVISOR', 'SECRETARIA_GOBIERNO']);
     if (!auth.authorized || !auth.user) {
       return auth.response!;
     }
