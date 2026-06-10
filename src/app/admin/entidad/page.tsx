@@ -22,6 +22,9 @@ export default function TenantEntidadPage() {
     logoUrl: '',
     primaryColor: '#1D4ED8',
     groqApiKey: '',
+    aiProvider: '',
+    aiApiKey: '',
+    aiModel: '',
     smtpUser: '',
     smtpPass: '',
     smtpFromName: '',
@@ -50,6 +53,9 @@ export default function TenantEntidadPage() {
         logoUrl: d?.logoUrl || '',
         primaryColor: d?.primaryColor || '#1D4ED8',
         groqApiKey: d?.groqApiKey || '',
+        aiProvider: d?.aiProvider || '',
+        aiApiKey: d?.aiApiKey || '',
+        aiModel: d?.aiModel || '',
         smtpUser: d?.smtpUser || '',
         smtpPass: d?.smtpPass || '',
         smtpFromName: d?.smtpFromName || '',
@@ -322,6 +328,45 @@ export default function TenantEntidadPage() {
               API key exclusiva para esta entidad. Si se deja vacía, se usará la key global del sistema como respaldo.
             </p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor de IA (informes)</label>
+              <select
+                value={formData.aiProvider}
+                onChange={(e) => setFormData({...formData, aiProvider: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="">GROQ (por defecto)</option>
+                <option value="GROQ">GROQ</option>
+                <option value="ANTHROPIC">Anthropic (Claude)</option>
+                <option value="OPENAI">OpenAI</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">API key del proveedor</label>
+              <input
+                type="password"
+                value={formData.aiApiKey}
+                onChange={(e) => setFormData({...formData, aiApiKey: e.target.value})}
+                placeholder="sk-... / gsk_..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Modelo (opcional)</label>
+              <input
+                type="text"
+                value={formData.aiModel}
+                onChange={(e) => setFormData({...formData, aiModel: e.target.value})}
+                placeholder="ej. claude-sonnet-4-6"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 -mt-3">
+            Usado para generar los informes preliminares de los instrumentos de valoración. Los datos sensibles se anonimizan antes de enviarse. Si se deja vacío, se usa GROQ con la key de arriba.
+          </p>
         </div>
 
         {/* Servicios de la Página Principal */}

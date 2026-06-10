@@ -14,7 +14,7 @@ import {
   AddHearingForm, HearingOutcomeControl,
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
-  DeclaracionesSection, ApplyInstrumentForm,
+  DeclaracionesSection, ApplyInstrumentForm, InstrumentReportControl,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -296,6 +296,7 @@ export default function ExpedienteFamiliaPage() {
                 )}
                 <p style={{ margin: '0.4rem 0 0', fontSize: '0.88rem', color: '#374151' }}>{a.findings}</p>
                 <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{a.assessor?.fullName ?? 'Profesional'} · {new Date(a.conductedAt).toLocaleDateString('es-CO')}</div>
+                {a.instrumento && <InstrumentReportControl assessment={a} onDone={load} />}
               </div>
             ))}
           </div>

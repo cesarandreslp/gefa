@@ -436,6 +436,68 @@ export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { ca
   );
 }
 
+// ── Informe preliminar por IA (borrador editable) ────────────────────────────
+export function InstrumentReportControl({ assessment, onDone }: { assessment: any; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(assessment.informePreliminar ?? '');
+  const tiene = !!assessment.informePreliminar;
+
+  const generate = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/assessments/${assessment.id}/informe`, { method: 'POST' });
+      const d = await res.json();
+      if (!res.ok) { setError(d.error || 'No se pudo generar el informe.'); return; }
+      setText(d.informePreliminar ?? ''); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
+  const save = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/assessments/${assessment.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ informePreliminar: text }) });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'No se pudo guardar.'); return; }
+      setEditing(false); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #fde68a', paddingTop: '0.5rem' }}>
+      <ErrorBox msg={error} />
+      {!tiene && !editing ? (
+        <button onClick={generate} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.65rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>
+          {busy ? 'Generando…' : '✨ Generar informe preliminar (IA)'}
+        </button>
+      ) : (
+        <div>
+          <div style={{ fontSize: '0.76rem', color: '#7c3aed', fontWeight: 600, marginBottom: '0.3rem' }}>
+            Informe preliminar (IA — borrador, sin peso procesal; requiere revisión/aprobación de la autoridad)
+          </div>
+          {editing ? (
+            <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', minHeight: '160px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+          ) : (
+            <p style={{ fontSize: '0.85rem', color: '#374151', whiteSpace: 'pre-wrap', margin: 0 }}>{assessment.informePreliminar}</p>
+          )}
+          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+            {editing ? (
+              <>
+                <button onClick={save} disabled={busy} style={{ ...primaryBtn, fontSize: '0.78rem', padding: '0.25rem 0.7rem' }}>{busy ? 'Guardando…' : 'Guardar'}</button>
+                <button onClick={() => { setEditing(false); setText(assessment.informePreliminar ?? ''); }} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.7rem' }}>Cancelar</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setEditing(true)} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.7rem' }}>Editar</button>
+                <button onClick={generate} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.7rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>{busy ? 'Generando…' : 'Regenerar'}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Equipo asignado al caso ──────────────────────────────────────────────────
 export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: boolean }) {
   const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
@@ -702,6 +764,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_DECLARATION_SIGNED: 'Declaración firmada (en firme)',
   FAMILY_EVIDENCE_VALUED: 'Prueba valorada (admitida/rechazada)',
   FAMILY_INSTRUMENT_APPLIED: 'Instrumento de valoración aplicado',
+  FAMILY_INSTRUMENT_REPORT_GENERATED: 'Informe preliminar generado (IA)',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del

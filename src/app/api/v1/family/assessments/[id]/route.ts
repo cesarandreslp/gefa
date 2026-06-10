@@ -59,6 +59,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (body.findings !== undefined) data.findings = body.findings;
     if (body.recommendations !== undefined) data.recommendations = body.recommendations || null;
+    if (body.informePreliminar !== undefined) data.informePreliminar = body.informePreliminar || null;
     if (body.isConfidential !== undefined) data.isConfidential = body.isConfidential !== false;
     if (body.riskLevel !== undefined) {
       if (!isValidEnum(RiskLevel, body.riskLevel)) {

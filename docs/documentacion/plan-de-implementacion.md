@@ -66,6 +66,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 #### Fase C — Instrumentos de valoración (subsistema)
 
+##### C3 — Informe preliminar por IA (multiproveedor + anonimización)
+**Estado:** COMPLETADO
+**Hecho:**
+- Schema: `Assessment` += `informePreliminar` (`@db.Text`) + `informeGeneradoAt`. `TenantSettings` += `aiProvider`/`aiApiKey`/`aiModel` (se conserva `groqApiKey` como fallback/legacy). `db push` aplicado.
+- IA multiproveedor: `src/services/aiClient.ts` (`callAI` por `fetch`) — GROQ/OpenAI (esquema OpenAI-compat) y Anthropic (messages); resuelve config del tenant con fallback a GROQ/env; `aiIsConfigured`.
+- Anonimización: `src/lib/anonymize.ts` — redacta nombres de las partes, correos y números largos (documentos/teléfonos) antes de enviar a la IA (Ley 1581/2012, Ley 1098/2006).
+- Generación: `src/services/InstrumentReportService.ts` arma resumen de respuestas+puntaje, anonimiza y pide un BORRADOR (prompt con estructura: síntesis/riesgo/protectores/recomendaciones; sin PII; aclara que es borrador sujeto a aprobación). Endpoint `POST /api/v1/family/assessments/[id]/informe` (RBAC confidencial, audita `FAMILY_INSTRUMENT_REPORT_GENERATED`); edición vía PATCH (`informePreliminar`).
+- UI: `InstrumentReportControl` en cada valoración con instrumento — generar/regenerar/editar el borrador; config IA (proveedor/key/modelo) en Entidad. `tenant-settings` API acepta los nuevos campos. type-check verde.
+- Principio: la IA solo produce borradores; sin peso procesal (la validez la da la aprobación de la autoridad, Fase C5).
+
 ##### C2 — Diligenciamiento del instrumento en plataforma + cálculo de puntaje/nivel
 **Estado:** COMPLETADO
 **Hecho:**

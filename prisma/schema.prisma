@@ -148,7 +148,10 @@ model TenantSettings {
   smtpFromName          String?  // Nombre que aparece en los correos enviados
 
   // Integración IA por tenant
-  groqApiKey            String?  // API key de GROQ exclusiva para esta entidad
+  groqApiKey            String?  // (legacy) API key de GROQ; sigue usándola la asignación inteligente
+  aiProvider            String?  // Proveedor IA: GROQ (def) | ANTHROPIC | OPENAI
+  aiApiKey              String?  // API key del proveedor seleccionado
+  aiModel               String?  // ID del modelo (def. según proveedor)
 
   // Extensibilidad futura sin necesidad de alterar esquema SQL a cada iteración
   metadata              Json?    // Documento JSON para propiedades no restrictivas
@@ -1543,6 +1546,11 @@ model Assessment {
   scoreDirecto    Int?         // nº de respuestas afirmativas ("Sí")
   scorePonderado  Int?         // suma ponderada según `peso`
   nivelCalculado  String?      // nivel calculado por scoringConfig (escala propia del instrumento)
+
+  // Informe preliminar generado por IA (Fase C3): BORRADOR editable, sin peso
+  // procesal. La validez la da la aprobación de la autoridad (Fase C5).
+  informePreliminar String?   @db.Text
+  informeGeneradoAt DateTime?
 
   // Confidencialidad (Ley 1581/2012 + Ley 1098/2006)
   isConfidential Boolean @default(true)
