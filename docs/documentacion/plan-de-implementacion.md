@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 57. Cupo de usuarios contratados por tenant (seats): el superadmin lo fija, el tenant no lo excede
+**Estado:** COMPLETADO
+**Objetivo:** Igual que el cupo de comisarías (entrada 55), el superadmin fija cuántos **usuarios** (seats) contrató la Alcaldía; desde el tenant no se pueden crear/reactivar más usuarios activos que ese número. Decisión: cupo **por tenant** (no por comisaría), consistente con `maxComisarias` y con el modelo de "seats contratados". Se excluye del conteo al usuario interno de IA (rol `ASIGNACION_DE_CASOS`). Añadir `maxUsers` al `Tenant`, aceptarlo en el alta de superadmin, forzarlo en el POST de usuarios, y reflejarlo en la UI.
+**Hecho:**
+- `prisma/schema.prisma` — `Tenant.maxUsers Int?` (null = sin límite). Aplicado al demo con `prisma db push` aditivo.
+- `src/app/api/v1/super-admin/tenants/route.ts` — el alta acepta `maxUsers` (helper `toCap`) y lo guarda en control plane + réplica.
+- `src/app/api/v1/users/route.ts` — POST: si las usuarios ACTIVOS (excluyendo IA) ya llegan a `maxUsers` → **409**.
+- `src/app/api/v1/users/[id]/toggle-status/route.ts` — reactivar también consume seat; bloquea con 409 si está lleno.
+- `src/app/api/v1/tenant/limits/route.ts` (NUEVO) — GET ligero con `{ maxUsers, maxComisarias, activeUsers, activeComisarias }` para la UI (no rompe el shape del listado de usuarios).
+- `src/app/super-admin/page.tsx` — campo "Usuarios contratados".
+- `src/app/admin/usuarios/page.tsx` — indicador "X de Y usuarios contratados en uso" + botones "Crear" deshabilitados al tope.
+**Verificación:** `tsc --noEmit` limpio; `next lint` solo con warnings preexistentes. Runtime tras redeploy pendiente.
+
 ### 56. Asignar un caso a su comisaría (sede) en la radicación y gestión
 **Estado:** COMPLETADO
 **Objetivo:** El modelo ya tiene `Case.comisariaId` pero no hay forma de elegir la comisaría (sede) que atiende un caso. Permitir seleccionar la comisaría al radicar (y poder cambiarla luego), validando que pertenezca al tenant. Es el complemento natural de la gestión de comisarías (entrada 53).
@@ -15,7 +28,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - `src/app/admin/family/nuevo/page.tsx` — selector "Comisaría (sede) que atiende el caso" en la radicación (carga las activas; opcional).
 - `src/app/admin/family/[caseId]/page.tsx` — el encabezado del expediente muestra la comisaría y permite reasignarla con un selector inline (PATCH + recarga).
 - `src/app/admin/family/page.tsx` — nueva columna "Comisaría" en el listado de casos.
-**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. Runtime tras redeploy pendiente.
+**Verificación:** `tsc --noEmit` limpio; `next lint` sin warnings. **Runtime en prod (admin@buga):** radicar caso con CF1 → 201 y GET muestra comisaría CF1; PATCH reasignar a CF2 → 200 y GET muestra CF2; limpieza aplicada. Asignación/reasignación confirmada end-to-end.
 
 ### 55. Cupo de comisarías por tenant (las "contratadas"): el superadmin lo fija, el tenant no lo excede
 **Estado:** COMPLETADO

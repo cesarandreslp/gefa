@@ -9,7 +9,7 @@ export default function SuperAdminDashboard() {
   
   // Create Modal State
   const [showCreate, setShowCreate] = useState(false);
-  const [formData, setFormData] = useState({ name: '', sigla: '', domain: '', institutionTypeId: '', maxComisarias: '', logoUrl: '', faviconUrl: '', groqApiKey: '', smtpUser: '', smtpPass: '', smtpFromName: '', databaseUrl: '', databaseUrlDirect: '' });
+  const [formData, setFormData] = useState({ name: '', sigla: '', domain: '', institutionTypeId: '', maxComisarias: '', maxUsers: '', logoUrl: '', faviconUrl: '', groqApiKey: '', smtpUser: '', smtpPass: '', smtpFromName: '', databaseUrl: '', databaseUrlDirect: '' });
   const [showDbUrl, setShowDbUrl] = useState(false);
   const [showDbUrlDirect, setShowDbUrlDirect] = useState(false);
   const [showSmtpPass, setShowSmtpPass] = useState(false);
@@ -357,7 +357,7 @@ export default function SuperAdminDashboard() {
                 </div>
                 
                 <button 
-                  onClick={() => { setShowCreate(false); setSuccessData(null); setFormData({ name: '', sigla: '', domain: '', institutionTypeId: '', maxComisarias: '', logoUrl: '', faviconUrl: '', groqApiKey: '', smtpUser: '', smtpPass: '', smtpFromName: '', databaseUrl: '', databaseUrlDirect: '' }); }}
+                  onClick={() => { setShowCreate(false); setSuccessData(null); setFormData({ name: '', sigla: '', domain: '', institutionTypeId: '', maxComisarias: '', maxUsers: '', logoUrl: '', faviconUrl: '', groqApiKey: '', smtpUser: '', smtpPass: '', smtpFromName: '', databaseUrl: '', databaseUrlDirect: '' }); }}
                   style={{ width: '100%', padding: '14px', backgroundColor: '#111827', color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                   Entendido, cerrar panel
@@ -400,6 +400,15 @@ export default function SuperAdminDashboard() {
                          style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }}
                          placeholder="Ej: 3" />
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>Máximo de comisarías (sedes) que la Alcaldía podrá tener activas. El administrador del tenant no podrá exceder este número.</p>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '0.9rem' }}>Usuarios contratados <span style={{ color: '#9ca3af', fontWeight: '400' }}>(cupo de seats — vacío = sin límite)</span></label>
+                  <input type="number" min={0} value={formData.maxUsers}
+                         onChange={e => setFormData({...formData, maxUsers: e.target.value})}
+                         style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px' }}
+                         placeholder="Ej: 25" />
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>Máximo de usuarios activos que la Alcaldía podrá tener (no cuenta el usuario interno de IA). El administrador del tenant no podrá exceder este número.</p>
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>

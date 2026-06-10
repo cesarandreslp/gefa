@@ -29,6 +29,29 @@ export async function PATCH(
       );
     }
 
+    // Reactivar consume seat: si pasa de inactivo a activo, respetar maxUsers.
+    if (!user.isActive) {
+      const tenant = await db.tenant.findUnique({
+        where: { id: auth.user.tenantId },
+        select: { maxUsers: true },
+      });
+      if (tenant?.maxUsers != null) {
+        const activos = await db.user.count({
+          where: {
+            tenantId: auth.user.tenantId,
+            isActive: true,
+            OR: [{ role: null }, { role: { code: { not: 'ASIGNACION_DE_CASOS' } } }],
+          },
+        });
+        if (activos >= tenant.maxUsers) {
+          return NextResponse.json(
+            { error: `Cupo de usuarios alcanzado: la entidad contrató ${tenant.maxUsers}. Desactive otro o solicite ampliación.` },
+            { status: 409 }
+          );
+        }
+      }
+    }
+
     // Cambiar el estado
     const updatedUser = await db.user.update({
       where: { id },

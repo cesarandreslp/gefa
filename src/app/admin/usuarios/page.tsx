@@ -36,6 +36,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [comisarias, setComisarias] = useState<Comisaria[]>([]);
+  const [limits, setLimits] = useState<{ maxUsers: number | null; activeUsers: number } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -72,12 +73,19 @@ export default function UsersPage() {
         const data = await response.json();
         setUsers(data);
       }
+      const limRes = await fetch('/api/v1/tenant/limits');
+      if (limRes.ok) {
+        const lim = await limRes.json();
+        setLimits({ maxUsers: lim.maxUsers ?? null, activeUsers: lim.activeUsers ?? 0 });
+      }
     } catch (error) {
       console.error('Error cargando usuarios:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const atUserCap = !!limits && limits.maxUsers != null && limits.activeUsers >= limits.maxUsers;
 
   const loadRoles = async () => {
     try {
@@ -279,11 +287,20 @@ export default function UsersPage() {
                 <p style={{ color: '#6b7280', marginTop: '0.25rem', fontSize: '0.875rem' }}>
                   Administra los usuarios del sistema
                 </p>
+                {limits && (
+                  <p style={{ marginTop: '0.4rem', fontSize: '0.8rem', fontWeight: 600, color: atUserCap ? '#b91c1c' : '#059669' }}>
+                    {limits.maxUsers == null
+                      ? `${limits.activeUsers} usuario(s) activo(s) · sin límite contratado`
+                      : `${limits.activeUsers} de ${limits.maxUsers} usuarios contratados en uso${atUserCap ? ' · cupo alcanzado' : ''}`}
+                  </p>
+                )}
               </div>
             </div>
 
             <button
               onClick={() => handleOpenModal()}
+              disabled={atUserCap}
+              title={atUserCap ? 'Cupo de usuarios contratados alcanzado' : undefined}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -291,11 +308,11 @@ export default function UsersPage() {
                 padding: '0.75rem 1.5rem',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                backgroundColor: '#10b981',
+                backgroundColor: atUserCap ? '#9ca3af' : '#10b981',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer'
+                cursor: atUserCap ? 'not-allowed' : 'pointer'
               }}
             >
               <Plus size={18} />
@@ -344,15 +361,16 @@ export default function UsersPage() {
             </p>
             <button
               onClick={() => handleOpenModal()}
+              disabled={atUserCap}
               style={{
                 padding: '0.75rem 1.5rem',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                backgroundColor: '#10b981',
+                backgroundColor: atUserCap ? '#9ca3af' : '#10b981',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer'
+                cursor: atUserCap ? 'not-allowed' : 'pointer'
               }}
             >
               Crear Primer Usuario

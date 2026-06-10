@@ -56,6 +56,11 @@ model Tenant {
   // más comisarías activas que este número. null = sin límite.
   maxComisarias       Int?
 
+  // Cupo de usuarios (seats) contratados por la Alcaldía. El ADMIN no puede crear
+  // ni reactivar más usuarios activos que este número. No cuenta el usuario interno
+  // de IA (rol ASIGNACION_DE_CASOS). null = sin límite.
+  maxUsers            Int?
+
   // Base de datos independiente por tenant
   databaseUrl         String?  // Connection string (pooled) de la BD propia del tenant
   databaseUrlDirect   String?  // Connection string directo (sin pooler, para migraciones)

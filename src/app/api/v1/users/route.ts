@@ -97,6 +97,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Cupo de usuarios (seats) contratados: el tenant no puede tener más usuarios
+    // ACTIVOS que maxUsers (lo fija el superadmin). No cuenta el usuario interno de
+    // IA (rol ASIGNACION_DE_CASOS). null = sin límite.
+    const tenant = await db.tenant.findUnique({
+      where: { id: auth.user.tenantId },
+      select: { maxUsers: true },
+    });
+    if (tenant?.maxUsers != null) {
+      const activos = await db.user.count({
+        where: {
+          tenantId: auth.user.tenantId,
+          isActive: true,
+          OR: [{ role: null }, { role: { code: { not: 'ASIGNACION_DE_CASOS' } } }],
+        },
+      });
+      if (activos >= tenant.maxUsers) {
+        return NextResponse.json(
+          { error: `Cupo de usuarios alcanzado: la entidad contrató ${tenant.maxUsers}. Para crear más, solicite ampliación al administrador del sistema.` },
+          { status: 409 }
+        );
+      }
+    }
+
     // Hash de la contraseña
     const passwordHash = await bcrypt.hash(password, 10);
 
