@@ -17,7 +17,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - `src/app/admin/comisarias/page.tsx` (NUEVO) — pantalla de gestión de sedes (tabla con código/nombre/contacto/personal/casos/estado; modal crear-editar con código, nombre, dirección, teléfono, unidad móvil; activar/desactivar).
 - `src/app/admin/AdminNav.tsx` — nuevo ítem "🏢 Comisarías" (solo ADMIN).
 - `src/app/admin/usuarios/page.tsx` — **arreglo de fondo**: el form estaba desalineado con el schema (usaba `firstName/secondName/...` cuando el modelo es `fullName`, lo que rompía el alta). Migrado a un único campo "Nombre completo" (`fullName`) y añadido el selector "Comisaría (sede)"; el listado muestra la sede de cada usuario.
-**Verificación:** `tsc --noEmit` limpio; `next lint` de los archivos tocados sin warnings. Falta verificación runtime tras el redeploy de Vercel.
+**Verificación:** `tsc --noEmit` limpio; `next lint` de los archivos tocados sin warnings. **Runtime en prod (buga.ossgefa.lat):** ADMIN lista 3 comisarías del seed (200), crea CFTEST (201), la lista pasa a 4, un PSICÓLOGO recibe 403 al intentar crear (RBAC OK), ADMIN desactiva CFTEST (200, limpieza). Flujo CRUD + RBAC confirmado end-to-end.
 **Pendiente/nota:** las comisarías las crea el ADMIN de la Alcaldía; el seed sigue sembrando CF1/CF2/CF3 para el demo. La asignación de comisaría a un caso (no a usuario) ya existía en el modelo (`Case.comisariaId`) pero su UI de asignación queda fuera de este alcance.
 
 ### 52. VERIFICADO EN VIVO: dominio propio ossgefa.lat operativo (entradas 50 y 51)
