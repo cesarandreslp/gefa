@@ -1605,6 +1605,72 @@ enum TipoDeclarante {
   NNA            // a través de su representante legal
 }
 
+/// Instrumento/formato normado de valoración que aplica el equipo interdisciplinario
+/// (psicología / trabajo social). Catálogo GLOBAL por `code` (norma nacional: ICBF,
+/// Minjusticia). El diligenciamiento por caso vive en `Assessment` (Fase C2).
+model Instrumento {
+  id String @id @default(uuid())
+
+  code           String  @unique // ICBF_F3G16P, ICBF_F5G16P, MINJUSTICIA_RES0362_2026
+  name           String
+  norma          String          // referencia legal / formato oficial
+  version        String?
+  profesion      ProfesionInstrumento
+  appliesTo      CaseModality?   // modalidad de caso a la que aplica (null = general)
+  assessmentType AssessmentType? // tipo de valoración que produce
+  description    String? @db.Text
+  isActive       Boolean @default(true)
+  displayOrder   Int     @default(0)
+
+  campos InstrumentoCampo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profesion])
+  @@index([appliesTo])
+  @@map("instrumentos")
+}
+
+/// Campo de la plantilla de un instrumento (define el formulario a diligenciar).
+model InstrumentoCampo {
+  id String @id @default(uuid())
+
+  instrumentoId String
+  instrumento   Instrumento @relation(fields: [instrumentoId], references: [id], onDelete: Cascade)
+
+  code      String    // identificador del campo dentro del instrumento
+  seccion   String    // agrupación visual del formulario
+  label     String
+  tipo      CampoTipo
+  opciones  Json?     // para SELECCION/ESCALA: [{ value, label, score? }]
+  ayuda     String?   @db.Text
+  requerido Boolean   @default(false)
+  orden     Int       @default(0)
+
+  @@unique([instrumentoId, code])
+  @@index([instrumentoId])
+  @@map("instrumento_campos")
+}
+
+/// Profesión que aplica el instrumento.
+enum ProfesionInstrumento {
+  PSICOLOGIA
+  TRABAJO_SOCIAL
+  AMBOS
+}
+
+/// Tipo de campo de la plantilla de un instrumento.
+enum CampoTipo {
+  TEXTO
+  TEXTO_LARGO
+  SELECCION
+  BOOLEANO
+  ESCALA
+  NUMERO
+  FECHA
+}
+
 // ============================================================================
 // JERARQUÍA TERRITORIAL: el tenant es el municipio/administración, que opera
 // una o varias comisarías de familia (sedes). La Secretaría de Gobierno hace

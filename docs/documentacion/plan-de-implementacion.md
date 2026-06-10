@@ -64,6 +64,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - Seed: declaración de ejemplo (víctima del CASO 1, firmada por la comisaria) + limpieza idempotente. type-check verde.
 - Nota: el seed NO se re-ejecutó (evitar borrar datos demo vigentes); la tabla ya existe vía `db push`.
 
+#### Fase C — Instrumentos de valoración (subsistema)
+
+##### C1 — Catálogo + plantillas estructuradas
+**Estado:** COMPLETADO
+**Alcance:** modelo `Instrumento` + `InstrumentoCampo` (motor de plantillas, catálogo global por `code`); catálogo de dominio + seeder idempotente (seguro de correr sin tocar datos demo); endpoint de listado. Sembrar ICBF F3.G16.P (psicológica) y F5.G16.P (socio-familiar) con estructura base **marcada como pendiente de validación oficial**; Minjusticia Res.0362/2026 se siembra **inactivo** hasta confirmar su estructura. UI de diligenciamiento va en C2.
+**Hecho:**
+- Schema: modelos `Instrumento` (catálogo global por `code`: norma, version, `profesion`, `appliesTo`=CaseModality, `assessmentType`, isActive) + `InstrumentoCampo` (seccion, label, `tipo`=CampoTipo, opciones Json, requerido, orden) + enums `ProfesionInstrumento` y `CampoTipo`. `db push` aplicado.
+- Catálogo de dominio `src/domain/catalogs/familyInstrumentos.ts` (con aviso explícito de que la estructura de campos es base a validar contra el texto oficial).
+- Seeder idempotente `scripts/seed-instrumentos.ts` (upsert por code + resync de campos; no toca datos del tenant). Ejecutado: ICBF_F3G16P (7 campos) y ICBF_F5G16P (10 campos) activos; MINJUSTICIA_RES0362_2026 inactivo, 0 campos.
+- API `GET /api/v1/family/instrumentos?profesion=&modalidad=` (solo activos, con campos; RBAC `FAMILY_CONFIDENTIAL_ROLES`). type-check verde.
+
 #### Fase B — Acervo probatorio (pruebas aportadas por las partes)
 **Estado:** COMPLETADO
 **Alcance:** extender `Document` (`aportanteId`→`CaseParty`; estado probatorio ADMITIDA/RECHAZADA/PENDIENTE + `valoradaPor`/`valoradaAt`; confidencialidad reforzada); RBAC valoración = `DIRECTOR`; UI cargar prueba con aportante + bandeja del comisario para admitir/valorar.
