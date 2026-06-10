@@ -14,7 +14,7 @@ import {
   AddHearingForm, HearingOutcomeControl,
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
-  DeclaracionesSection,
+  DeclaracionesSection, ApplyInstrumentForm,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -266,7 +266,12 @@ export default function ExpedienteFamiliaPage() {
           <h2 style={{ ...h2, margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Lock size={16} /> Valoraciones — confidencial
           </h2>
-          {!assessmentsDenied && <AddAssessmentForm caseId={data.id} parties={data.caseParties} onDone={load} />}
+          {!assessmentsDenied && (
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <ApplyInstrumentForm caseId={data.id} parties={data.caseParties} modalidad={data.caseModality} onDone={load} />
+              <AddAssessmentForm caseId={data.id} parties={data.caseParties} onDone={load} />
+            </div>
+          )}
         </div>
         {assessmentsDenied ? (
           <p style={{ ...empty, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#92400e' }}>
@@ -282,6 +287,13 @@ export default function ExpedienteFamiliaPage() {
                   <b>{ASSESSMENT_TYPE_LABELS[a.assessmentType] ?? a.assessmentType}</b>
                   <span style={pill(a.riskLevel === 'ALTO' || a.riskLevel === 'EXTREMO' ? '#dc2626' : a.riskLevel === 'MEDIO' ? '#f59e0b' : '#059669')}>Riesgo {RISK_LEVEL_LABELS[a.riskLevel] ?? a.riskLevel}</span>
                 </div>
+                {a.instrumento && (
+                  <div style={{ fontSize: '0.78rem', color: '#1a5fb4', marginTop: '0.3rem', fontWeight: 600 }}>
+                    📋 {a.instrumento.name}
+                    {(a.scorePonderado !== null && a.scorePonderado !== undefined) && <> · puntaje {a.scorePonderado}</>}
+                    {a.nivelCalculado && <> · nivel {a.nivelCalculado}</>}
+                  </div>
+                )}
                 <p style={{ margin: '0.4rem 0 0', fontSize: '0.88rem', color: '#374151' }}>{a.findings}</p>
                 <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.3rem' }}>{a.assessor?.fullName ?? 'Profesional'} · {new Date(a.conductedAt).toLocaleDateString('es-CO')}</div>
               </div>

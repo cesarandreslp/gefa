@@ -1535,6 +1535,15 @@ model Assessment {
   riskLevel       RiskLevel @default(BAJO)
   recommendations String?  @db.Text
 
+  // Instrumento normado aplicado (Fase C2): diligenciamiento estructurado + puntaje.
+  // Si la valoración se hizo con un instrumento del catálogo, aquí queda su rastro.
+  instrumentoId   String?
+  instrumento     Instrumento? @relation(fields: [instrumentoId], references: [id])
+  respuestas      Json?        // { campoCode: boolean | string | number }
+  scoreDirecto    Int?         // nº de respuestas afirmativas ("Sí")
+  scorePonderado  Int?         // suma ponderada según `peso`
+  nivelCalculado  String?      // nivel calculado por scoringConfig (escala propia del instrumento)
+
   // Confidencialidad (Ley 1581/2012 + Ley 1098/2006)
   isConfidential Boolean @default(true)
 
@@ -1634,7 +1643,8 @@ model Instrumento {
   //   "cutoffs": [{"level":"BAJO","min":0,"max":10}, ...] }
   scoringConfig  Json?
 
-  campos InstrumentoCampo[]
+  campos       InstrumentoCampo[]
+  aplicaciones Assessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

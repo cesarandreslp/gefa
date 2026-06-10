@@ -25,6 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
       include: {
         assessor: { select: { id: true, fullName: true } },
         assessedPerson: { select: { id: true, firstName: true, firstLastName: true } },
+        instrumento: { select: { id: true, name: true, norma: true } },
       },
       orderBy: { conductedAt: 'desc' },
     });

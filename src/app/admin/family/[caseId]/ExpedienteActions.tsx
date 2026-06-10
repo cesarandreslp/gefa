@@ -313,6 +313,129 @@ export function AddAssessmentForm({ caseId, parties, onDone }: { caseId: string;
   );
 }
 
+// ── Aplicar instrumento de valoración (diligenciamiento + puntaje) ───────────
+export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { caseId: string; parties: any[]; modalidad?: string | null; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [instruments, setInstruments] = useState<any[] | null>(null);
+  const [selId, setSelId] = useState('');
+  const [respuestas, setRespuestas] = useState<Record<string, any>>({});
+  const [assessedPersonId, setAssessedPersonId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
+
+  const loadInstruments = async () => {
+    if (instruments) return;
+    try {
+      const url = modalidad ? `/api/v1/family/instrumentos?modalidad=${encodeURIComponent(modalidad)}` : '/api/v1/family/instrumentos';
+      const res = await fetch(url);
+      setInstruments(res.ok ? ((await res.json()).data ?? []) : []);
+    } catch { setInstruments([]); }
+  };
+
+  const sel = instruments?.find((i) => i.id === selId);
+  const setVal = (code: string, v: any) => setRespuestas((p) => ({ ...p, [code]: v }));
+
+  const reset = () => { setSelId(''); setRespuestas({}); setAssessedPersonId(''); setResult(null); setError(null); };
+
+  const submit = async () => {
+    setError(null);
+    if (!selId) { setError('Seleccione un instrumento.'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/instrumentos/aplicar`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instrumentoId: selId, respuestas, assessedPersonId: assessedPersonId || undefined }),
+      });
+      const d = await res.json();
+      if (!res.ok) { setError(d.error || 'No se pudo aplicar el instrumento.'); return; }
+      setResult(d);
+      onDone();
+    } catch { setError('Error de conexión.'); } finally { setSaving(false); }
+  };
+
+  if (!open) return <ToggleButton open={false} onClick={() => { setOpen(true); loadInstruments(); }} label="Aplicar instrumento" />;
+
+  let lastSeccion = '';
+  return (
+    <div style={{ ...formBox, borderColor: '#fcd34d', background: 'white' }}>
+      <ErrorBox msg={error} />
+      {result ? (
+        <div>
+          <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Instrumento aplicado ✓</div>
+          <div style={{ fontSize: '0.88rem', color: '#374151' }}>
+            Puntaje directo <b>{result.scoreDirecto}</b> · ponderado <b>{result.scorePonderado}</b>
+            {result.nivelCalculado ? <> · nivel <b>{result.nivelCalculado}</b></> : <> · interpretación de continuo</>}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+            <button onClick={() => { reset(); }} style={ghostBtn}>Aplicar otro</button>
+            <button onClick={() => { reset(); setOpen(false); }} style={primaryBtn}>Cerrar</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ fontSize: '0.75rem', color: '#92400e', marginBottom: '0.5rem' }}>🔒 Valoración confidencial — el puntaje y el nivel se calculan automáticamente.</div>
+          <label style={label}>Instrumento</label>
+          <select value={selId} onChange={(e) => { setSelId(e.target.value); setRespuestas({}); }} style={input}>
+            <option value="">Seleccionar…</option>
+            {(instruments ?? []).map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+          </select>
+
+          {sel && (
+            <>
+              {sel.description && <div style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0.5rem 0' }}>{sel.description}</div>}
+              <div style={{ marginTop: '0.5rem' }}>
+                <label style={label}>Persona valorada (opcional)</label>
+                <select value={assessedPersonId} onChange={(e) => setAssessedPersonId(e.target.value)} style={input}>
+                  <option value="">— No especificar —</option>
+                  {parties.map((p) => <option key={p.person.id} value={p.person.id}>{p.person.firstName} {p.person.firstLastName}</option>)}
+                </select>
+              </div>
+
+              <div style={{ marginTop: '0.6rem', display: 'grid', gap: '0.55rem', maxHeight: '420px', overflowY: 'auto', paddingRight: '0.3rem' }}>
+                {(sel.campos ?? []).map((c: any) => {
+                  const header = c.seccion !== lastSeccion ? (lastSeccion = c.seccion) : null;
+                  return (
+                    <div key={c.id}>
+                      {header && <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#374151', margin: '0.5rem 0 0.2rem', borderTop: '1px solid #f3f4f6', paddingTop: '0.5rem' }}>{c.seccion}</div>}
+                      <label style={{ ...label, fontWeight: 500 }}>{c.orden}. {c.label}{c.requerido && ' *'}{c.esCritico && <span style={{ color: '#b91c1c' }}> (crítico)</span>}</label>
+                      {c.ayuda && <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginBottom: '0.2rem' }}>{c.ayuda}</div>}
+                      {c.tipo === 'BOOLEANO' ? (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          {[['true', 'Sí'], ['false', 'No']].map(([v, lbl]) => (
+                            <button key={v} type="button" onClick={() => setVal(c.code, v === 'true')}
+                              style={{ ...ghostBtn, padding: '0.25rem 0.85rem', fontSize: '0.82rem', background: (respuestas[c.code] === (v === 'true')) ? (v === 'true' ? '#fee2e2' : '#ecfdf5') : 'none', borderColor: (respuestas[c.code] === (v === 'true')) ? (v === 'true' ? '#fca5a5' : '#6ee7b7') : '#d1d5db' }}>
+                              {lbl}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (c.tipo === 'SELECCION' || c.tipo === 'ESCALA') ? (
+                        <select value={respuestas[c.code] ?? ''} onChange={(e) => setVal(c.code, e.target.value)} style={input}>
+                          <option value="">Seleccionar…</option>
+                          {(Array.isArray(c.opciones) ? c.opciones : []).map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      ) : c.tipo === 'TEXTO_LARGO' ? (
+                        <textarea value={respuestas[c.code] ?? ''} onChange={(e) => setVal(c.code, e.target.value)} style={{ ...input, minHeight: '54px' }} />
+                      ) : (
+                        <input type={c.tipo === 'NUMERO' ? 'number' : c.tipo === 'FECHA' ? 'date' : 'text'} value={respuestas[c.code] ?? ''} onChange={(e) => setVal(c.code, e.target.value)} style={input} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+            <button onClick={submit} disabled={saving || !selId} style={{ ...primaryBtn, opacity: saving || !selId ? 0.6 : 1 }}>{saving ? 'Calculando…' : 'Aplicar y calcular'}</button>
+            <button onClick={() => { reset(); setOpen(false); }} style={ghostBtn}>Cancelar</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Equipo asignado al caso ──────────────────────────────────────────────────
 export function TeamSection({ caseId, canEdit }: { caseId: string; canEdit: boolean }) {
   const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
@@ -578,6 +701,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_DECLARATION_UPDATED: 'Declaración corregida',
   FAMILY_DECLARATION_SIGNED: 'Declaración firmada (en firme)',
   FAMILY_EVIDENCE_VALUED: 'Prueba valorada (admitida/rechazada)',
+  FAMILY_INSTRUMENT_APPLIED: 'Instrumento de valoración aplicado',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del

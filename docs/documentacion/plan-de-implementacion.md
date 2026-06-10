@@ -66,6 +66,14 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 #### Fase C — Instrumentos de valoración (subsistema)
 
+##### C2 — Diligenciamiento del instrumento en plataforma + cálculo de puntaje/nivel
+**Estado:** COMPLETADO
+**Hecho:**
+- Schema: `Assessment` += `instrumentoId`→`Instrumento`, `respuestas` Json, `scoreDirecto`, `scorePonderado`, `nivelCalculado`; reverse `aplicaciones` en `Instrumento`. `db push` aplicado.
+- Helper `src/lib/instrumentoScoring.ts`: suma directa (nº de "Sí") + ponderada (`peso`/`score` de opción); nivel por `cutoffs` (FIR-R) y `criticalToHigh` (crítico afirmativo → ALTO); continuo si no hay cortes (DA-R/C2).
+- API `POST /api/v1/family/cases/[caseId]/instrumentos/aplicar` (RBAC `FAMILY_CONFIDENTIAL_ROLES`): carga el instrumento+campos, calcula, crea `Assessment` (findings autogenerado, riskLevel mapeado del nivel), audita `FAMILY_INSTRUMENT_APPLIED`. GET de valoraciones incluye el instrumento.
+- UI: `ApplyInstrumentForm` en la sección Valoraciones — selector de instrumento, formulario dinámico por `tipo`/`seccion` (Sí/No, selección, texto…), envío y resultado (puntaje directo/ponderado + nivel). Tarjeta de valoración muestra instrumento + puntaje + nivel. type-check verde.
+
 ##### C1.1 — Extensión del motor: puntuación + batería (para el instrumento Res. 0362/2026)
 **Estado:** COMPLETADO (motor; transcripción de sub-instrumentos en etapas siguientes)
 **Contexto:** el PDF oficial (`docs/documentacion/Guia-...feminicidio...pdf`) revela que el instrumento de Minjusticia es una **batería**: Módulo 1 Caracterización (ítems 1–76), Módulo 2 entrevista semiestructurada, **FIR-R** (suma de "Sí" → bajo 0–10/moderado 11–15/alto 16–22; ítems críticos→alto), **DA-R** (18 ítems ponderados P1=4,P2=3,P3–6=2,P7–17=1,P18 cualitativa; máx 26) y concepto técnico. Ver memoria [[instrumento-riesgo-feminicidio-res0362]].
