@@ -10,9 +10,9 @@
  *   para la valoración de percepción del riesgo de feminicidio, Minjusticia V.1.0):
  *   sus 5 componentes — Caracterización (Módulo 1), Entrevista semiestructurada
  *   (Módulo 2), FIR-R, DA-R y C2 — están activos; el contenedor permanece inactivo.
- * - Los formatos ICBF (F3.G16.P, F5.G16.P) siguen siendo una BASE DE TRABAJO
- *   derivada de la verificación de garantía de derechos; DEBEN validarse y
- *   completarse contra el texto oficial de cada formato antes de uso en producción.
+ * - ICBF F3.G16.P (valoración psicológica) está transcrito VERBATIM del formato
+ *   oficial v4 (21/04/2023). ICBF F5.G16.P (socio-familiar) sigue siendo una BASE
+ *   DE TRABAJO y DEBE validarse contra el texto oficial antes de uso en producción.
  * ============================================================================
  */
 
@@ -60,34 +60,69 @@ export interface InstrumentoDef {
   campos: InstrumentoCampoDef[];
 }
 
-const NIVEL_RIESGO = [
-  { value: 'BAJO', label: 'Bajo' },
-  { value: 'MEDIO', label: 'Medio' },
-  { value: 'ALTO', label: 'Alto' },
-  { value: 'EXTREMO', label: 'Extremo' },
-];
-
 export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
   // ── ICBF — Valoración psicológica de verificación de derechos (F3.G16.P) ──────
   {
     code: 'ICBF_F3G16P',
-    name: 'Valoración psicológica de verificación de derechos',
-    norma: 'ICBF F3.G16.P — Verificación de garantía de derechos (Ley 1098/2006)',
-    version: 'baseline',
+    name: 'Informe de valoración psicológica de verificación de derechos',
+    norma: 'ICBF F3.G16.P v4 (21/04/2023) — Proceso Protección, Restablecimiento de derechos (Ley 1098/2006)',
+    version: 'v4.1',
     profesion: 'PSICOLOGIA',
     appliesTo: 'PARD',
     assessmentType: 'PSICOLOGICA',
-    description: 'Formato ICBF para la valoración del estado psicológico y emocional del NNA en el marco del PARD. Estructura base — validar contra el formato oficial.',
+    description: 'Formato oficial ICBF para conceptuar, desde la perspectiva psicológica, el estado de garantía de derechos del NNA en la verificación que ordena la autoridad administrativa (PARD). Informe descriptivo estructurado por niveles (microsistema/mesosistema/exosistema). No tiene alcance forense ni clínico.',
     isActive: true,
     displayOrder: 10,
     campos: [
-      { code: 'motivo', seccion: 'Identificación', label: 'Motivo de la valoración', tipo: 'TEXTO_LARGO', requerido: true, orden: 1 },
-      { code: 'estado_emocional', seccion: 'Estado psicológico y emocional', label: 'Estado emocional observado', tipo: 'TEXTO_LARGO', requerido: true, orden: 2 },
-      { code: 'afectacion', seccion: 'Estado psicológico y emocional', label: 'Afectación identificada', tipo: 'TEXTO_LARGO', orden: 3 },
-      { code: 'vinculos', seccion: 'Dinámica y vínculos', label: 'Vínculos afectivos y dinámica relacional', tipo: 'TEXTO_LARGO', orden: 4 },
-      { code: 'nivel_riesgo', seccion: 'Concepto', label: 'Nivel de riesgo', tipo: 'SELECCION', opciones: NIVEL_RIESGO, requerido: true, orden: 5 },
-      { code: 'concepto', seccion: 'Concepto', label: 'Concepto profesional', tipo: 'TEXTO_LARGO', requerido: true, orden: 6 },
-      { code: 'recomendaciones', seccion: 'Concepto', label: 'Recomendaciones', tipo: 'TEXTO_LARGO', requerido: true, orden: 7 },
+      // Datos generales (estructura administrativa ICBF / SIM)
+      { code: 'f3_regional', seccion: 'Datos generales (SIM)', label: 'Regional', tipo: 'TEXTO', orden: 1 },
+      { code: 'f3_centro_zonal', seccion: 'Datos generales (SIM)', label: 'Centro Zonal', tipo: 'TEXTO', orden: 2 },
+      { code: 'f3_peticion_sim', seccion: 'Datos generales (SIM)', label: 'N° de petición en el SIM', tipo: 'TEXTO', orden: 3 },
+      { code: 'f3_autoridad', seccion: 'Datos generales (SIM)', label: 'Nombre de la autoridad administrativa', tipo: 'TEXTO', orden: 4 },
+      { code: 'f3_autoridad_correo', seccion: 'Datos generales (SIM)', label: 'Correo electrónico de la autoridad administrativa', tipo: 'TEXTO', orden: 5 },
+      // Datos del NNA (complementan la identificación del expediente)
+      { code: 'f3_nna_etnia', seccion: 'Datos del NNA', label: 'Pertenencia étnica', tipo: 'SELECCION', opciones: [{ value: 'NINGUNA', label: 'Ninguna de las anteriores' }, { value: 'INDIGENA', label: 'Indígena (pueblo / comunidad)' }, { value: 'ROM', label: 'Rom o Gitano' }, { value: 'AFRO', label: 'Afrocolombiano' }, { value: 'PALENQUERO', label: 'Palenquero' }, { value: 'RAIZAL', label: 'Raizal' }], orden: 6 },
+      { code: 'f3_nna_lengua', seccion: 'Datos del NNA', label: 'Lengua natal (y segunda lengua si es bilingüe)', tipo: 'TEXTO', orden: 7 },
+      { code: 'f3_nna_discapacidad', seccion: 'Datos del NNA', label: 'Discapacidad', tipo: 'SELECCION', opciones: [{ value: 'NO', label: 'No' }, { value: 'FISICA', label: 'Física' }, { value: 'AUDITIVA', label: 'Auditiva' }, { value: 'VISUAL', label: 'Visual' }, { value: 'SORDOCEGUERA', label: 'Sordoceguera' }, { value: 'INTELECTUAL', label: 'Intelectual' }, { value: 'PSICOSOCIAL', label: 'Psicosocial' }, { value: 'MULTIPLE', label: 'Múltiple' }], orden: 8 },
+      { code: 'f3_nna_enf_especial', seccion: 'Datos del NNA', label: 'Enfermedad de cuidado especial (¿cuál?)', tipo: 'TEXTO', orden: 9 },
+      { code: 'f3_nna_spa', seccion: 'Datos del NNA', label: 'Consumo de SPA', tipo: 'SELECCION', opciones: [{ value: 'NO', label: 'No' }, { value: 'EXPERIMENTAL', label: 'Experimental' }, { value: 'SOCIAL', label: 'Social' }, { value: 'HABITUAL', label: 'Habitual' }, { value: 'PROBLEMATICO', label: 'Problemático' }], orden: 10 },
+      { code: 'f3_nna_spa_tipo', seccion: 'Datos del NNA', label: 'Tipo de sustancia(s)', tipo: 'TEXTO', orden: 11 },
+      { code: 'f3_nna_emergencia', seccion: 'Datos del NNA', label: 'Situación de emergencia', tipo: 'SELECCION', opciones: [{ value: 'SI', label: 'Sí' }, { value: 'NO', label: 'No' }, { value: 'ND', label: 'No definido' }], orden: 12 },
+      { code: 'f3_nna_desplazamiento', seccion: 'Datos del NNA', label: 'Situación de desplazamiento', tipo: 'SELECCION', opciones: [{ value: 'SI', label: 'Sí' }, { value: 'NO', label: 'No' }, { value: 'ND', label: 'No definido' }], orden: 13 },
+      { code: 'f3_nna_migracion', seccion: 'Datos del NNA', label: 'Situación de migración (¿cuál tipo?)', tipo: 'TEXTO', orden: 14 },
+      { code: 'f3_nna_escolarizado', seccion: 'Datos del NNA', label: '¿Vinculado al servicio educativo (escolarizado)?', tipo: 'BOOLEANO', orden: 15 },
+      { code: 'f3_nna_nivel_edu', seccion: 'Datos del NNA', label: 'Nivel educativo', tipo: 'SELECCION', opciones: [{ value: 'INICIAL', label: 'Educación inicial' }, { value: 'PREESCOLAR', label: 'Preescolar' }, { value: 'BASICA', label: 'Básica' }, { value: 'MEDIA', label: 'Media' }], orden: 16 },
+      { code: 'f3_nna_jornada', seccion: 'Datos del NNA', label: 'Jornada', tipo: 'SELECCION', opciones: [{ value: 'MANANA', label: 'Mañana' }, { value: 'TARDE', label: 'Tarde' }, { value: 'NOCHE', label: 'Noche' }], orden: 17 },
+      { code: 'f3_nna_institucion', seccion: 'Datos del NNA', label: 'Institución educativa (nombre, sede, naturaleza)', tipo: 'TEXTO', orden: 18 },
+      { code: 'f3_nna_regimen_salud', seccion: 'Datos del NNA', label: 'Régimen de salud (SGSSS)', tipo: 'SELECCION', opciones: [{ value: 'CONTRIBUTIVO', label: 'Contributivo' }, { value: 'SUBSIDIADO', label: 'Subsidiado' }, { value: 'ESPECIAL', label: 'Especial' }, { value: 'NINGUNO', label: 'Ninguno' }, { value: 'SIN_INFO', label: 'Sin información' }], orden: 19 },
+      { code: 'f3_nna_eps', seccion: 'Datos del NNA', label: 'EPS', tipo: 'TEXTO', orden: 20 },
+      { code: 'f3_nna_convivientes', seccion: 'Datos del NNA', label: 'Personas con quienes convive en el hogar (nombre, parentesco/no pariente, sexo, edad, ocupación)', tipo: 'TEXTO_LARGO', orden: 21 },
+      { code: 'f3_nna_contacto', seccion: 'Datos del NNA', label: 'Personas de contacto (nombre, parentesco o rol, teléfono y correo)', tipo: 'TEXTO_LARGO', orden: 22 },
+      { code: 'f3_nna_ubicacion', seccion: 'Datos del NNA', label: 'Ubicación actual', tipo: 'SELECCION', opciones: [{ value: 'EMERGENCIA', label: 'Centro de emergencia' }, { value: 'HOGAR_PASO', label: 'Hogar de paso' }, { value: 'RECUP_NUTRICIONAL', label: 'Centro de recuperación nutricional' }, { value: 'INST_SALUD', label: 'Institución de salud' }, { value: 'FAMILIA_ORIGEN', label: 'Familia de origen' }, { value: 'FAMILIA_EXTENSA', label: 'Familia extensa' }, { value: 'FAMILIA_SOLIDARIA', label: 'Familia solidaria' }], orden: 23 },
+      // Síntesis de la petición
+      { code: 'f3_sintesis_peticion', seccion: 'Síntesis de la petición', label: 'Síntesis de la petición que fundamenta la solicitud de valoración', tipo: 'TEXTO_LARGO', ayuda: 'Se sugiere transcribir de forma textual la petición y los elementos del auto de trámite de la autoridad administrativa.', requerido: true, orden: 24 },
+      // Metodología
+      { code: 'f3_met_observacion', seccion: 'Metodología utilizada', label: 'Observación', tipo: 'BOOLEANO', orden: 25 },
+      { code: 'f3_met_entrevista', seccion: 'Metodología utilizada', label: 'Entrevista psicológica', tipo: 'BOOLEANO', orden: 26 },
+      { code: 'f3_met_entrevista_semi', seccion: 'Metodología utilizada', label: 'Entrevista semiestructurada', tipo: 'BOOLEANO', orden: 27 },
+      { code: 'f3_met_pruebas', seccion: 'Metodología utilizada', label: 'Aplicación de pruebas psicológicas', tipo: 'BOOLEANO', orden: 28 },
+      { code: 'f3_met_otras', seccion: 'Metodología utilizada', label: 'Otras técnicas', tipo: 'BOOLEANO', orden: 29 },
+      { code: 'f3_met_otras_cuales', seccion: 'Metodología utilizada', label: 'Otras técnicas — ¿cuáles?', tipo: 'TEXTO', orden: 30 },
+      { code: 'f3_met_info', seccion: 'Metodología utilizada', label: 'Información relevante sobre aspectos metodológicos (instrumentos, a quiénes, fechas)', tipo: 'TEXTO_LARGO', orden: 31 },
+      // Factores de desarrollo y estado psicológico por niveles
+      { code: 'f3_micro_examen_mental', seccion: 'Microsistema — desarrollo y salud psicológica', label: 'Examen mental', tipo: 'TEXTO_LARGO', ayuda: 'Porte y actitud, atención, conciencia, orientación, sensopercepción, memoria, lenguaje, pensamiento, afecto, juicio, prospección y sueño.', requerido: true, orden: 32 },
+      { code: 'f3_micro_areas', seccion: 'Microsistema — desarrollo y salud psicológica', label: 'Valoración por áreas', tipo: 'TEXTO_LARGO', ayuda: 'Cognitiva/adaptativa, emocional-afectiva, sensorio-motriz, lenguaje, e identidad personal y social.', requerido: true, orden: 33 },
+      { code: 'f3_meso', seccion: 'Mesosistema — familia y red vincular', label: 'Composición y funcionamiento familiar y red vincular de apoyo', tipo: 'TEXTO_LARGO', ayuda: 'Afrontamiento de situaciones problemáticas, pautas comunicacionales, vinculación afectiva, roles por subsistemas, relacionamiento con pares.', requerido: true, orden: 34 },
+      { code: 'f3_exo', seccion: 'Exosistema — SNBF', label: 'Sectores y servicios del Sistema Nacional de Bienestar Familiar (educativo, recreativo, cultural)', tipo: 'TEXTO_LARGO', requerido: true, orden: 35 },
+      // Concepto, derechos y acciones
+      { code: 'f3_concepto', seccion: 'Concepto integrado', label: 'Concepto integrado de valoración psicológica', tipo: 'TEXTO_LARGO', ayuda: 'Triangular micro/meso/exo; impresión diagnóstica (DSM-5/CIE-10) si procede; factores de riesgo y protectores individuales, familiares y de contexto; contraste de hipótesis.', requerido: true, orden: 36 },
+      { code: 'f3_derechos', seccion: 'Análisis de derechos', label: 'Análisis de derechos garantizados, amenazados y/o vulnerados desde la perspectiva psicológica', tipo: 'TEXTO_LARGO', requerido: true, orden: 37 },
+      { code: 'f3_acciones', seccion: 'Acciones sugeridas', label: 'Acciones sugeridas por niveles', tipo: 'TEXTO_LARGO', ayuda: 'Indicar prioridad: urgente (corto plazo), importante (mediano plazo), necesario (durante el proceso), y responsable.', requerido: true, orden: 38 },
+      // Profesional responsable
+      { code: 'f3_prof_nombre', seccion: 'Profesional responsable', label: 'Nombre del profesional en psicología', tipo: 'TEXTO', orden: 39 },
+      { code: 'f3_prof_registro', seccion: 'Profesional responsable', label: 'Tarjeta o registro profesional', tipo: 'TEXTO', orden: 40 },
+      { code: 'f3_fecha_elaboracion', seccion: 'Profesional responsable', label: 'Fecha de elaboración del informe', tipo: 'FECHA', orden: 41 },
+      { code: 'f3_fecha_entrega', seccion: 'Profesional responsable', label: 'Fecha de entrega del informe', tipo: 'FECHA', orden: 42 },
     ],
   },
 

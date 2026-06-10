@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 42. ICBF F3.G16.P verbatim desde el formato oficial (cierra hallazgo #3 psicológica)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario aportó el formato oficial `docs/documentacion/f3.g16.p_formato_informe_valoracion_psicologica_de_verificacion_de_derechos_v4_1.docx`. Reemplazar la estructura base del instrumento `ICBF_F3G16P` por la transcripción verbatim del formato oficial (v4.1).
+**Hecho:**
+- Extraída la guía+formato del `.docx` oficial (ICBF F3.G16.P v4, 21/04/2023). `ICBF_F3G16P` pasó de 7 campos base a **42 campos verbatim**, con secciones del informe oficial: Datos generales (SIM), Datos del NNA (étnia, lengua, discapacidad, SPA, situaciones de emergencia/desplazamiento/migración, escolaridad, salud, convivientes, contacto, ubicación), Síntesis de la petición, Metodología (técnicas), Factores por niveles (microsistema: examen mental + áreas; mesosistema; exosistema), Concepto integrado (impresión diagnóstica DSM-5/CIE-10, factores de riesgo/protectores), Análisis de derechos garantizados/amenazados/vulnerados, Acciones sugeridas por niveles, y Profesional responsable.
+- `name`/`norma`/`version`/`description` actualizados al formato oficial; sigue PSICOLOGIA/PARD/PSICOLOGICA, descriptivo (sin puntaje). Removida la constante `NIVEL_RIESGO` (ya sin uso). Encabezado del catálogo: F3 verbatim, F5 aún base.
+- type-check verde; catálogo resembrado (F3=42 campos). 
+- **Pendiente restante del hallazgo #3:** solo **ICBF F5.G16.P** (socio-familiar / trabajo social) sigue como estructura base — falta su formato oficial.
+- Archivo: `src/domain/catalogs/familyInstrumentos.ts`.
+
 ### 41. Cerrar hallazgos del catálogo de instrumentos (núcleo del servicio)
 **Estado:** COMPLETADO (hallazgos #1 y #2; #3 documentado como pendiente por falta de fuente)
 **Objetivo:** Resolver los 3 hallazgos detectados en el catálogo, que son el núcleo del valor para las comisarías: (1) faltan en la batería Res. 0362/2026 el Módulo 1 Caracterización y el Módulo 2 entrevista semiestructurada; (2) FIR-R no tiene marcados los ítems críticos (afirmativo → riesgo alto); (3) los formatos ICBF F3/F5 son estructura base, no verbatim oficial.
