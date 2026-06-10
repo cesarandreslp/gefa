@@ -6,6 +6,13 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 51. El apex ossgefa.lat debe dirigir a la página principal de GEFA
+**Estado:** COMPLETADO
+**Objetivo:** `ossgefa.lat` (apex, sin subdominio) debe mostrar la página principal/landing de GEFA que ya existe; los subdominios `<sigla>.ossgefa.lat` siguen yendo a cada tenant (entrada 50). Investigar cómo enruta hoy la raíz cuando no hay tenant resuelto y asegurar que el apex caiga en la landing y no en un error/redirección de tenant.
+**Hallazgo:** el comportamiento YA existe. `src/app/page.tsx:29` — si `resolveTenantByHost(host)` no encuentra tenant, renderiza `<GefaLanding />` (landing del PRODUCTO GEFA: "Plataforma SaaS para comisarías de familia", CTAs Registrar entidad / Acceso institucional); si hay tenant, muestra el portal público de esa comisaría. El apex no es subdominio (`siglaFromBaseDomain` → null) y ningún tenant tiene `domain=ossgefa.lat` (verificado en la BD: BUGA/TULUA/PALMIRA usan sus `*.vercel.app`), así que cae en `GefaLanding`.
+**Hecho (hardening):** `src/lib/tenantResolver.ts` — guard explícito al inicio: si `host === TENANT_BASE_DOMAIN` (apex), devuelve `null` siempre, antes de cache/BD. Garantiza que el apex muestre la landing del producto aunque un tenant tuviera el apex mal configurado como su `domain`. `www.ossgefa.lat` ya se normaliza a `ossgefa.lat` por `normalizeHost`.
+**Verificación:** `tsc --noEmit` limpio; BD confirmada (ningún tenant reclama el apex). Test runtime end-to-end espera a que el dominio esté vivo (junto con la config infra de la entrada 50).
+
 ### 50. Routing por subdominio para dominio propio ossgefa.lat (Fase 1 del alta automática)
 **Estado:** COMPLETADO (Fase 1: routing)
 **Objetivo:** Hoy crear una alcaldía (tenant) es manual. Al tener el dominio propio `ossgefa.lat` queremos que el alta sea automática. **Decisión del usuario:** modelo = **BD/branch Neon por tenant** (aislamiento fuerte, alineado con CLAUDE.md); **alcance inicial = solo routing por subdominio**.

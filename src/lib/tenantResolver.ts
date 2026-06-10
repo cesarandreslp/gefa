@@ -55,6 +55,15 @@ export async function resolveTenantByHost(rawHost: string | null): Promise<Tenan
     return null;
   }
 
+  // 0. Apex del dominio propio (p. ej. ossgefa.lat) y su www: NUNCA es un tenant.
+  // Está reservado para la landing del producto GEFA (GefaLanding). Los tenants
+  // viven en subdominios <sigla>.ossgefa.lat. Se corta aquí de forma defensiva
+  // para que el apex muestre la página principal aunque algún tenant tuviera el
+  // apex mal configurado como su domain.
+  if (TENANT_BASE_DOMAIN && host === TENANT_BASE_DOMAIN) {
+    return null;
+  }
+
   // 1. Check Memory Cache
   if (tenantCache.has(host)) {
     return tenantCache.get(host)!;
