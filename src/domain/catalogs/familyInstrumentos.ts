@@ -226,4 +226,64 @@ export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
       { code: 'dar_18', seccion: 'Evaluación cualitativa', label: '¿Ha amenazado o intentado matarse?', tipo: 'BOOLEANO', ayuda: 'No puntúa — se evalúa cualitativamente (ideación/intento suicida).', requerido: true, orden: 18 },
     ],
   },
+
+  // ── C2 — Valoración de riesgo en contextos de cohabitación y cuidado ─────────
+  // Hijo de la batería Res.0362/2026. Relaciones de cohabitación/cuidado (familiares
+  // o no; agresor puede ser hombre o mujer). 34 ítems Sí/No, 4 subescalas.
+  // Ponderado: críticos 16/17/26=4, 21/27=3, 14=2; resto=1. Máx 48. Continuo.
+  // Suma directa 0–34; "sus agresores" puede ser una o varias personas. Último año.
+  {
+    code: 'RES0362_C2',
+    name: 'C2 — Valoración de riesgo en contextos de cohabitación y cuidado',
+    norma: 'Instrumento C2 (Res. 0362/2026 Minjusticia) — Ley 2126/2021',
+    version: 'V.1.0',
+    profesion: 'AMBOS',
+    appliesTo: 'VIOLENCIA_INTRAFAMILIAR',
+    assessmentType: 'RIESGO',
+    description: 'Para relaciones de cohabitación y cuidado (familiares o no; agresor hombre o mujer). 34 ítems Sí/No en 4 subescalas. Referido al último año. Continuo: suma directa 0–34 y ponderada máx 48; a mayor puntaje, mayor riesgo.',
+    isActive: true,
+    displayOrder: 33,
+    parentCode: 'MINJUSTICIA_RES0362_2026',
+    scoringConfig: { maxScore: 48 }, // continuo; ítems críticos con mayor peso predictivo
+    campos: [
+      // Subescala 1 — Condiciones contextuales de vulnerabilidad
+      { code: 'c2_01', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿En su comunidad se tolera la violencia contra las mujeres?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 1 },
+      { code: 'c2_02', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿En su comunidad han ocurrido feminicidios o ataques a mujeres?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 2 },
+      { code: 'c2_03', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿La presencia de grupos armados en su comunidad ha aumentado el riesgo de violencia contra usted?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 3 },
+      { code: 'c2_04', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Su familia le ha negado apoyo en situaciones de riesgo de violencia?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 4 },
+      { code: 'c2_05', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Su familia le ha negado ayuda económica cuando lo ha necesitado?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 5 },
+      { code: 'c2_06', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Ha carecido de orientación o consejos de su entorno para enfrentar las situaciones de riesgo de violencia?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 6 },
+      { code: 'c2_07', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Ha tenido dificultades para el acceso a organizaciones de apoyo a mujeres en riesgo de violencia?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 7 },
+      { code: 'c2_08', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Ha tenido dificultades para el acceso a atención y apoyo legal del Estado?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 8 },
+      { code: 'c2_09', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Sus condiciones de vivienda le dificultan escapar de situaciones de violencia que ha vivido?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 9 },
+      { code: 'c2_10', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Su condición de dependencia física ha aumentado su vulnerabilidad a sufrir violencia por parte de sus agresores?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 10 },
+      { code: 'c2_11', seccion: 'Subescala 1 — Condiciones contextuales de vulnerabilidad', label: '¿Ha tenido conflictos con sus agresores debido a la falta de recursos económicos?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 11 },
+      // Subescala 2 — Antecedentes de violencia y maltrato directo
+      { code: 'c2_12', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Su salud se ha deteriorado por la falta de cuidados adecuados por parte de sus agresores?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 12 },
+      { code: 'c2_13', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Sus agresores le han negado cuidados necesarios para su salud física o mental?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 13 },
+      { code: 'c2_14', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Sus agresores han descuidado sus necesidades básicas (comida, higiene, salud)?', tipo: 'BOOLEANO', peso: 2, esCritico: true, requerido: true, orden: 14 },
+      { code: 'c2_15', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Sus agresores la han humillado haciéndola sentir inferior, sin valor o atemorizada?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 15 },
+      { code: 'c2_16', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Sus agresores la han golpeado causándole daño físico?', tipo: 'BOOLEANO', peso: 4, esCritico: true, requerido: true, orden: 16 },
+      { code: 'c2_17', seccion: 'Subescala 2 — Antecedentes de violencia y maltrato directo', label: '¿Sus agresores han intentado asfixiarla o estrangularla?', tipo: 'BOOLEANO', peso: 4, esCritico: true, requerido: true, orden: 17 },
+      // Subescala 3 — Control, coerción y dominación
+      { code: 'c2_18', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores han controlado o intentado controlar constantemente sus actividades cotidianas?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 18 },
+      { code: 'c2_19', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores la han aislado de familia, amigos o actividades sociales, laborales o educativas?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 19 },
+      { code: 'c2_20', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores han usado sus recursos económicos sin su permiso?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 20 },
+      { code: 'c2_21', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores usan su enfermedad o discapacidad como excusa para agredirla o controlarla?', tipo: 'BOOLEANO', peso: 3, esCritico: true, requerido: true, orden: 21 },
+      { code: 'c2_22', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores le han impedido trabajar, estudiar o manejar su propio dinero?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 22 },
+      { code: 'c2_23', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿La falta de dinero debida a sabotaje o control por parte de sus agresores le impide dejar la situación violenta?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 23 },
+      { code: 'c2_24', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores han usado sus miedos para manipularla?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 24 },
+      { code: 'c2_25', seccion: 'Subescala 3 — Control, coerción y dominación', label: '¿Sus agresores la han manipulado para hacerla sentir dependiente y controlar sus decisiones?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 25 },
+      // Subescala 4 — Perfil y características del agresor
+      { code: 'c2_26', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores tienen acceso a armas?', tipo: 'BOOLEANO', peso: 4, esCritico: true, requerido: true, orden: 26 },
+      { code: 'c2_27', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores se vuelven más violentos cuando consumen alcohol o drogas o cuando no pueden hacerlo?', tipo: 'BOOLEANO', peso: 3, esCritico: true, requerido: true, orden: 27 },
+      { code: 'c2_28', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores han tenido problemas legales debido a su agresividad y transgresión de normas?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 28 },
+      { code: 'c2_29', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores justifican la violencia como algo "normal" en hombres?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 29 },
+      { code: 'c2_30', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores han maltratado animales?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 30 },
+      { code: 'c2_31', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores le dicen que son las mujeres quienes deben hacer tareas domésticas y de cuidado?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 31 },
+      { code: 'c2_32', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores muestran agotamiento extremo frecuente?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 32 },
+      { code: 'c2_33', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores reaccionan con violencia ante situaciones cotidianas?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 33 },
+      { code: 'c2_34', seccion: 'Subescala 4 — Perfil y características del agresor', label: '¿Sus agresores desprecian, se burlan o tratan mal a las personas mayores o con discapacidad?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 34 },
+    ],
+  },
 ];

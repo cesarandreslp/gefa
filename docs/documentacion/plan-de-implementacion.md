@@ -72,6 +72,10 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Decisiones del usuario:** (1) extender el motor y transcribir por etapas; (2) **incluir el FIR-R** asumiendo que la Res. 0362/2026 lo adopta (anotar el supuesto de IP — derechos del FIR-R son de la Fiscalía); (3) **pre-rellenar** identificación (secciones A/B) desde `Person`/`CaseParty`.
 **Alcance C1.1:** extender `Instrumento` (auto-relación `parent`/`subInstrumentos` para batería; `scoringConfig` Json con cortes/criticalToHigh) e `InstrumentoCampo` (`peso` Int, `esCritico` Bool); actualizar tipos del catálogo y el seeder. Las etapas siguientes transcriben DA-R, FIR-R, Caracterización (con pre-fill) y entrevista/concepto.
 
+##### C1.4 — Sub-instrumento C2 (cohabitación y cuidado)
+**Estado:** COMPLETADO
+**Hecho:** sembrado `RES0362_C2` (hijo de la batería). 34 ítems Sí/No verbatim (provistos por el usuario) en 4 subescalas (S1 vulnerabilidad contextual 1–11; S2 antecedentes 12–17; S3 control/coerción 18–25; S4 perfil del agresor 26–34). Ponderación confirmada contra el PDF: críticos 16/17/26=4, 21/27=3, 14=2 (marcados `esCritico`); resto=1; `scoringConfig.maxScore=48`; continuo (suma directa 0–34 + ponderada). type-check verde. **Batería Res.0362/2026 completa** (FIR-R + DA-R + C2).
+
 ##### C1.3 — Sub-instrumento FIR-R (Formato de Identificación del Riesgo Revisado)
 **Estado:** COMPLETADO
 **Hecho:** sembrado `RES0362_FIRR` (hijo de `MINJUSTICIA_RES0362_2026`, ahora padre/contenedor de la batería). 22 ítems Sí/No (peso 1) agrupados en 3 factores (F1: 3,4,6,7,8,9,11; F2: 1,2,5,10,12,13,20,21,22; F3: 14,15,16,17,18,19); `scoringConfig` cortes BAJO 0–10 / MODERADO 11–15 / ALTO 16–22, `criticalToHigh: true`, máx 22. Textos verbatim provistos por el usuario (pág. 129 del PDF). type-check verde.
