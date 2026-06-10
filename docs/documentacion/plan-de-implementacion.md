@@ -72,6 +72,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Decisiones del usuario:** (1) extender el motor y transcribir por etapas; (2) **incluir el FIR-R** asumiendo que la Res. 0362/2026 lo adopta (anotar el supuesto de IP — derechos del FIR-R son de la Fiscalía); (3) **pre-rellenar** identificación (secciones A/B) desde `Person`/`CaseParty`.
 **Alcance C1.1:** extender `Instrumento` (auto-relación `parent`/`subInstrumentos` para batería; `scoringConfig` Json con cortes/criticalToHigh) e `InstrumentoCampo` (`peso` Int, `esCritico` Bool); actualizar tipos del catálogo y el seeder. Las etapas siguientes transcriben DA-R, FIR-R, Caracterización (con pre-fill) y entrevista/concepto.
 
+##### C1.3 — Sub-instrumento FIR-R (Formato de Identificación del Riesgo Revisado)
+**Estado:** COMPLETADO
+**Hecho:** sembrado `RES0362_FIRR` (hijo de `MINJUSTICIA_RES0362_2026`, ahora padre/contenedor de la batería). 22 ítems Sí/No (peso 1) agrupados en 3 factores (F1: 3,4,6,7,8,9,11; F2: 1,2,5,10,12,13,20,21,22; F3: 14,15,16,17,18,19); `scoringConfig` cortes BAJO 0–10 / MODERADO 11–15 / ALTO 16–22, `criticalToHigh: true`, máx 22. Textos verbatim provistos por el usuario (pág. 129 del PDF). type-check verde.
+**Pendiente:** el manual menciona "ítems críticos" del FIR-R (afirmativo → alto) pero NO los enumera; sembrado sin `esCritico` hasta confirmar la lista. IP: el FIR-R es de la Fiscalía (adoptado por la Res.).
+
+##### C1.2 — Sub-instrumento DA-R (Danger Assessment – Revised)
+**Estado:** EN CURSO (esperando los 18 ítems verbatim — pág. 130 del PDF, en imagen)
+**Alcance:** transcribir los 18 ítems del DA-R verbatim y sembrarlo como sub-instrumento (hijo de MINJUSTICIA_RES0362_2026) con su ponderación (P1=4, P2=3, P3–6=2, P7–17=1, P18 cualitativa) e ítems críticos; `scoringConfig` con máx 26.
+
 ##### C1 — Catálogo + plantillas estructuradas
 **Estado:** COMPLETADO
 **Alcance:** modelo `Instrumento` + `InstrumentoCampo` (motor de plantillas, catálogo global por `code`); catálogo de dominio + seeder idempotente (seguro de correr sin tocar datos demo); endpoint de listado. Sembrar ICBF F3.G16.P (psicológica) y F5.G16.P (socio-familiar) con estructura base **marcada como pendiente de validación oficial**; Minjusticia Res.0362/2026 se siembra **inactivo** hasta confirmar su estructura. UI de diligenciamiento va en C2.
