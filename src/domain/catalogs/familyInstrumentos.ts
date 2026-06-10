@@ -187,4 +187,43 @@ export const FAMILY_INSTRUMENTOS: InstrumentoDef[] = [
       { code: 'fir_22', seccion: 'Factor 2 — Riesgo contra sí misma y terceros', label: '¿Considera que el denunciado podría matarla?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 22 },
     ],
   },
+
+  // ── DA-R — Danger Assessment-Revised (Glass et al., 2008) ────────────────────
+  // Hijo de la batería Res.0362/2026. Parejas/exparejas conformadas por mujeres.
+  // Ponderado: P1=4, P2=3, P3–P6=2 (críticos); P7–P17=1; P18 NO puntúa (cualitativa,
+  // ideación/intento suicida). Máx 26. Interpretación de continuo (sin bandas fijas).
+  {
+    code: 'RES0362_DAR',
+    name: 'DA-R — Danger Assessment-Revised',
+    norma: 'Danger Assessment-Revised (Glass et al., 2008) — adoptado por Res. 0362/2026, Ley 2126/2021',
+    version: 'Revised',
+    profesion: 'AMBOS',
+    appliesTo: 'VIOLENCIA_INTRAFAMILIAR',
+    assessmentType: 'RIESGO',
+    description: 'Para relaciones de pareja entre mujeres. 18 ítems Sí/No con ponderación; evalúa riesgo de reincidencia de violencia (no letalidad). Interpretación de continuo: a más puntaje/"Sí", mayor riesgo. "Ella" = su pareja o expareja.',
+    isActive: true,
+    displayOrder: 32,
+    parentCode: 'MINJUSTICIA_RES0362_2026',
+    scoringConfig: { maxScore: 26 }, // continuo: sin cortes fijos; los ítems críticos tienen mayor peso
+    campos: [
+      { code: 'dar_01', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella es constantemente celosa y/o posesiva con usted?', tipo: 'BOOLEANO', peso: 4, esCritico: true, requerido: true, orden: 1 },
+      { code: 'dar_02', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella intenta aislarla socialmente?', tipo: 'BOOLEANO', peso: 3, esCritico: true, requerido: true, orden: 2 },
+      { code: 'dar_03', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿La violencia física ha aumentado en severidad o frecuencia durante el último año?', tipo: 'BOOLEANO', peso: 2, esCritico: true, requerido: true, orden: 3 },
+      { code: 'dar_04', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella la ha amenazado con un arma de fuego en el último año?', tipo: 'BOOLEANO', peso: 2, esCritico: true, requerido: true, orden: 4 },
+      { code: 'dar_05', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ha vivido con ella en el último año?', tipo: 'BOOLEANO', peso: 2, esCritico: true, requerido: true, orden: 5 },
+      { code: 'dar_06', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella alguna vez ha maltratado o amenazado con maltratar a una pareja íntima anterior, o a sus familiares o amigos?', tipo: 'BOOLEANO', peso: 2, esCritico: true, requerido: true, orden: 6 },
+      { code: 'dar_07', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella consume drogas ilegales (marihuana, cocaína, anfetaminas, inhalantes, sedantes, alucinógenos, etc.) o abusa de medicamentos recetados?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 7 },
+      { code: 'dar_08', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella es alcohólica o tiene problemas con la bebida?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 8 },
+      { code: 'dar_09', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella intenta controlar/limitar su religión/espiritualidad?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 9 },
+      { code: 'dar_10', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella constantemente la culpa y/o menosprecia?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 10 },
+      { code: 'dar_11', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella ha destruido o amenazado con destruir cosas que le pertenecen?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 11 },
+      { code: 'dar_12', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ha amenazado con hacer daño a una mascota, familiar adulto mayor o a una persona con discapacidad a la que usted cuide?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 12 },
+      { code: 'dar_13', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella alguna vez ha violado una orden de restricción/alejamiento?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 13 },
+      { code: 'dar_14', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: '¿Ella la acosa, por ejemplo, la sigue o espía, deja notas o mensajes amenazantes en el celular, o la llama cuando no quiere que lo haga?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 14 },
+      { code: 'dar_15', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: 'Si estuviera siendo maltratada por ella y tratara de obtener ayuda, ¿la gente dudaría en creerle?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 15 },
+      { code: 'dar_16', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: 'Si estuviera siendo maltratada por ella, ¿el miedo a reforzar estereotipos negativos sobre las relaciones de pareja entre mujeres y/o ser discriminada le impediría buscar ayuda, por ejemplo, ayuda de amigos, profesionales de salud o ir a las autoridades competentes?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 16 },
+      { code: 'dar_17', seccion: 'Factores de riesgo de reincidencia (DA-R)', label: 'Si tuviera serias dificultades con ella, ¿lo mantendría en secreto por miedo o vergüenza?', tipo: 'BOOLEANO', peso: 1, requerido: true, orden: 17 },
+      { code: 'dar_18', seccion: 'Evaluación cualitativa', label: '¿Ha amenazado o intentado matarse?', tipo: 'BOOLEANO', ayuda: 'No puntúa — se evalúa cualitativamente (ideación/intento suicida).', requerido: true, orden: 18 },
+    ],
+  },
 ];

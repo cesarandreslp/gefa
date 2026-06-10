@@ -78,8 +78,8 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Pendiente:** el manual menciona "ítems críticos" del FIR-R (afirmativo → alto) pero NO los enumera; sembrado sin `esCritico` hasta confirmar la lista. IP: el FIR-R es de la Fiscalía (adoptado por la Res.).
 
 ##### C1.2 — Sub-instrumento DA-R (Danger Assessment – Revised)
-**Estado:** EN CURSO (esperando los 18 ítems verbatim — pág. 130 del PDF, en imagen)
-**Alcance:** transcribir los 18 ítems del DA-R verbatim y sembrarlo como sub-instrumento (hijo de MINJUSTICIA_RES0362_2026) con su ponderación (P1=4, P2=3, P3–6=2, P7–17=1, P18 cualitativa) e ítems críticos; `scoringConfig` con máx 26.
+**Estado:** COMPLETADO
+**Hecho:** sembrado `RES0362_DAR` (hijo de la batería). 18 ítems Sí/No verbatim (provistos por el usuario, pág. 130). Ponderación: P1=4, P2=3, P3–P6=2 (los 6 marcados `esCritico`); P7–P17=1; P18 sin peso (cualitativa, ideación/intento suicida, con `ayuda`). `scoringConfig.maxScore=26`; interpretación de **continuo** (sin cortes fijos). Para parejas de mujeres. type-check verde.
 
 ##### C1 — Catálogo + plantillas estructuradas
 **Estado:** COMPLETADO
