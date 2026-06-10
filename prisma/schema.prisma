@@ -539,15 +539,28 @@ model Document {
   // Subido por
   uploadedBy   String  // userId o citizenId
   uploadedByType String // USER o CITIZEN
-  
+
+  // Acervo probatorio (Fase B): prueba aportada por una PARTE y valorada por el Comisario.
+  // El valor probatorio lo fija el DIRECTOR; lo que se sube/aporta es insumo del expediente.
+  aportanteId    String?    // CaseParty que aporta la prueba (no solo quién la sube)
+  aportante      CaseParty? @relation("DocumentoAportante", fields: [aportanteId], references: [id])
+  isConfidential Boolean    @default(false) // contenido sensible (lesiones, NNA): acceso restringido
+
+  evidenceStatus    EvidenceStatus? // PENDIENTE/ADMITIDA/RECHAZADA — lo decide el Comisario
+  evidenceValue     String?   @db.Text // motivación de la admisión/rechazo / valor probatorio
+  valoradaPorUserId String?
+  valoradaPor       User?     @relation("PruebaValoradaPor", fields: [valoradaPorUserId], references: [id])
+  valoradaAt        DateTime?
+
   // Auditoría
   uploadedAt DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([caseId])
   @@index([documentType])
   @@index([uploadedAt])
+  @@index([aportanteId])
   @@map("documents")
 }
 
@@ -567,6 +580,13 @@ enum DocumentType {
   VALORACION        // Valoración del equipo interdisciplinario
   OFICIO            // Oficio
   CITACION          // Citación o notificación a las partes
+}
+
+/// Estado probatorio de una prueba aportada al expediente (lo fija el Comisario).
+enum EvidenceStatus {
+  PENDIENTE  // Aportada, aún sin valorar
+  ADMITIDA   // Admitida como prueba
+  RECHAZADA  // Rechazada / no admitida
 }
 
 // ============================================================================
@@ -642,6 +662,7 @@ model User {
   conductedAssessments Assessment[]
   managedRestorations  RestorationProcess[]
   tomadasDeclaraciones Declaracion[] @relation("DeclaracionTomadaPor")
+  valoradasPruebas     Document[]    @relation("PruebaValoradaPor")
 
   // Relación recursiva para conectar Auxiliares con el Oficial que los creó
   supervisorId String?
@@ -1324,6 +1345,9 @@ model CaseParty {
 
   // Declaraciones rendidas por esta parte (peso procesal — las toma el Comisario)
   declaraciones Declaracion[]
+
+  // Pruebas (acervo probatorio) aportadas por esta parte
+  documentosAportados Document[] @relation("DocumentoAportante")
 
   // Auditoría
   createdAt DateTime @default(now())

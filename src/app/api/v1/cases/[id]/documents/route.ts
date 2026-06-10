@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
 import { documentService } from '@/services/DocumentService';
+import { FAMILY_CONFIDENTIAL_ROLES } from '@/lib/familyApi';
 import { DocumentType } from '@prisma/client';
 
 /**
@@ -56,6 +57,8 @@ export async function POST(
     const documentType = formData.get('documentType') as DocumentType;
     const description = formData.get('description') as string | undefined;
     const isInternal = formData.get('isInternal') === 'true';
+    const isConfidential = formData.get('isConfidential') === 'true';
+    const aportanteId = (formData.get('aportanteId') as string | null) || null;
 
     if (!file) {
       return NextResponse.json(
@@ -71,6 +74,20 @@ export async function POST(
       );
     }
 
+    // Si se indica aportante (acervo probatorio), debe ser una parte de ESTE caso.
+    if (aportanteId) {
+      const party = await db.caseParty.findFirst({
+        where: { id: aportanteId, caseId, tenantId: user.tenantId },
+        select: { id: true },
+      });
+      if (!party) {
+        return NextResponse.json(
+          { error: 'El aportante indicado no es una parte de este caso' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Subir documento
     const result = await documentService.uploadDocument({
       file,
@@ -82,6 +99,8 @@ export async function POST(
       documentType,
       description,
       isInternal,
+      isConfidential,
+      aportanteId,
       ipAddress: req.headers.get('x-forwarded-for') || 'unknown',
       userAgent: req.headers.get('user-agent') || 'unknown',
       db,
@@ -144,19 +163,23 @@ export async function GET(
       );
     }
 
-    // Listar documentos
-    const result = await documentService.listDocumentsByCase(caseId);
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      documents: result.documents,
+    // Listar documentos del expediente con aportante (acervo probatorio) y valorador.
+    const docs = await db.document.findMany({
+      where: { caseId },
+      include: {
+        aportante: { include: { person: { select: { firstName: true, firstLastName: true } } } },
+        valoradaPor: { select: { id: true, fullName: true } },
+      },
+      orderBy: { uploadedAt: 'desc' },
     });
+
+    // Las pruebas confidenciales (lesiones, NNA) solo las ve el equipo habilitado;
+    // ventanilla/Secretaría no. El resto de documentos sí es visible.
+    const visible = FAMILY_CONFIDENTIAL_ROLES.includes(authResult.user.roleCode)
+      ? docs
+      : docs.filter((d) => !d.isConfidential);
+
+    return NextResponse.json({ documents: visible });
   } catch (error) {
     console.error('Error en GET /api/v1/cases/[id]/documents:', error);
     return NextResponse.json(

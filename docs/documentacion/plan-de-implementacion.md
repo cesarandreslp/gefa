@@ -64,6 +64,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - Seed: declaración de ejemplo (víctima del CASO 1, firmada por la comisaria) + limpieza idempotente. type-check verde.
 - Nota: el seed NO se re-ejecutó (evitar borrar datos demo vigentes); la tabla ya existe vía `db push`.
 
+#### Fase B — Acervo probatorio (pruebas aportadas por las partes)
+**Estado:** COMPLETADO
+**Alcance:** extender `Document` (`aportanteId`→`CaseParty`; estado probatorio ADMITIDA/RECHAZADA/PENDIENTE + `valoradaPor`/`valoradaAt`; confidencialidad reforzada); RBAC valoración = `DIRECTOR`; UI cargar prueba con aportante + bandeja del comisario para admitir/valorar.
+**Hecho:**
+- Schema: `Document` gana `aportanteId`→`CaseParty` (rel. `DocumentoAportante`), `isConfidential`, `evidenceStatus` (enum `EvidenceStatus` PENDIENTE/ADMITIDA/RECHAZADA), `evidenceValue`, `valoradaPor`→`User` (rel. `PruebaValoradaPor`), `valoradaAt`. Relaciones inversas en `CaseParty` y `User`. Aplicado con `db push`.
+- `DocumentService.uploadDocument`: acepta `aportanteId`/`isConfidential`; una EVIDENCE nace `PENDIENTE`.
+- API: `POST cases/[id]/documents` lee y valida `aportanteId` (parte del caso) + `isConfidential`; `GET` ahora incluye aportante/valorador y **filtra las confidenciales** para roles fuera de `FAMILY_CONFIDENTIAL_ROLES` (ventanilla/Secretaría no las ven). Nueva `PATCH /api/v1/family/documents/[id]` para valorar (solo `DIRECTOR`, `FAMILY_EVIDENCE_VALUATION_ROLES`), auditada `FAMILY_EVIDENCE_VALUED`.
+- UI: `CaseDocuments` recibe `parties`; al subir EVIDENCE muestra aportante + casilla confidencial; lista con badge de estado, candado confidencial y control `EvidenceValuationControl` (admitir/rechazar con motivación, exclusivo del Comisario).
+- Nota: no se sembró evidencia de ejemplo (el seed no crea documentos y un blob ficticio daría 404). type-check verde.
+
 ### 37. Seed demo crea municipio + comisarías + Secretaría desde cero
 **Estado:** COMPLETADO
 **Objetivo:** Cerrar el pendiente menor de la entrada 36: que `seed-demo-gefa.ts` genere la estructura jerárquica (tenant = "Municipio de Guadalajara de Buga", 3 comisarías, rol + usuario de Secretaría de Gobierno, casos y funcionarios asignados a su sede) sin depender del script de migración posterior.

@@ -314,8 +314,8 @@ export default function ExpedienteFamiliaPage() {
         )}
       </div>
 
-      {/* Documentos del expediente */}
-      <CaseDocuments caseId={data.id} />
+      {/* Documentos y pruebas del expediente */}
+      <CaseDocuments caseId={data.id} parties={data.caseParties} />
 
       {/* Trazabilidad / auditoría (solo dirección y administración) */}
       <AuditSection caseId={data.id} />

@@ -577,6 +577,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   FAMILY_DECLARATION_TAKEN: 'Declaración tomada',
   FAMILY_DECLARATION_UPDATED: 'Declaración corregida',
   FAMILY_DECLARATION_SIGNED: 'Declaración firmada (en firme)',
+  FAMILY_EVIDENCE_VALUED: 'Prueba valorada (admitida/rechazada)',
 };
 
 // Visor de trazabilidad del expediente (Fase 8). Se auto-oculta si el rol del

@@ -58,6 +58,13 @@ export const FAMILY_CONFIDENTIAL_ROLES = ['ADMIN', 'DIRECTOR', 'FUNCIONARIO'];
 export const FAMILY_DECLARATION_AUTHOR_ROLES = ['DIRECTOR'];
 
 /**
+ * Roles que pueden VALORAR el acervo probatorio (admitir/rechazar una prueba y
+ * fijar su valor). Mismo principio: la parte aporta la prueba, pero su valor
+ * probatorio lo determina la autoridad — el Comisario (DIRECTOR).
+ */
+export const FAMILY_EVIDENCE_VALUATION_ROLES = ['DIRECTOR'];
+
+/**
  * Roles con acceso al VISOR DE AUDITORÍA (trazabilidad del expediente).
  * Es una herramienta de control interno: expone IPs y quién accedió a datos
  * confidenciales. Se limita a la dirección/administración, no al funcionario

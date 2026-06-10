@@ -42,6 +42,8 @@ export interface UploadDocumentInput {
   documentType: DocumentType;
   description?: string;
   isInternal?: boolean;
+  isConfidential?: boolean;     // contenido sensible (lesiones, NNA): acceso restringido
+  aportanteId?: string | null;  // CaseParty que aporta la prueba (acervo probatorio)
   ipAddress: string;
   userAgent: string;
   db?: PrismaClient;
@@ -126,6 +128,10 @@ export class DocumentService {
           documentType: input.documentType,
           description: input.description,
           isInternal: input.isInternal ?? false,
+          isConfidential: input.isConfidential ?? false,
+          aportanteId: input.aportanteId ?? null,
+          // Una evidencia aportada nace PENDIENTE de valoración por el Comisario.
+          evidenceStatus: input.documentType === 'EVIDENCE' ? 'PENDIENTE' : null,
           uploadedBy: input.userId!,
           uploadedByType: input.userRole === 'CITIZEN' ? 'CITIZEN' : 'USER',
           uploadedAt: new Date(),
