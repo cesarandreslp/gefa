@@ -1670,6 +1670,44 @@ enum AtencionEstado {
   CANCELADA   // turno anulado sin valoración
 }
 
+/// Solicitud de indisponibilidad de un profesional (RF‑18/19). Dentro de la
+/// jornada nadie se marca no-disponible a mano: debe SOLICITARLO y el comisario
+/// AUTORIZARLO. Mientras esté AUTORIZADA y vigente, el tablero lo muestra
+/// NO_DISPONIBLE. Todo queda trazado (quién pidió, quién resolvió, cuándo).
+model Indisponibilidad {
+  id String @id @default(uuid())
+
+  tenantId          String
+  profesionalUserId String        // referencia suelta (igual que en Atencion)
+
+  motivo String   @db.Text
+  desde  DateTime
+  hasta  DateTime
+
+  estado       IndisponibilidadEstado @default(PENDIENTE)
+  solicitadaAt DateTime               @default(now())
+
+  // Resolución por la autoridad (comisario)
+  resueltaPorUserId String?
+  resueltaAt        DateTime?
+  notaResolucion    String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([profesionalUserId])
+  @@index([estado])
+  @@map("indisponibilidades")
+}
+
+/// Estado de una solicitud de indisponibilidad.
+enum IndisponibilidadEstado {
+  PENDIENTE
+  AUTORIZADA
+  RECHAZADA
+}
+
 /// Declaración / testimonio con PESO PROCESAL, tomada por la autoridad.
 /// Principio rector: solo el Comisario (rol DIRECTOR) puede tomarla. Lo que
 /// recaban los demás funcionarios (valoraciones, entrevistas, hechos) o aportan

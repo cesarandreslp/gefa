@@ -17,8 +17,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings. Sin schema → despliegue directo.
 
 ### 84. RF‑16..19 sub‑paso 12d — Jornada laboral + disponibilidad derivada + excepción autorizada
-**Estado:** EN CURSO
+**Estado:** COMPLETADO
 **Objetivo:** Jornada 7:30–17:00 con almuerzo (config); la disponibilidad se deriva (fuera de jornada/almuerzo → no disponible; OCUPADO si hay turno). Prohibido marcarse no-disponible a mano; única vía: solicitud que el comisario autoriza, trazada.
+**Hecho:**
+- `prisma/schema.prisma` — modelo `Indisponibilidad` (tenantId, profesionalUserId sueltos, motivo, desde/hasta, estado, resueltaPor/resueltaAt/nota) + enum `IndisponibilidadEstado {PENDIENTE|AUTORIZADA|RECHAZADA}`. Sin relaciones (escalares) → no toca otros modelos. **db push aplicado**.
+- `src/lib/jornada.ts` (NUEVO) — `bogotaNow` (hora local Colombia vía Intl/America-Bogota) + `dentroDeJornada` (día hábil + horario + excluye almuerzo). Lee `BUSINESS_HOURS`/`ATTENTION_DAYS`; defaults 07:30–17:00 / L‑V; **almuerzo por defecto 12:00–14:00** (hardcoded; LUNCH_HOURS configurable queda para iteración futura).
+- `atenciones/tablero` — superpone jornada + indisponibilidad AUTORIZADA vigente. Estados: `FUERA_HORARIO` (fuera de jornada/almuerzo) · `NO_DISPONIBLE` (excepción autorizada) · `OCUPADO` · `LIBRE`. Solo LIBRE es asignable.
+- `family/indisponibilidades` (NUEVO) — POST: el profesional (FUNCIONARIO/DIRECTOR) solicita (PENDIENTE). GET: ADMIN/DIRECTOR ven todas/por estado; el profesional solo las suyas. `family/indisponibilidades/[id]/resolver` (NUEVO) — ADMIN/DIRECTOR AUTORIZA/RECHAZA, trazado (`FAMILY_INDISPONIBILIDAD_*`).
+- `admin/atenciones/page.tsx` — 4 estados con color; panel `IndisponibilidadPanel`: formulario de solicitud (profesional) o bandeja de autorización (comisario).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Deuda anotada:** LUNCH_HOURS como setting + UI en Configuración→Horarios (hoy almuerzo por defecto). Con esto se CIERRA la tanda RF‑01..22; siguiente: PLANTILLAS JURÍDICAS + FIRMAS (ver entrada 80, nota).
 
 ### 82. RF‑12/13 sub‑paso 12b — Ciclo del turno: abrir · autoguardar · finalizar
 **Estado:** COMPLETADO

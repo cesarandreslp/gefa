@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute } from '@/lib/auth';
 import { FAMILY_DISPATCH_ROLES } from '@/lib/familyApi';
+import { dentroDeJornada } from '@/lib/jornada';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,29 +44,55 @@ export async function GET(request: NextRequest) {
     });
 
     const ids = profesionales.map((p) => p.id);
-    const enCurso = ids.length
-      ? await db.atencion.findMany({
-          where: { estado: 'EN_CURSO', profesionalUserId: { in: ids } },
-          select: {
-            id: true, profesionalUserId: true, startedAt: true,
-            case: { select: { id: true, filingNumber: true } },
-          },
-        })
-      : [];
+    const ahora = new Date();
+
+    // Jornada laboral (RF‑16/17): si estamos fuera de jornada, todos quedan FUERA_HORARIO.
+    const settings = await db.systemSetting.findMany({
+      where: { key: { in: ['BUSINESS_HOURS', 'ATTENTION_DAYS'] } },
+      select: { key: true, value: true },
+    });
+    const businessHours = settings.find((s) => s.key === 'BUSINESS_HOURS')?.value as { start?: string; end?: string } | undefined;
+    const attentionDays = settings.find((s) => s.key === 'ATTENTION_DAYS')?.value as string[] | undefined;
+    const enJornada = dentroDeJornada({ businessHours, attentionDays });
+
+    const [enCurso, indisponibles] = ids.length
+      ? await Promise.all([
+          db.atencion.findMany({
+            where: { estado: 'EN_CURSO', profesionalUserId: { in: ids } },
+            select: {
+              id: true, profesionalUserId: true, startedAt: true,
+              case: { select: { id: true, filingNumber: true } },
+            },
+          }),
+          // Indisponibilidades AUTORIZADAS y vigentes ahora (RF‑19).
+          db.indisponibilidad.findMany({
+            where: { estado: 'AUTORIZADA', profesionalUserId: { in: ids }, desde: { lte: ahora }, hasta: { gte: ahora } },
+            select: { profesionalUserId: true, motivo: true, hasta: true },
+          }),
+        ])
+      : [[], []];
     const ocupadoPorUser = new Map(enCurso.map((a) => [a.profesionalUserId, a]));
+    const noDispPorUser = new Map(indisponibles.map((i) => [i.profesionalUserId, i]));
 
     const data = profesionales
       .map((p) => {
         const turno = ocupadoPorUser.get(p.id);
+        const noDisp = noDispPorUser.get(p.id);
+        const estado = !enJornada ? 'FUERA_HORARIO'
+          : noDisp ? 'NO_DISPONIBLE'
+          : turno ? 'OCUPADO'
+          : 'LIBRE';
         return {
           id: p.id,
           fullName: p.fullName,
           profesion: p.profesion,
           comisaria: p.comisaria,
-          estado: turno ? 'OCUPADO' : 'LIBRE',
+          estado,
           desde: turno?.startedAt ?? null,
           caso: turno?.case ?? null,
           atencionId: turno?.id ?? null,
+          noDisponibleMotivo: noDisp?.motivo ?? null,
+          noDisponibleHasta: noDisp?.hasta ?? null,
         };
       })
       .sort((a, b) => {

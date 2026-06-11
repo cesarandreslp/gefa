@@ -17,13 +17,21 @@ interface Prof {
   fullName: string;
   profesion: string | null;
   comisaria: { id: string; code: string; name: string } | null;
-  estado: 'LIBRE' | 'OCUPADO';
+  estado: 'LIBRE' | 'OCUPADO' | 'NO_DISPONIBLE' | 'FUERA_HORARIO';
   desde: string | null;
   caso: { id: string; filingNumber: string } | null;
   atencionId: string | null;
+  noDisponibleMotivo?: string | null;
+  noDisponibleHasta?: string | null;
 }
 
 const PROFESION_LABEL: Record<string, string> = { PSICOLOGIA: 'Psicología', TRABAJO_SOCIAL: 'Trabajo Social', JURIDICA: 'Jurídico' };
+const ESTADO_CFG: Record<string, { label: string; bg: string; fg: string; bd: string }> = {
+  LIBRE: { label: 'LIBRE', bg: '#f0fdf4', fg: '#15803d', bd: '#bbf7d0' },
+  OCUPADO: { label: 'OCUPADO', bg: '#fff7ed', fg: '#c2410c', bd: '#fed7aa' },
+  NO_DISPONIBLE: { label: 'NO DISPONIBLE', bg: '#fef2f2', fg: '#991b1b', bd: '#fecaca' },
+  FUERA_HORARIO: { label: 'FUERA DE HORARIO', bg: '#f1f5f9', fg: '#475569', bd: '#e2e8f0' },
+};
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.25rem' };
 const input: React.CSSProperties = { padding: '0.6rem 0.7rem', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.9rem', boxSizing: 'border-box' };
 
@@ -32,6 +40,7 @@ export default function TableroAtencionesPage() {
   const [profs, setProfs] = useState<Prof[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDispatch, setIsDispatch] = useState(false);
+  const [roleCode, setRoleCode] = useState('');
 
   // Asignación
   const [radicado, setRadicado] = useState('');
@@ -62,6 +71,7 @@ export default function TableroAtencionesPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const code = d?.data?.user?.role?.code ?? '';
+        setRoleCode(code);
         setIsDispatch(['ADMIN', 'DIRECTOR', 'VENTANILLA_UNICA', 'AUXILIAR_ATENCION_USUARIO'].includes(code));
       })
       .catch(() => {});
@@ -156,6 +166,7 @@ export default function TableroAtencionesPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {profs.map((p) => {
               const ocupado = p.estado === 'OCUPADO';
+              const cfg = ESTADO_CFG[p.estado] ?? ESTADO_CFG.LIBRE;
               return (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, border: '1px solid #f1f5f9', borderRadius: 10, padding: '0.7rem 0.9rem' }}>
                   <div>
@@ -170,8 +181,11 @@ export default function TableroAtencionesPage() {
                         {p.caso.filingNumber}{p.desde ? ` · desde ${new Date(p.desde).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}` : ''}
                       </span>
                     )}
-                    <span style={{ borderRadius: 999, padding: '0.25rem 0.7rem', fontSize: '0.78rem', fontWeight: 700, background: ocupado ? '#fff7ed' : '#f0fdf4', color: ocupado ? '#c2410c' : '#15803d', border: `1px solid ${ocupado ? '#fed7aa' : '#bbf7d0'}` }}>
-                      {ocupado ? 'OCUPADO' : 'LIBRE'}
+                    {p.estado === 'NO_DISPONIBLE' && p.noDisponibleMotivo && (
+                      <span title={p.noDisponibleMotivo} style={{ fontSize: '0.78rem', color: '#991b1b', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.noDisponibleMotivo}</span>
+                    )}
+                    <span style={{ borderRadius: 999, padding: '0.25rem 0.7rem', fontSize: '0.78rem', fontWeight: 700, background: cfg.bg, color: cfg.fg, border: `1px solid ${cfg.bd}` }}>
+                      {cfg.label}
                     </span>
                     {ocupado && p.atencionId && (
                       <button onClick={() => router.push(`/admin/atenciones/${p.atencionId}`)} style={{ background: 'none', border: 'none', color: 'var(--color-primary, #2563eb)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>Abrir turno →</button>
@@ -183,6 +197,113 @@ export default function TableroAtencionesPage() {
           </div>
         )}
       </div>
+
+      {(roleCode === 'FUNCIONARIO' || ['ADMIN', 'DIRECTOR'].includes(roleCode)) && (
+        <IndisponibilidadPanel roleCode={roleCode} />
+      )}
+    </div>
+  );
+}
+
+// ── Indisponibilidad (RF‑18/19): solicitar (profesional) / autorizar (comisario) ──
+interface IndisRow { id: string; motivo: string; desde: string; hasta: string; estado: string; profesionalNombre?: string }
+
+function IndisponibilidadPanel({ roleCode }: { roleCode: string }) {
+  const esComisario = ['ADMIN', 'DIRECTOR'].includes(roleCode);
+  const [list, setList] = useState<IndisRow[]>([]);
+  const [motivo, setMotivo] = useState('');
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/family/indisponibilidades${esComisario ? '?estado=PENDIENTE' : ''}`);
+      if (res.ok) setList((await res.json()).data ?? []);
+    } catch { /* noop */ }
+  }, [esComisario]);
+  useEffect(() => { load(); }, [load]);
+
+  const solicitar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch('/api/v1/family/indisponibilidades', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivo, desde, hasta }),
+      });
+      const d = await res.json();
+      if (!res.ok) { setMsg({ type: 'err', text: d.error || 'No se pudo enviar.' }); return; }
+      setMsg({ type: 'ok', text: 'Solicitud enviada. Queda pendiente de autorización del comisario.' });
+      setMotivo(''); setDesde(''); setHasta(''); load();
+    } catch { setMsg({ type: 'err', text: 'Error de conexión.' }); } finally { setBusy(false); }
+  };
+
+  const resolver = async (id: string, autorizar: boolean) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/v1/family/indisponibilidades/${id}/resolver`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autorizar }),
+      });
+      if (res.ok) load();
+    } catch { /* noop */ } finally { setBusy(false); }
+  };
+
+  const fmt = (s: string) => new Date(s).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+  const ESTADO_LBL: Record<string, { t: string; c: string }> = {
+    PENDIENTE: { t: 'Pendiente', c: '#b45309' }, AUTORIZADA: { t: 'Autorizada', c: '#15803d' }, RECHAZADA: { t: 'Rechazada', c: '#991b1b' },
+  };
+
+  return (
+    <div style={{ ...card, marginTop: '1.25rem' }}>
+      <h2 style={{ fontSize: '1rem', margin: '0 0 0.8rem', color: '#1e293b' }}>
+        {esComisario ? 'Solicitudes de indisponibilidad (pendientes)' : 'Indisponibilidad'}
+      </h2>
+
+      {!esComisario && (
+        <form onSubmit={solicitar} style={{ marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 0.6rem' }}>
+            Dentro de la jornada la disponibilidad es automática. Para ausentarse (audiencia, permiso…) solicite autorización del comisario.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+            <div><label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>Desde</label><input type="datetime-local" value={desde} onChange={(e) => setDesde(e.target.value)} required style={{ ...input, width: '100%' }} /></div>
+            <div><label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>Hasta</label><input type="datetime-local" value={hasta} onChange={(e) => setHasta(e.target.value)} required style={{ ...input, width: '100%' }} /></div>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>Motivo</label>
+            <input value={motivo} onChange={(e) => setMotivo(e.target.value)} required placeholder="Ej: audiencia programada, permiso médico…" style={{ ...input, width: '100%' }} />
+          </div>
+          <button type="submit" disabled={busy} style={{ marginTop: 10, background: 'var(--color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.55rem 1.1rem', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Enviar solicitud</button>
+          {msg && <div style={{ marginTop: 10, fontSize: '0.84rem', color: msg.type === 'ok' ? '#166534' : '#991b1b' }}>{msg.text}</div>}
+        </form>
+      )}
+
+      {list.length === 0 ? (
+        <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>{esComisario ? 'No hay solicitudes pendientes.' : 'No tiene solicitudes registradas.'}</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {list.map((i) => (
+            <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, border: '1px solid #f1f5f9', borderRadius: 8, padding: '0.6rem 0.85rem' }}>
+              <div style={{ fontSize: '0.84rem', color: '#374151' }}>
+                {esComisario && <b>{i.profesionalNombre} · </b>}{i.motivo}
+                <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{fmt(i.desde)} → {fmt(i.hasta)}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {esComisario && i.estado === 'PENDIENTE' ? (
+                  <>
+                    <button onClick={() => resolver(i.id, true)} disabled={busy} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 7, padding: '0.35rem 0.75rem', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Autorizar</button>
+                    <button onClick={() => resolver(i.id, false)} disabled={busy} style={{ background: '#fff', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 7, padding: '0.35rem 0.75rem', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Rechazar</button>
+                  </>
+                ) : (
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: (ESTADO_LBL[i.estado] ?? ESTADO_LBL.PENDIENTE).c }}>{(ESTADO_LBL[i.estado] ?? ESTADO_LBL.PENDIENTE).t}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
