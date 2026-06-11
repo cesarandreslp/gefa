@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Building2, X, Phone, MapPin, Truck, Power } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Building2, X, Phone, MapPin, Truck, Power, Users as UsersIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import ComisariaTeamPanel from './ComisariaTeamPanel';
 
 interface Comisaria {
   id: string;
@@ -13,6 +14,12 @@ interface Comisaria {
   isMobile: boolean;
   isActive: boolean;
   _count?: { users: number; cases: number };
+}
+
+interface RoleOpt { id: string; code: string; name: string }
+interface TeamUser {
+  id: string; email: string; fullName: string; documentType: string; documentNumber: string;
+  role?: RoleOpt; comisaria?: { id: string; code: string; name: string } | null; isActive: boolean;
 }
 
 const EMPTY = { code: '', name: '', address: '', phone: '', isMobile: false };
@@ -27,6 +34,9 @@ export default function ComisariasPage() {
   const [editing, setEditing] = useState<Comisaria | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState<TeamUser[]>([]);
+  const [roles, setRoles] = useState<RoleOpt[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const isAuth = localStorage.getItem('isAuthenticated');
@@ -35,6 +45,7 @@ export default function ComisariasPage() {
       return;
     }
     load();
+    loadTeam();
   }, [router]);
 
   const load = async () => {
@@ -53,6 +64,21 @@ export default function ComisariasPage() {
       setLoading(false);
     }
   };
+
+  const loadTeam = async () => {
+    try {
+      const [u, r] = await Promise.all([
+        fetch('/api/v1/users').then((res) => (res.ok ? res.json() : [])),
+        fetch('/api/v1/roles').then((res) => (res.ok ? res.json() : [])),
+      ]);
+      setUsers(Array.isArray(u) ? u : []);
+      setRoles((Array.isArray(r) ? r : []).filter((x: RoleOpt & { isActive?: boolean }) => x.isActive !== false));
+    } catch (e) {
+      console.error('Error cargando equipo:', e);
+    }
+  };
+
+  const reloadAll = () => { load(); loadTeam(); };
 
   const openModal = (c?: Comisaria) => {
     if (c) {
@@ -187,8 +213,12 @@ export default function ComisariasPage() {
                 </tr>
               </thead>
               <tbody>
-                {comisarias.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #e5e7eb', opacity: c.isActive ? 1 : 0.55 }}>
+                {comisarias.map((c) => {
+                  const expanded = expandedId === c.id;
+                  const members = users.filter((u) => u.comisaria?.id === c.id);
+                  return (
+                  <Fragment key={c.id}>
+                  <tr style={{ borderBottom: expanded ? 'none' : '1px solid #e5e7eb', opacity: c.isActive ? 1 : 0.55 }}>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb', backgroundColor: '#dbeafe', padding: '0.15rem 0.5rem', borderRadius: '6px', fontFamily: 'monospace' }}>{c.code}</span>
@@ -205,7 +235,16 @@ export default function ComisariasPage() {
                       {c.phone && <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '0.25rem 0 0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Phone size={12} /> {c.phone}</p>}
                       {!c.address && !c.phone && <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>Sin datos</span>}
                     </td>
-                    <td style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#374151' }}>{c._count?.users ?? 0}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <button
+                        onClick={() => setExpandedId(expanded ? null : c.id)}
+                        title="Ver / gestionar equipo de la comisaría"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: expanded ? '#dbeafe' : '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontSize: '0.82rem', color: '#374151', fontWeight: 600 }}
+                      >
+                        <UsersIcon size={14} /> {members.length}
+                        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </button>
+                    </td>
                     <td style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#374151' }}>{c._count?.cases ?? 0}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, backgroundColor: c.isActive ? '#d1fae5' : '#fee2e2', color: c.isActive ? '#065f46' : '#991b1b', borderRadius: '9999px' }}>
@@ -223,7 +262,16 @@ export default function ComisariasPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  {expanded && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: 0, borderBottom: '1px solid #e5e7eb' }}>
+                        <ComisariaTeamPanel comisaria={c} members={members} roles={roles} comisarias={comisarias} onChanged={reloadAll} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

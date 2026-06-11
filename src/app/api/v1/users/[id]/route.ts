@@ -43,8 +43,11 @@ export async function PUT(
       );
     }
 
-    // Validar email único DENTRO del tenant (si cambió)
-    if (email !== existingUser.email) {
+    // Validar email único DENTRO del tenant (solo si viene y cambió).
+    // Importante: en actualizaciones parciales (p. ej. solo comisariaId) estos
+    // campos llegan undefined y NO deben dispararse (un findFirst con email:undefined
+    // devolvería cualquier otro usuario y daría un falso "ya existe").
+    if (email !== undefined && email !== existingUser.email) {
       const emailExists = await db.user.findFirst({
         where: { email, tenantId: auth.user.tenantId, id: { not: id } }
       });
@@ -57,8 +60,8 @@ export async function PUT(
       }
     }
 
-    // Validar documento único DENTRO del tenant (si cambió)
-    if (documentNumber !== existingUser.documentNumber) {
+    // Validar documento único DENTRO del tenant (solo si viene y cambió)
+    if (documentNumber !== undefined && documentNumber !== existingUser.documentNumber) {
       const documentExists = await db.user.findFirst({
         where: { documentNumber, tenantId: auth.user.tenantId, id: { not: id } }
       });
@@ -71,13 +74,12 @@ export async function PUT(
       }
     }
 
-    // Preparar datos para actualizar
-    const updateData: Prisma.UserUncheckedUpdateInput = {
-      email,
-      fullName,
-      documentType,
-      documentNumber
-    };
+    // Preparar datos para actualizar (solo los campos que vienen)
+    const updateData: Prisma.UserUncheckedUpdateInput = {};
+    if (email !== undefined) updateData.email = email;
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (documentType !== undefined) updateData.documentType = documentType;
+    if (documentNumber !== undefined) updateData.documentNumber = documentNumber;
 
     // Campos opcionales
     if (department !== undefined) {
