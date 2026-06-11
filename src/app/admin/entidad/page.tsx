@@ -1,13 +1,28 @@
+/**
+ * /admin/entidad — Configuración de la Entidad
+ * Datos públicos, branding, SMTP, IA y servicios de la página principal. Estilo
+ * inline (el proyecto no usa Tailwind). Acceso: ADMIN.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Building2, Save, Check } from 'lucide-react';
 import { AVAILABLE_ICONS, ICON_LABELS } from '@/lib/landingDefaults';
 import type { LandingConfig } from '@/lib/landingDefaults';
+import AdminPageHeader from '../AdminPageHeader';
+
+const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.5rem' };
+const input: React.CSSProperties = { width: '100%', padding: '0.6rem 0.7rem', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.88rem', boxSizing: 'border-box' };
+const label: React.CSSProperties = { display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 5 };
+const help: React.CSSProperties = { margin: '0.35rem 0 0', fontSize: '0.78rem', color: '#94a3b8' };
+const sectionTitle: React.CSSProperties = { fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 1.1rem', paddingBottom: '0.7rem', borderBottom: '1px solid #f1f5f9' };
+const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 };
 
 export default function TenantEntidadPage() {
   const router = useRouter();
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -42,7 +57,7 @@ export default function TenantEntidadPage() {
       }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Error al cargar los datos');
-      
+
       const d = json.data;
       setFormData({
         address: d?.address || '',
@@ -61,7 +76,6 @@ export default function TenantEntidadPage() {
         smtpFromName: d?.smtpFromName || '',
       });
 
-      // Cargar landing config desde mi-entidad API
       try {
         const lcRes = await fetch('/api/v1/mi-entidad');
         if (lcRes.ok) {
@@ -92,13 +106,12 @@ export default function TenantEntidadPage() {
       const res = await fetch('/api/v1/tenant-settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
       const json = await res.json();
 
       if (!res.ok) {
         if (json.details) {
-          // Flatten Zod errors
           const errors = Object.values(json.details)
             .map((e: any) => e?._errors?.[0])
             .filter(Boolean);
@@ -109,12 +122,11 @@ export default function TenantEntidadPage() {
 
       setSuccess('Configuración institucional guardada exitosamente');
 
-      // Guardar landing config si se modificó
       if (landingConfig) {
         const lcRes = await fetch('/api/v1/mi-entidad', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ landingConfig })
+          body: JSON.stringify({ landingConfig }),
         });
         if (!lcRes.ok) {
           console.warn('Error al guardar servicios de landing');
@@ -130,213 +142,118 @@ export default function TenantEntidadPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando configuración de la entidad...</p>
-        </div>
-      </div>
-    );
+    return <p style={{ color: '#94a3b8', padding: '2rem 0', textAlign: 'center' }}>Cargando configuración de la entidad…</p>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Configuración de la Entidad</h1>
-        <p className="mt-2 text-gray-600">
-          Esta información se mostrará públicamente a los ciudadanos en el pie de página y los comprobantes oficiales.
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        title="Configuración de la Entidad"
+        subtitle="Esta información se muestra públicamente a la ciudadanía en el pie de página y los comprobantes oficiales."
+        icon={<Building2 size={24} />}
+        actions={
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: saving ? '#9ca3af' : 'var(--color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.65rem 1.25rem', fontWeight: 600, fontSize: '0.9rem', cursor: saving ? 'wait' : 'pointer' }}
+          >
+            <Save size={16} /> {saving ? 'Guardando…' : 'Guardar Configuración'}
+          </button>
+        }
+      />
 
       {error && (
-        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r shadow-sm">
-          <p className="text-red-800">{error}</p>
-        </div>
+        <div style={{ marginBottom: '1.5rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: 8, fontSize: '0.88rem' }}>{error}</div>
       )}
       {success && (
-        <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r shadow-sm">
-          <p className="text-green-800 font-medium">{success}</p>
-        </div>
+        <div style={{ marginBottom: '1.5rem', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem 1rem', borderRadius: 8, fontSize: '0.88rem', fontWeight: 500 }}>{success}</div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3">Información de Contacto</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Dirección Principal / Sede Electrónica
-            </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({...formData, address: e.target.value})}
-              placeholder="Ej: Calle 1 # 2-3, Barrio Centro"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Teléfono / Conmutador
-            </label>
-            <input
-              type="text"
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              placeholder="Ej: (+57) 2 0000000"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Correo Electrónico Institucional
-            </label>
-            <input
-              type="email"
-              value={formData.institutionalEmail}
-              onChange={(e) => setFormData({...formData, institutionalEmail: e.target.value})}
-              placeholder="Ej: contactenos@municipio.gov.co"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notificaciones Judiciales
-            </label>
-            <input
-              type="email"
-              value={formData.judicialNoticesEmail}
-              onChange={(e) => setFormData({...formData, judicialNoticesEmail: e.target.value})}
-              placeholder="Ej: notificaciones@municipio.gov.co"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Línea Anticorrupción
-            </label>
-            <input
-              type="text"
-              value={formData.anticorruptionPhone}
-              onChange={(e) => setFormData({...formData, anticorruptionPhone: e.target.value})}
-              placeholder="Ej: (+57) 018000919748"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            <p className="text-xs text-gray-500 mt-1">Este número se mostrará resaltado en el portal para denuncias de corrupción.</p>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mt-8">Identidad Visual (Branding)</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Enlace del Escudo / Logo (URL)
-            </label>
-            <input
-              type="url"
-              value={formData.logoUrl}
-              onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
-              placeholder="https://..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color Primario
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={formData.primaryColor || '#000000'}
-                onChange={(e) => setFormData({...formData, primaryColor: e.target.value})}
-                className="w-12 h-10 border-0 rounded cursor-pointer p-0"
-              />
-              <input
-                type="text"
-                value={formData.primaryColor}
-                onChange={(e) => setFormData({...formData, primaryColor: e.target.value})}
-                placeholder="#1D4ED8"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
-              />
-            </div>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mt-8">Correo Institucional (SMTP)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Cuenta de correo (Gmail)</label>
-            <input
-              type="email"
-              value={formData.smtpUser}
-              onChange={(e) => setFormData({...formData, smtpUser: e.target.value})}
-              placeholder="notificaciones@entidad.gov.co"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña de aplicación</label>
-            <div className="relative">
-              <input
-                type={showSmtpPass ? 'text' : 'password'}
-                value={formData.smtpPass}
-                onChange={(e) => setFormData({...formData, smtpPass: e.target.value})}
-                placeholder="xxxx xxxx xxxx xxxx"
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
-              />
-              <button type="button" onClick={() => setShowSmtpPass(!showSmtpPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                {showSmtpPass ? '🙈' : '👁️'}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Genera una en Google → Cuenta → Seguridad → Contraseñas de aplicación.</p>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del remitente</label>
-            <input
-              type="text"
-              value={formData.smtpFromName}
-              onChange={(e) => setFormData({...formData, smtpFromName: e.target.value})}
-              placeholder="Ej: Nombre oficial de la entidad"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            <p className="text-xs text-gray-500 mt-1">Así aparecerá la entidad en el correo del ciudadano.</p>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mt-8">Inteligencia Artificial</h2>
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              GROQ API Key
-            </label>
-            <input
-              type="password"
-              value={formData.groqApiKey}
-              onChange={(e) => setFormData({...formData, groqApiKey: e.target.value})}
-              placeholder="gsk_..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              API key exclusiva para esta entidad. Si se deja vacía, se usará la key global del sistema como respaldo.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Contacto */}
+        <div style={card}>
+          <h2 style={sectionTitle}>Información de Contacto</h2>
+          <div style={grid2}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor de IA (informes)</label>
-              <select
-                value={formData.aiProvider}
-                onChange={(e) => setFormData({...formData, aiProvider: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
+              <label style={label}>Dirección Principal / Sede Electrónica</label>
+              <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej: Calle 1 # 2-3, Barrio Centro" style={input} />
+            </div>
+            <div>
+              <label style={label}>Teléfono / Conmutador</label>
+              <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Ej: (+57) 2 0000000" style={input} />
+            </div>
+            <div>
+              <label style={label}>Correo Electrónico Institucional</label>
+              <input type="email" value={formData.institutionalEmail} onChange={(e) => setFormData({ ...formData, institutionalEmail: e.target.value })} placeholder="Ej: contactenos@municipio.gov.co" style={input} />
+            </div>
+            <div>
+              <label style={label}>Notificaciones Judiciales</label>
+              <input type="email" value={formData.judicialNoticesEmail} onChange={(e) => setFormData({ ...formData, judicialNoticesEmail: e.target.value })} placeholder="Ej: notificaciones@municipio.gov.co" style={input} />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={label}>Línea Anticorrupción</label>
+              <input type="text" value={formData.anticorruptionPhone} onChange={(e) => setFormData({ ...formData, anticorruptionPhone: e.target.value })} placeholder="Ej: (+57) 018000919748" style={input} />
+              <p style={help}>Este número se mostrará resaltado en el portal para denuncias de corrupción.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Branding */}
+        <div style={card}>
+          <h2 style={sectionTitle}>Identidad Visual (Branding)</h2>
+          <div style={grid2}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={label}>Enlace del Escudo / Logo (URL)</label>
+              <input type="url" value={formData.logoUrl} onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })} placeholder="https://…" style={input} />
+            </div>
+            <div>
+              <label style={label}>Color Primario</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input type="color" value={formData.primaryColor || '#000000'} onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })} style={{ width: 48, height: 40, border: 0, borderRadius: 6, cursor: 'pointer', padding: 0 }} />
+                <input type="text" value={formData.primaryColor} onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })} placeholder="#1D4ED8" style={{ ...input, fontFamily: 'monospace' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SMTP */}
+        <div style={card}>
+          <h2 style={sectionTitle}>Correo Institucional (SMTP)</h2>
+          <div style={grid2}>
+            <div>
+              <label style={label}>Cuenta de correo (Gmail)</label>
+              <input type="email" value={formData.smtpUser} onChange={(e) => setFormData({ ...formData, smtpUser: e.target.value })} placeholder="notificaciones@entidad.gov.co" style={input} />
+            </div>
+            <div>
+              <label style={label}>Contraseña de aplicación</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showSmtpPass ? 'text' : 'password'} value={formData.smtpPass} onChange={(e) => setFormData({ ...formData, smtpPass: e.target.value })} placeholder="xxxx xxxx xxxx xxxx" style={{ ...input, paddingRight: 40, fontFamily: 'monospace' }} />
+                <button type="button" onClick={() => setShowSmtpPass(!showSmtpPass)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  {showSmtpPass ? '🙈' : '👁️'}
+                </button>
+              </div>
+              <p style={help}>Genera una en Google → Cuenta → Seguridad → Contraseñas de aplicación.</p>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={label}>Nombre del remitente</label>
+              <input type="text" value={formData.smtpFromName} onChange={(e) => setFormData({ ...formData, smtpFromName: e.target.value })} placeholder="Ej: Nombre oficial de la entidad" style={input} />
+              <p style={help}>Así aparecerá la entidad en el correo de la ciudadanía.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* IA */}
+        <div style={card}>
+          <h2 style={sectionTitle}>Inteligencia Artificial</h2>
+          <div style={{ marginBottom: 16 }}>
+            <label style={label}>GROQ API Key</label>
+            <input type="password" value={formData.groqApiKey} onChange={(e) => setFormData({ ...formData, groqApiKey: e.target.value })} placeholder="gsk_…" style={{ ...input, fontFamily: 'monospace' }} />
+            <p style={help}>API key exclusiva para esta entidad. Si se deja vacía, se usará la key global del sistema como respaldo.</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+            <div>
+              <label style={label}>Proveedor de IA (informes)</label>
+              <select value={formData.aiProvider} onChange={(e) => setFormData({ ...formData, aiProvider: e.target.value })} style={input}>
                 <option value="">GROQ (por defecto)</option>
                 <option value="GROQ">GROQ</option>
                 <option value="ANTHROPIC">Anthropic (Claude)</option>
@@ -344,183 +261,136 @@ export default function TenantEntidadPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">API key del proveedor</label>
-              <input
-                type="password"
-                value={formData.aiApiKey}
-                onChange={(e) => setFormData({...formData, aiApiKey: e.target.value})}
-                placeholder="sk-... / gsk_..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
-              />
+              <label style={label}>API key del proveedor</label>
+              <input type="password" value={formData.aiApiKey} onChange={(e) => setFormData({ ...formData, aiApiKey: e.target.value })} placeholder="sk-… / gsk_…" style={{ ...input, fontFamily: 'monospace' }} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Modelo (opcional)</label>
-              <input
-                type="text"
-                value={formData.aiModel}
-                onChange={(e) => setFormData({...formData, aiModel: e.target.value})}
-                placeholder="ej. claude-sonnet-4-6"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
-              />
+              <label style={label}>Modelo (opcional)</label>
+              <input type="text" value={formData.aiModel} onChange={(e) => setFormData({ ...formData, aiModel: e.target.value })} placeholder="ej. claude-sonnet-4-6" style={{ ...input, fontFamily: 'monospace' }} />
             </div>
           </div>
-          <p className="text-xs text-gray-500 -mt-3">
-            Usado para generar los informes preliminares de los instrumentos de valoración. Los datos sensibles se anonimizan antes de enviarse. Si se deja vacío, se usa GROQ con la key de arriba.
-          </p>
+          <p style={help}>Usado para generar los informes preliminares de los instrumentos de valoración. Los datos sensibles se anonimizan antes de enviarse. Si se deja vacío, se usa GROQ con la key de arriba.</p>
         </div>
 
-        {/* Servicios de la Página Principal */}
+        {/* Servicios de la página principal */}
         {landingConfig && (
-          <>
-            <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mt-8">Servicios de la Página Principal</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Estos servicios se muestran a los ciudadanos en la página de inicio. Puede editar el título, descripción y enlace de cada uno.
+          <div style={card}>
+            <h2 style={sectionTitle}>Servicios de la Página Principal</h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 1.25rem' }}>
+              Estos servicios se muestran a la ciudadanía en la página de inicio. Puede editar el título, descripción y enlace de cada uno.
             </p>
 
-            {/* Hero subtitle */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subtítulo del Banner Principal</label>
-              <input
-                type="text"
-                value={landingConfig.heroSubtitle}
-                onChange={(e) => setLandingConfig({...landingConfig, heroSubtitle: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label style={label}>Subtítulo del Banner Principal</label>
+              <input type="text" value={landingConfig.heroSubtitle} onChange={(e) => setLandingConfig({ ...landingConfig, heroSubtitle: e.target.value })} style={input} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={label}>Texto del Llamado a la Acción</label>
+              <input type="text" value={landingConfig.ctaText} onChange={(e) => setLandingConfig({ ...landingConfig, ctaText: e.target.value })} style={input} />
             </div>
 
-            {/* CTA text */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Texto del Llamado a la Acción</label>
-              <input
-                type="text"
-                value={landingConfig.ctaText}
-                onChange={(e) => setLandingConfig({...landingConfig, ctaText: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            {/* Services list */}
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {landingConfig.services.map((service, index) => (
-                <div
-                  key={service.id}
-                  className={`border rounded-lg p-4 ${
-                    service.enabled ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-medium text-gray-700">#{index + 1}</span>
+                <div key={service.id} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: service.enabled ? '#fff' : '#f8fafc', opacity: service.enabled ? 1 : 0.6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#475569' }}>#{index + 1}</span>
                       <select
                         value={service.icon}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], icon: e.target.value };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        style={{ ...input, width: 'auto', padding: '0.35rem 0.5rem', fontSize: '0.82rem' }}
                       >
-                        {AVAILABLE_ICONS.map(icon => (
+                        {AVAILABLE_ICONS.map((icon) => (
                           <option key={icon} value={icon}>{ICON_LABELS[icon] ?? icon}</option>
                         ))}
                       </select>
                     </div>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <input
                         type="checkbox"
                         checked={service.enabled}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], enabled: e.target.checked };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        style={{ width: 16, height: 16 }}
                       />
-                      <span className="text-sm text-gray-600">Visible</span>
+                      <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Visible</span>
                     </label>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Título</label>
+                      <label style={{ ...label, fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>Título</label>
                       <input
                         type="text"
                         value={service.title}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], title: e.target.value };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                        style={{ ...input, padding: '0.45rem 0.6rem', fontSize: '0.84rem' }}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Texto del Botón</label>
+                      <label style={{ ...label, fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>Texto del Botón</label>
                       <input
                         type="text"
                         value={service.linkText}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], linkText: e.target.value };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                        style={{ ...input, padding: '0.45rem 0.6rem', fontSize: '0.84rem' }}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs text-gray-500 mb-1">Descripción</label>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ ...label, fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>Descripción</label>
                       <textarea
                         value={service.description}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], description: e.target.value };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
                         rows={2}
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                        style={{ ...input, padding: '0.45rem 0.6rem', fontSize: '0.84rem', resize: 'vertical' }}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs text-gray-500 mb-1">URL del Enlace</label>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ ...label, fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>URL del Enlace</label>
                       <input
                         type="text"
                         value={service.linkUrl}
                         onChange={(e) => {
                           const updated = [...landingConfig.services];
                           updated[index] = { ...updated[index], linkUrl: e.target.value };
-                          setLandingConfig({...landingConfig, services: updated});
+                          setLandingConfig({ ...landingConfig, services: updated });
                         }}
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-mono"
+                        style={{ ...input, padding: '0.45rem 0.6rem', fontSize: '0.84rem', fontFamily: 'monospace' }}
                       />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
 
-        <div className="pt-6 border-t flex justify-end">
+        {/* Guardar (pie) */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium shadow-sm hover:shadow"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: saving ? '#9ca3af' : 'var(--color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: '0.9rem', cursor: saving ? 'wait' : 'pointer' }}
           >
-            {saving ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Guardar Configuración
-              </>
-            )}
+            {saving ? <Save size={17} /> : <Check size={17} />} {saving ? 'Guardando…' : 'Guardar Configuración'}
           </button>
         </div>
       </div>

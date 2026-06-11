@@ -6,6 +6,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 74. Alinear Entidad/Configuración/Sistema al encabezado y estilo del admin
+**Estado:** COMPLETADO
+**Objetivo:** Dejar las páginas restantes del admin (Entidad, Configuración, Sistema) con el mismo `AdminPageHeader` y estilo inline consistente que el resto, eliminando chrome redundante.
+**HALLAZGO (corrige el resumen de la entrada 73):** las tres también usaban **Tailwind** (className), no estilo inline como se había dicho → renderizaban crudas igual que notifications/reports/metrics. Convertidas las tres a estilo inline + `AdminPageHeader`, misma lógica/handlers/subcomponentes:
+- `admin/system/page.tsx` — encabezado con ícono `Activity` + acción "Actualizar estado"; tarjetas de servicio con color por estado (healthy/degraded/down), métricas del día y estadísticas generales en grids inline.
+- `admin/settings/page.tsx` — encabezado `Settings`; nav lateral de secciones (Calendario/Horarios/Textos/Institución/Umbrales) con ítem activo al color primario; todos los subcomponentes (Calendar/Hours/LegalTexts/Institution/Thresholds) reescritos a inline preservando handlers y validaciones.
+- `admin/entidad/page.tsx` — encabezado `Building2` + acción "Guardar"; secciones (Contacto, Branding, SMTP, IA, Servicios de landing) como tarjetas inline; editor de servicios de landing y toggle de contraseña SMTP conservados. Copy "ciudadanos"→"ciudadanía".
+**Verificación:** `tsc --noEmit` exit=0; `next lint` solo 3 warnings `any` preexistentes (manejo de errores Zod en entidad).
+
 ### 73. Pulir la presentación del contenido del admin + re-sync de roles
 **Estado:** COMPLETADO
 **Objetivo:** El usuario dice que el contenido de las páginas del admin no se ve bonito/profesional, y pide re-sincronizar las descripciones de roles de los 3 tenants con el catálogo nuevo.

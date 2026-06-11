@@ -1,22 +1,14 @@
 /**
- * COMPONENTE: /admin/system
- * 
- * Panel de monitoreo y salud del sistema
- * 
- * Acceso: ADMIN
- * Características:
- * - Estado de servicios (BD, notificaciones)
- * - Métricas operativas del día
- * - Información del sistema
- * - Actualización manual
- * 
- * @author GEFA — Gestión Familiar
- * @date Enero 13, 2026
+ * /admin/system — Estado del Sistema
+ * Panel de monitoreo y salud del sistema. Estilo inline (el proyecto no usa
+ * Tailwind). Acceso: ADMIN.
  */
 
 'use client';
 
 import { useState } from 'react';
+import { Activity, RefreshCw } from 'lucide-react';
+import AdminPageHeader from '../AdminPageHeader';
 
 interface SystemStatus {
   database: {
@@ -67,6 +59,37 @@ interface SystemMetrics {
   };
 }
 
+const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.5rem' };
+const sectionTitle: React.CSSProperties = { fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 1rem' };
+const muted: React.CSSProperties = { color: '#64748b', fontSize: '0.78rem', margin: 0 };
+const value: React.CSSProperties = { fontWeight: 600, color: '#0f172a', margin: '0.15rem 0 0' };
+
+function statusColor(statusValue: string): React.CSSProperties {
+  switch (statusValue) {
+    case 'healthy':
+      return { background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' };
+    case 'degraded':
+      return { background: '#fefce8', color: '#854d0e', border: '1px solid #fef08a' };
+    case 'down':
+      return { background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' };
+    default:
+      return { background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' };
+  }
+}
+
+function statusIcon(statusValue: string) {
+  switch (statusValue) {
+    case 'healthy':
+      return '🟢';
+    case 'degraded':
+      return '🟡';
+    case 'down':
+      return '🔴';
+    default:
+      return '⚪';
+  }
+}
+
 export default function SystemPage() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
@@ -100,190 +123,123 @@ export default function SystemPage() {
     }
   };
 
-  const getStatusIcon = (statusValue: string) => {
-    switch (statusValue) {
-      case 'healthy':
-        return '🟢';
-      case 'degraded':
-        return '🟡';
-      case 'down':
-        return '🔴';
-      default:
-        return '⚪';
-    }
-  };
-
-  const getStatusColor = (statusValue: string) => {
-    switch (statusValue) {
-      case 'healthy':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'degraded':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'down':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
+  const metricCards: { label: string; val: number; bg: string; bd: string; fg: string }[] = metrics
+    ? [
+        { label: 'Casos Radicados Hoy', val: metrics.operations.casesCreatedToday, bg: '#eff6ff', bd: '#bfdbfe', fg: '#1d4ed8' },
+        { label: 'Casos Cerrados Hoy', val: metrics.operations.casesClosedToday, bg: '#f0fdf4', bd: '#bbf7d0', fg: '#15803d' },
+        { label: 'Notificaciones Enviadas', val: metrics.operations.notificationsSentToday, bg: '#ecfeff', bd: '#a5f3fc', fg: '#0e7490' },
+        { label: 'Notificaciones Pendientes', val: metrics.operations.pendingNotifications, bg: '#fff7ed', bd: '#fed7aa', fg: '#c2410c' },
+      ]
+    : [];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Estado del Sistema 🔧</h1>
-        <button
-          onClick={loadSystemInfo}
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Cargando...' : 'Actualizar Estado'}
-        </button>
-      </div>
+    <div>
+      <AdminPageHeader
+        title="Estado del Sistema"
+        subtitle="Monitoreo de servicios, almacenamiento y métricas operativas del día."
+        icon={<Activity size={24} />}
+        actions={
+          <button
+            onClick={loadSystemInfo}
+            disabled={loading}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: loading ? '#9ca3af' : 'var(--color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.65rem 1.1rem', fontWeight: 600, fontSize: '0.9rem', cursor: loading ? 'wait' : 'pointer' }}
+          >
+            <RefreshCw size={16} /> {loading ? 'Cargando…' : 'Actualizar estado'}
+          </button>
+        }
+      />
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded border border-red-200">
+        <div style={{ marginBottom: '1.5rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: 8, fontSize: '0.88rem' }}>
           {error}
         </div>
       )}
 
       {!status && !metrics && !loading && (
-        <div className="text-center py-12 bg-gray-50 rounded border border-gray-200">
-          <p className="text-gray-600 mb-4">Haga clic en &quot;Actualizar Estado&quot; para cargar la información</p>
+        <div style={{ ...card, textAlign: 'center', color: '#94a3b8' }}>
+          <p style={{ margin: 0 }}>Haga clic en «Actualizar estado» para cargar la información.</p>
         </div>
       )}
 
-      {(status || metrics) && (
-        <>
-          {/* Estado de Servicios */}
-          {status && (
-            <div className="mb-6 bg-white p-6 rounded shadow border">
-              <h2 className="text-xl font-bold mb-4">Estado de Servicios</h2>
-              
-              {status.system.degradedMode && (
-                <div className="mb-4 p-3 bg-orange-50 text-orange-700 rounded border border-orange-200">
-                  ⚠️ Sistema en modo degradado (solo lectura)
-                </div>
-              )}
+      {status && (
+        <div style={{ ...card, marginBottom: '1.5rem' }}>
+          <h2 style={sectionTitle}>Estado de servicios</h2>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Base de Datos */}
-                <div className={`p-4 rounded border ${getStatusColor(status.database.status)}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">Base de Datos</span>
-                    <span className="text-2xl">{getStatusIcon(status.database.status)}</span>
-                  </div>
-                  <div className="text-sm">
-                    <p>Estado: {status.database.connected ? 'Conectada' : 'Desconectada'}</p>
-                    <p>Latencia: {status.database.latency}ms</p>
-                  </div>
-                </div>
-
-                {/* Cola de Notificaciones */}
-                <div className={`p-4 rounded border ${getStatusColor(status.queue.notifications.status)}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">Cola de Notificaciones</span>
-                    <span className="text-2xl">{getStatusIcon(status.queue.notifications.status)}</span>
-                  </div>
-                  <div className="text-sm">
-                    <p>Pendientes: {status.queue.notifications.pending}</p>
-                    <p>Fallidas: {status.queue.notifications.failed}</p>
-                    {status.queue.notifications.lastProcessed && (
-                      <p className="text-xs mt-1">
-                        Último procesamiento: {new Date(status.queue.notifications.lastProcessed).toLocaleString('es-CO')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Información del Sistema */}
-              <div className="mt-4 pt-4 border-t grid md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Versión</p>
-                  <p className="font-medium">{status.system.version}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Uptime</p>
-                  <p className="font-medium">{status.system.uptimeFormatted}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Entorno</p>
-                  <p className="font-medium">{status.system.environment}</p>
-                </div>
-              </div>
-
-              {/* Almacenamiento */}
-              <div className="mt-4 pt-4 border-t">
-                <h3 className="font-medium mb-2">Almacenamiento</h3>
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Documentos</p>
-                    <p className="font-medium">{status.storage.documentsCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Tamaño Total</p>
-                    <p className="font-medium">{status.storage.totalSizeMB} MB</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Promedio por Documento</p>
-                    <p className="font-medium">{status.storage.averageSizeMB} MB</p>
-                  </div>
-                </div>
-              </div>
+          {status.system.degradedMode && (
+            <div style={{ marginBottom: '1rem', background: '#fff7ed', border: '1px solid #fed7aa', color: '#9a3412', padding: '0.7rem 1rem', borderRadius: 8, fontSize: '0.85rem' }}>
+              ⚠️ Sistema en modo degradado (solo lectura)
             </div>
           )}
 
-          {/* Métricas del Día */}
-          {metrics && (
-            <div className="bg-white p-6 rounded shadow border">
-              <h2 className="text-xl font-bold mb-4">Métricas del Día</h2>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded border border-blue-200">
-                  <p className="text-sm text-blue-600 mb-1">Casos Radicados Hoy</p>
-                  <p className="text-3xl font-bold text-blue-700">{metrics.operations.casesCreatedToday}</p>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded border border-green-200">
-                  <p className="text-sm text-green-600 mb-1">Casos Cerrados Hoy</p>
-                  <p className="text-3xl font-bold text-green-700">{metrics.operations.casesClosedToday}</p>
-                </div>
-
-                <div className="bg-cyan-50 p-4 rounded border border-cyan-200">
-                  <p className="text-sm text-cyan-700 mb-1">Notificaciones Enviadas</p>
-                  <p className="text-3xl font-bold text-cyan-800">{metrics.operations.notificationsSentToday}</p>
-                </div>
-
-                <div className="bg-orange-50 p-4 rounded border border-orange-200">
-                  <p className="text-sm text-orange-600 mb-1">Notificaciones Pendientes</p>
-                  <p className="text-3xl font-bold text-orange-700">{metrics.operations.pendingNotifications}</p>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+            <div style={{ padding: '1rem', borderRadius: 10, ...statusColor(status.database.status) }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 600 }}>Base de Datos</span>
+                <span style={{ fontSize: '1.4rem' }}>{statusIcon(status.database.status)}</span>
               </div>
-
-              {/* Estadísticas Generales */}
-              <div className="pt-4 border-t">
-                <h3 className="font-medium mb-3">Estadísticas Generales</h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Total Casos</p>
-                    <p className="font-medium text-lg">{metrics.database.totalCases}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Total Usuarios</p>
-                    <p className="font-medium text-lg">{metrics.database.totalUsers}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Total Notificaciones</p>
-                    <p className="font-medium text-lg">{metrics.database.totalNotifications}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Tiempo Promedio Respuesta</p>
-                    <p className="font-medium text-lg">{metrics.operations.averageResponseTime} días</p>
-                  </div>
-                </div>
+              <div style={{ fontSize: '0.82rem', lineHeight: 1.6 }}>
+                <p style={{ margin: 0 }}>Estado: {status.database.connected ? 'Conectada' : 'Desconectada'}</p>
+                <p style={{ margin: 0 }}>Latencia: {status.database.latency}ms</p>
               </div>
             </div>
-          )}
-        </>
+
+            <div style={{ padding: '1rem', borderRadius: 10, ...statusColor(status.queue.notifications.status) }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 600 }}>Cola de Notificaciones</span>
+                <span style={{ fontSize: '1.4rem' }}>{statusIcon(status.queue.notifications.status)}</span>
+              </div>
+              <div style={{ fontSize: '0.82rem', lineHeight: 1.6 }}>
+                <p style={{ margin: 0 }}>Pendientes: {status.queue.notifications.pending}</p>
+                <p style={{ margin: 0 }}>Fallidas: {status.queue.notifications.failed}</p>
+                {status.queue.notifications.lastProcessed && (
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem' }}>
+                    Último procesamiento: {new Date(status.queue.notifications.lastProcessed).toLocaleString('es-CO')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
+            <div><p style={muted}>Versión</p><p style={value}>{status.system.version}</p></div>
+            <div><p style={muted}>Uptime</p><p style={value}>{status.system.uptimeFormatted}</p></div>
+            <div><p style={muted}>Entorno</p><p style={value}>{status.system.environment}</p></div>
+          </div>
+
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#334155', margin: '0 0 0.75rem' }}>Almacenamiento</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
+              <div><p style={muted}>Documentos</p><p style={value}>{status.storage.documentsCount}</p></div>
+              <div><p style={muted}>Tamaño Total</p><p style={value}>{status.storage.totalSizeMB} MB</p></div>
+              <div><p style={muted}>Promedio por Documento</p><p style={value}>{status.storage.averageSizeMB} MB</p></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {metrics && (
+        <div style={card}>
+          <h2 style={sectionTitle}>Métricas del día</h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '1.5rem' }}>
+            {metricCards.map((m) => (
+              <div key={m.label} style={{ background: m.bg, border: `1px solid ${m.bd}`, borderRadius: 10, padding: '1rem' }}>
+                <p style={{ fontSize: '0.78rem', color: m.fg, margin: '0 0 0.35rem' }}>{m.label}</p>
+                <p style={{ fontSize: '1.9rem', fontWeight: 700, color: m.fg, margin: 0 }}>{m.val}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#334155', margin: '0 0 0.75rem' }}>Estadísticas generales</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
+              <div><p style={muted}>Total Casos</p><p style={{ ...value, fontSize: '1.1rem' }}>{metrics.database.totalCases}</p></div>
+              <div><p style={muted}>Total Usuarios</p><p style={{ ...value, fontSize: '1.1rem' }}>{metrics.database.totalUsers}</p></div>
+              <div><p style={muted}>Total Notificaciones</p><p style={{ ...value, fontSize: '1.1rem' }}>{metrics.database.totalNotifications}</p></div>
+              <div><p style={muted}>Tiempo Promedio Respuesta</p><p style={{ ...value, fontSize: '1.1rem' }}>{metrics.operations.averageResponseTime} días</p></div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
