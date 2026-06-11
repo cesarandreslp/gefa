@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 89. Despacho — asignación automática rotativa + número de turno diario (01‑999)
+**Estado:** COMPLETADO
+**Objetivo:** (A) Asignar el caso automáticamente al equipo siguiendo un ciclo rotativo de profesiones psicología→trabajo social→jurídico→(psicología): se toma el primer profesional LIBRE recorriendo el ciclo desde el siguiente al último asignado (balancea carga y resuelve los empates de "ocupado"). (B) Cada asignación recibe un **número de turno diario 01‑999** que enmascara el radicado (turno 01 ↔ rad40124) para que el usuario no memorice el radicado; el contador reinicia cada día (zona America/Bogotá), los radicados mantienen su consecutivo.
+**Hecho:**
+- `prisma/schema.prisma` — `Atencion.numeroTurno Int?` + `turnoFecha String?` (YYYY-MM-DD Bogotá) + índice `[tenantId, turnoFecha]`. **db push aplicado** + `tenant-schema.sql` regenerado.
+- `src/lib/despacho.ts` (NUEVO) — `PROFESION_CICLO` + `siguienteProfesion` (wrap), `bogotaDateString`, `seleccionarProfesionalAuto` (deriva LIBRE como el tablero: jornada + sin EN_CURSO + sin indisponibilidad autorizada; el punto de partida = la profesión SIGUIENTE a la del último turno de la sede → rotación), `siguienteNumeroTurno` (max+1 del día por sede vía `case.comisariaId`).
+- `cases/[caseId]/atenciones` POST — modo **auto** (`{auto:true}` o sin `profesionalUserId`): elige con el ciclo; o **manual**. Asigna `numeroTurno`/`turnoFecha` en una transacción (recomprueba OCUPADO; max+1 del turno). Devuelve `numeroTurno`+`filingNumber`. Auditado con `modoAuto`/`numeroTurno`.
+- `atenciones/tablero` y `atenciones/[id]` — exponen `numeroTurno`; el tablero lo muestra en OCUPADO y la pantalla del profesional en el título.
+- `admin/atenciones/page.tsx` — botón "Asignar automáticamente" (ciclo rotativo) + se mantiene la asignación manual; el mensaje muestra "Turno NN · {radicado} → profesional"; los OCUPADO muestran "Turno NN".
+**Interpretación (clave):** los seis enunciados del negocio se satisfacen con **round‑robin cíclico** (rotar el inicio cada asignación); con inicio fijo en psicología el wrap "jurídico ocupado → psicología" sería regla muerta, por eso se eligió la rotación (balancea carga).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+
 ### 88. Documentos del despacho — FASE 3: emisión PDF + DOCX con firma electrónica
 **Estado:** COMPLETADO
 **Objetivo:** "Emitir" el documento: armar el HTML final con encabezado (Alcaldía + sede) y bloques de firma, generar **PDF** (Chromium headless) y **DOCX** (html-to-docx), estampar la(s) firma(s) electrónica(s) (imagen + SHA‑256 + sello), subir a blob y materializar un `Document` oficial del expediente con su traza (`DocumentSignature`).

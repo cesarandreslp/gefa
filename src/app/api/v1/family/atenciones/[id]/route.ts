@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       select: {
         id: true, caseId: true, estado: true, profesionalUserId: true, profesion: true,
         instrumentoId: true, assessedPersonId: true, borrador: true, lastAutosaveAt: true,
-        startedAt: true, endedAt: true, assessmentId: true,
+        startedAt: true, endedAt: true, assessmentId: true, numeroTurno: true,
       },
     });
     if (!atencion) return NextResponse.json({ error: 'Turno no encontrado' }, { status: 404 });

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           db.atencion.findMany({
             where: { estado: 'EN_CURSO', profesionalUserId: { in: ids } },
             select: {
-              id: true, profesionalUserId: true, startedAt: true,
+              id: true, profesionalUserId: true, startedAt: true, numeroTurno: true,
               case: { select: { id: true, filingNumber: true } },
             },
           }),
@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
           desde: turno?.startedAt ?? null,
           caso: turno?.case ?? null,
           atencionId: turno?.id ?? null,
+          numeroTurno: turno?.numeroTurno ?? null,
           noDisponibleMotivo: noDisp?.motivo ?? null,
           noDisponibleHasta: noDisp?.hasta ?? null,
         };

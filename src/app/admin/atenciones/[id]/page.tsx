@@ -131,7 +131,9 @@ export default function AtenderTurnoPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <ClipboardCheck size={22} color="var(--color-primary, #2563eb)" />
               <div>
-                <h1 style={{ fontSize: '1.2rem', margin: 0 }}>Atención del turno</h1>
+                <h1 style={{ fontSize: '1.2rem', margin: 0 }}>
+                  Atención del turno{turno?.numeroTurno ? <> · <span style={{ color: 'var(--color-primary, #2563eb)' }}>Turno {String(turno.numeroTurno).padStart(2, '0')}</span></> : ''}
+                </h1>
                 <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
                   {caseData ? <>Caso <b style={{ fontFamily: 'monospace' }}>{caseData.filingNumber}</b> · {caseData.subject}</> : 'Caso del turno'}
                 </div>

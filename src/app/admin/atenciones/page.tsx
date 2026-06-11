@@ -21,6 +21,7 @@ interface Prof {
   desde: string | null;
   caso: { id: string; filingNumber: string } | null;
   atencionId: string | null;
+  numeroTurno?: number | null;
   noDisponibleMotivo?: string | null;
   noDisponibleHasta?: string | null;
 }
@@ -93,22 +94,31 @@ export default function TableroAtencionesPage() {
     } catch { setMsg({ type: 'err', text: 'Error al buscar el caso.' }); } finally { setBuscando(false); }
   };
 
-  const asignar = async (prof: Prof) => {
+  const PROFESION_LBL = (p?: string | null) => PROFESION_LABEL[p ?? ''] ?? p ?? '';
+
+  // Asignación: con `body` { auto:true } el sistema elige por el ciclo rotativo;
+  // con { profesionalUserId } se asigna manualmente al profesional elegido.
+  const asignarCore = async (body: Record<string, unknown>, etiqueta?: string) => {
     if (!caso) return;
     setAsignando(true);
     setMsg(null);
     try {
       const res = await fetch(`/api/v1/family/cases/${caso.id}/atenciones`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profesionalUserId: prof.id }),
+        body: JSON.stringify(body),
       });
       const d = await res.json();
       if (!res.ok) { setMsg({ type: 'err', text: d.error || 'No se pudo asignar el turno.' }); return; }
-      setMsg({ type: 'ok', text: `Caso ${caso.filingNumber} asignado a ${prof.fullName}.` });
+      const turno = d.numeroTurno ? `Turno ${String(d.numeroTurno).padStart(2, '0')} · ` : '';
+      const quien = etiqueta ?? `${d.profesional?.fullName ?? ''} (${PROFESION_LBL(d.profesion)})`;
+      setMsg({ type: 'ok', text: `${turno}${caso.filingNumber} asignado automáticamente a ${quien}.` });
       setCaso(null); setRadicado('');
       load();
     } catch { setMsg({ type: 'err', text: 'Error de conexión.' }); } finally { setAsignando(false); }
   };
+
+  const asignarAuto = () => asignarCore({ auto: true });
+  const asignar = (prof: Prof) => asignarCore({ profesionalUserId: prof.id }, `${prof.fullName} (${PROFESION_LBL(prof.profesion)})`);
 
   const libres = profs.filter((p) => p.estado === 'LIBRE');
 
@@ -139,7 +149,16 @@ export default function TableroAtencionesPage() {
         {caso && (
           <div style={{ marginTop: '0.9rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.85rem 1rem' }}>
             <div style={{ fontSize: '0.88rem', color: '#0f172a' }}><b style={{ fontFamily: 'monospace' }}>{caso.filingNumber}</b> · {caso.subject}</div>
-            <div style={{ marginTop: '0.6rem', fontSize: '0.82rem', color: '#64748b' }}>Asignar a un profesional libre:</div>
+
+            <div style={{ marginTop: '0.7rem' }}>
+              <button onClick={asignarAuto} disabled={asignando}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.55rem 1.1rem', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer' }}>
+                <UserCheck size={16} /> {asignando ? 'Asignando…' : 'Asignar automáticamente'}
+              </button>
+              <span style={{ marginLeft: 10, fontSize: '0.78rem', color: '#64748b' }}>Sigue el ciclo rotativo (psicología → trabajo social → jurídico) y le da un número de turno.</span>
+            </div>
+
+            <div style={{ marginTop: '0.8rem', fontSize: '0.82rem', color: '#64748b' }}>O elija manualmente un profesional libre:</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: '0.5rem' }}>
               {libres.length === 0 ? (
                 <span style={{ fontSize: '0.85rem', color: '#b45309' }}>No hay profesionales libres en este momento.</span>
@@ -178,7 +197,7 @@ export default function TableroAtencionesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {ocupado && p.caso && (
                       <span style={{ fontSize: '0.78rem', color: '#9a3412' }}>
-                        {p.caso.filingNumber}{p.desde ? ` · desde ${new Date(p.desde).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                        {p.numeroTurno ? <b>Turno {String(p.numeroTurno).padStart(2, '0')} · </b> : ''}{p.caso.filingNumber}{p.desde ? ` · desde ${new Date(p.desde).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}` : ''}
                       </span>
                     )}
                     {p.estado === 'NO_DISPONIBLE' && p.noDisponibleMotivo && (

@@ -1657,6 +1657,12 @@ model Atencion {
   // Quién asignó el turno (recepción) — referencia suelta para auditoría
   asignadoPorUserId String?
 
+  // Número de turno diario (1‑999) que enmascara el radicado: el usuario recuerda
+  // "turno 07" en vez del radicado completo. Reinicia cada día por sede; el radicado
+  // mantiene su consecutivo. `turnoFecha` es la fecha local (America/Bogotá) YYYY-MM-DD.
+  numeroTurno Int?
+  turnoFecha  String?
+
   estado    AtencionEstado @default(EN_CURSO)
   startedAt DateTime       @default(now())
   endedAt   DateTime?
@@ -1679,6 +1685,7 @@ model Atencion {
   @@index([caseId])
   @@index([profesionalUserId])
   @@index([estado])
+  @@index([tenantId, turnoFecha])
   @@map("atenciones")
 }
 
