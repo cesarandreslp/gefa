@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 80. RF‑07 — Ruta urgente: transición directa RADICADO → MEDIDA_ADOPTADA con triage
+**Estado:** COMPLETADO
+**Objetivo:** Cuando el caso tiene `riesgoInminente` (RF‑06), permitir que el comisario adopte una medida de inmediato saltándose la valoración: habilitar la transición `RADICADO → MEDIDA_ADOPTADA` solo cuando hay triage. La valoración se hace después.
+**Hecho:**
+- `domain/rules/familyStateMachine.ts` — nuevo `FAMILY_URGENT_TRANSITIONS = { RADICADO: ['MEDIDA_ADOPTADA'] }` + `FamilyTransitionContext { riesgoInminente }`. `validateFamilyTransition` y `availableFamilyTransitions` reciben ctx opcional y suman las transiciones urgentes solo si `ctx.riesgoInminente`. Backward‑compatible (ctx opcional).
+- `api/v1/family/cases/[caseId]/transition` GET y POST — leen `riesgoInminente` del caso y lo pasan como contexto. Así un RADICADO urgente muestra "Medida Adoptada" en el selector y la valida; los no urgentes siguen igual. `MEDIDA_ADOPTADA` exige comentario (catálogo) → el comisario documenta la medida.
+- Sin cambios de schema (reusa la columna `riesgoInminente` de RF‑06) → **no requiere db push**; despliegue directo seguro.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Nota UI (polish opcional, no hecho):** el selector muestra "Medida Adoptada" sin rótulo de "ruta urgente"; el badge URGENTE del caso ya señala el contexto.
+**Pendiente de la tanda:** RF‑12/13 (Atención+autoguardado+tablero), por sub‑pasos. Luego: solicitud de PLANTILLAS JURÍDICAS (declaraciones, actas, citaciones, oficios, autos, resoluciones, medidas, constancias, informes, seguimientos, recursos) con encabezado tenant+comisaría y FIRMAS (digitalizada + firma digital criptográfica) — la firma se pide al crear el usuario con rol y aplica a documentos de jurídico, psicología, trabajo social y comisario.
+
 ### 79. RF‑06 — Triage de riesgo inminente en recepción + badge URGENTE
 **Estado:** COMPLETADO
 **Objetivo:** Que quien recepciona marque "violencia física evidente / riesgo inminente" al radicar, para priorizar y (RF‑07, aparte) habilitar la ruta urgente. Aditivo: campos en `Case` + checkbox en radicación + badge URGENTE en listado/expediente.

@@ -26,6 +26,20 @@ export const FAMILY_TRANSITIONS: Record<string, string[]> = {
   CERRADO: [],
 };
 
+/**
+ * Transiciones URGENTES (RF‑07): solo disponibles cuando el caso tiene triage de
+ * riesgo inminente (RF‑06). Permiten que el comisario adopte una medida de
+ * inmediato saltándose la valoración; ésta se realiza después.
+ */
+export const FAMILY_URGENT_TRANSITIONS: Record<string, string[]> = {
+  RADICADO: ['MEDIDA_ADOPTADA'],
+};
+
+/** Contexto del caso que habilita transiciones condicionales. */
+export interface FamilyTransitionContext {
+  riesgoInminente?: boolean;
+}
+
 /** Estados finales del workflow de familia. */
 export const FAMILY_FINAL_STATES = ['REMITIDO', 'CERRADO'];
 
@@ -55,7 +69,8 @@ export function validateFamilyTransition(
   fromCode: string,
   toCode: string,
   roleCode: string,
-  comment?: string
+  comment?: string,
+  ctx?: FamilyTransitionContext
 ): FamilyTransitionResult {
   if (!STATE_BY_CODE[fromCode]) {
     return { valid: false, error: `Estado actual desconocido: ${fromCode}` };
@@ -82,9 +97,10 @@ export function validateFamilyTransition(
       };
     }
   } else {
-    // Transición normal según la matriz
+    // Transición normal según la matriz; más las urgentes si el caso tiene triage.
     const allowed = FAMILY_TRANSITIONS[fromCode] || [];
-    if (!allowed.includes(toCode)) {
+    const urgentAllowed = ctx?.riesgoInminente ? (FAMILY_URGENT_TRANSITIONS[fromCode] || []) : [];
+    if (!allowed.includes(toCode) && !urgentAllowed.includes(toCode)) {
       return { valid: false, error: `No se permite pasar de ${fromCode} a ${toCode}.` };
     }
   }
@@ -103,13 +119,19 @@ export function validateFamilyTransition(
  */
 export function availableFamilyTransitions(
   fromCode: string,
-  roleCode: string
+  roleCode: string,
+  ctx?: FamilyTransitionContext
 ): Array<{ code: string; name: string; requiresComment: boolean }> {
   let targets: string[];
   if (FAMILY_FINAL_STATES.includes(fromCode)) {
     targets = FAMILY_REOPEN_ROLES.includes(roleCode) ? FAMILY_REOPEN_TARGETS : [];
   } else {
-    targets = FAMILY_TRANSITIONS[fromCode] || [];
+    targets = [...(FAMILY_TRANSITIONS[fromCode] || [])];
+    if (ctx?.riesgoInminente) {
+      for (const t of FAMILY_URGENT_TRANSITIONS[fromCode] || []) {
+        if (!targets.includes(t)) targets.push(t);
+      }
+    }
   }
   return targets
     .filter((code) => STATE_BY_CODE[code])

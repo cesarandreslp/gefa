@@ -18,14 +18,14 @@ export async function GET(request: NextRequest, { params }: { params: { caseId: 
     const db = auth.db;
     const caseRow = await db.case.findFirst({
       where: { id: params.caseId, tenantId: auth.user.tenantId },
-      select: { state: { select: { code: true, name: true } } },
+      select: { riesgoInminente: true, state: { select: { code: true, name: true } } },
     });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
     }
 
     const roleCode = getBaseRoleCode(auth.user.roleCode);
-    const available = availableFamilyTransitions(caseRow.state.code, roleCode);
+    const available = availableFamilyTransitions(caseRow.state.code, roleCode, { riesgoInminente: caseRow.riesgoInminente });
 
     return NextResponse.json({ currentState: caseRow.state, available });
   } catch (error) {
@@ -53,14 +53,14 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
 
     const caseRow = await db.case.findFirst({
       where: { id: params.caseId, tenantId: auth.user.tenantId },
-      select: { id: true, stateId: true, state: { select: { code: true, name: true } } },
+      select: { id: true, stateId: true, riesgoInminente: true, state: { select: { code: true, name: true } } },
     });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
     }
 
     const roleCode = getBaseRoleCode(auth.user.roleCode);
-    const validation = validateFamilyTransition(caseRow.state.code, toStateCode, roleCode, comment);
+    const validation = validateFamilyTransition(caseRow.state.code, toStateCode, roleCode, comment, { riesgoInminente: caseRow.riesgoInminente });
     if (!validation.valid) {
       return NextResponse.json(
         { error: validation.error, requiresComment: validation.requiresComment },
