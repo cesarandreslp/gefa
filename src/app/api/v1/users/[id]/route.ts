@@ -28,8 +28,14 @@ export async function PUT(
       roleId,
       comisariaId,
       department,
-      position
+      position,
+      profesion
     } = body;
+
+    const PROFESIONES = ['PSICOLOGIA', 'TRABAJO_SOCIAL', 'JURIDICA'];
+    if (profesion !== undefined && profesion !== '' && profesion !== null && !PROFESIONES.includes(profesion)) {
+      return NextResponse.json({ error: 'Profesión inválida' }, { status: 400 });
+    }
 
     // Verificar si el usuario existe Y pertenece al mismo tenant
     const existingUser = await db.user.findFirst({
@@ -87,6 +93,9 @@ export async function PUT(
     }
     if (position !== undefined) {
       updateData.position = position || null;
+    }
+    if (profesion !== undefined) {
+      updateData.profesion = (profesion === '' || profesion === null) ? null : (profesion as never);
     }
 
     // Si hay contraseña nueva, hashearla

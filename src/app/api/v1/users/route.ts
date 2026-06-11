@@ -76,8 +76,16 @@ export async function POST(request: NextRequest) {
       roleId,
       comisariaId,
       department,
-      position
+      position,
+      profesion
     } = body;
+
+    // Profesión del equipo interdisciplinario (psicología / trabajo social /
+    // jurídico). Restringe qué instrumentos puede aplicar. Vacío = sin profesión.
+    const PROFESIONES = ['PSICOLOGIA', 'TRABAJO_SOCIAL', 'JURIDICA'];
+    if (profesion && !PROFESIONES.includes(profesion)) {
+      return NextResponse.json({ error: 'Profesión inválida' }, { status: 400 });
+    }
 
     // Validar email único DENTRO del tenant
     const existingEmail = await db.user.findFirst({
@@ -144,6 +152,7 @@ export async function POST(request: NextRequest) {
     // Agregar campos opcionales solo si tienen valor
     if (department) userData.department = department;
     if (position) userData.position = position;
+    if (profesion) userData.profesion = profesion as never;
 
     // Asignar a una comisaría (sede), validando que pertenezca al tenant
     if (comisariaId) {

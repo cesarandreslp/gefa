@@ -27,9 +27,17 @@ interface User {
   comisaria?: Comisaria | null;
   department?: string;
   position?: string;
+  profesion?: string | null;
   isActive: boolean;
   createdAt: string;
 }
+
+const PROFESION_OPCIONES: { value: string; label: string }[] = [
+  { value: '', label: 'Sin profesión' },
+  { value: 'PSICOLOGIA', label: 'Psicología' },
+  { value: 'TRABAJO_SOCIAL', label: 'Trabajo Social' },
+  { value: 'JURIDICA', label: 'Jurídico' },
+];
 
 export default function UsersPage() {
   const router = useRouter();
@@ -50,7 +58,8 @@ export default function UsersPage() {
     roleId: '',
     comisariaId: '',
     department: '',
-    position: ''
+    position: '',
+    profesion: ''
   });
 
   useEffect(() => {
@@ -125,7 +134,8 @@ export default function UsersPage() {
         roleId: user.role?.id || '',
         comisariaId: user.comisaria?.id || '',
         department: user.department || '',
-        position: user.position || ''
+        position: user.position || '',
+        profesion: user.profesion || ''
       });
     } else {
       setEditingUser(null);
@@ -138,7 +148,8 @@ export default function UsersPage() {
         roleId: '',
         comisariaId: '',
         department: '',
-        position: ''
+        position: '',
+        profesion: ''
       });
     }
     setIsModalOpen(true);
@@ -376,6 +387,11 @@ export default function UsersPage() {
                         <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>
                           Sin rol asignado
                         </span>
+                      )}
+                      {user.profesion && (
+                        <div style={{ fontSize: '0.72rem', color: '#0e7490', marginTop: '0.2rem' }}>
+                          {PROFESION_OPCIONES.find(p => p.value === user.profesion)?.label ?? user.profesion}
+                        </div>
                       )}
                     </td>
                     <td style={{ padding: '1rem' }}>
@@ -695,6 +711,30 @@ export default function UsersPage() {
                         <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                      Profesión (equipo interdisciplinario)
+                    </label>
+                    <select
+                      value={formData.profesion}
+                      onChange={(e) => setFormData({ ...formData, profesion: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      {PROFESION_OPCIONES.map(p => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: '0.3rem' }}>
+                      Determina qué instrumentos de valoración puede aplicar.
+                    </p>
                   </div>
 
                   <div>

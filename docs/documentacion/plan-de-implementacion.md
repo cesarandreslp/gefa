@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 78. RF‑04 — Habilitar la profesión Jurídico en el equipo interdisciplinario
+**Estado:** COMPLETADO
+**Objetivo:** El paso 2 del flujo necesita al jurídico como tercer profesional; hoy `User.profesion` solo admite PSICOLOGIA/TRABAJO_SOCIAL/AMBOS y no hay UI para asignarla. Cambio aditivo (enum + asignación desde la gestión de equipo).
+**Auditoría de migraciones (previa):** NO hay `prisma/migrations`; se usa `prisma db push` + `tenant-schema.sql` generado desde vacío (regenerado por `postinstall`). → tenants nuevos reciben el schema completo al provisionarse; el demo (BD principal) se actualiza con un `db push`. Agregar un valor de enum es la migración más segura (aditiva, sin pérdida).
+**Hecho:**
+- `prisma/schema.prisma` — `enum ProfesionInstrumento` suma `JURIDICA` (queda PSICOLOGIA/TRABAJO_SOCIAL/JURIDICA/AMBOS). `prisma generate` OK.
+- `api/v1/users` POST y `api/v1/users/[id]` PUT — aceptan y validan `profesion` (PSICOLOGIA/TRABAJO_SOCIAL/JURIDICA o vacío=null); cast `as never` por el tipo del enum.
+- `admin/usuarios/page.tsx` — selector "Profesión (equipo interdisciplinario)" en el modal de crear/editar + rótulo en la lista; `PROFESION_OPCIONES`. El GET de usuarios ya devolvía el campo (findMany sin select).
+- Efecto en RBAC de instrumentos (ya existente): un usuario con `profesion=JURIDICA` ve/aplica instrumentos `JURIDICA`+`AMBOS`; sin instrumentos JURIDICA aún, participa con los de `AMBOS` (caracterización, batería, FIR‑R, DA‑R, C2, entrevista).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**ACCIÓN MANUAL REQUERIDA (BD demo):** aplicar el valor de enum a la BD principal antes de asignar "Jurídico": `ALTER TYPE "ProfesionInstrumento" ADD VALUE IF NOT EXISTS 'JURIDICA';` (o `prisma db push`). Los tenants nuevos lo reciben automáticamente vía `tenant-schema.sql` (postinstall). El despliegue es seguro sin esto: solo falla si se intenta guardar específicamente JURIDICA antes de aplicarlo.
+
 ### 77. Herencia de datos (RF‑01/02): prellenado de lectura de instrumentos
 **Estado:** COMPLETADO
 **Objetivo:** Primer corte de los requisitos del flujo (ver memoria flujo-paso2-despacho-disponibilidad). Aditivo y sin migración: un mapa de campos canónicos (campoCode → dato en Person/CaseParty/Case) + un resolver + endpoint que devuelve `respuestasIniciales` para que cada instrumento se abra prellenado. Elimina el re-tecleo sin tocar BD ni RBAC.

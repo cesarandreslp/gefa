@@ -1734,6 +1734,7 @@ model InstrumentoCampo {
 enum ProfesionInstrumento {
   PSICOLOGIA
   TRABAJO_SOCIAL
+  JURIDICA
   AMBOS
 }
 
