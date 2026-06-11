@@ -16,18 +16,26 @@ export default function AgendaPage() {
   const [hearings, setHearings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mine, setMine] = useState(false);
+  const [comisarias, setComisarias] = useState<any[]>([]);
+  const [comisariaId, setComisariaId] = useState('');
+
+  useEffect(() => {
+    fetch('/api/v1/comisarias').then((r) => (r.ok ? r.json() : null)).then((d) => setComisarias(d?.comisarias ?? [])).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/family/agenda?mine=${mine}`);
+      const params = new URLSearchParams({ mine: String(mine) });
+      if (comisariaId) params.set('comisariaId', comisariaId);
+      const res = await fetch(`/api/v1/family/agenda?${params.toString()}`);
       if (res.ok) setHearings((await res.json()).data ?? []);
     } catch (e) {
       console.error('Error cargando agenda:', e);
     } finally {
       setLoading(false);
     }
-  }, [mine]);
+  }, [mine, comisariaId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -48,11 +56,24 @@ export default function AgendaPage() {
         <h1 style={{ fontSize: '1.6rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Calendar size={22} /> Agenda de audiencias
         </h1>
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-          <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> Solo las que presido
-        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+          <select
+            value={comisariaId}
+            onChange={(e) => setComisariaId(e.target.value)}
+            aria-label="Filtrar por comisaría"
+            style={{ padding: '0.45rem 0.6rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.88rem', background: 'white', color: '#374151' }}
+          >
+            <option value="">Todas las comisarías</option>
+            {comisarias.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> Solo las que presido
+          </label>
+        </div>
       </div>
-      <p style={{ color: '#6b7280', marginTop: '-0.5rem', marginBottom: '1.25rem', fontSize: '0.88rem' }}>Próximos 30 días</p>
+      <p style={{ color: '#6b7280', marginTop: '-0.5rem', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+        Próximos 30 días · {comisariaId ? (comisarias.find((c) => c.id === comisariaId)?.name ?? 'comisaría') : 'todas las comisarías'}
+      </p>
 
       {loading ? <p style={{ color: '#6b7280' }}>Cargando…</p> : hearings.length === 0 ? (
         <div style={{ ...card, textAlign: 'center', color: '#6b7280' }}>
@@ -71,7 +92,13 @@ export default function AgendaPage() {
                       {new Date(h.scheduledAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div><b>{HEARING_TYPE_LABELS[h.hearingType] ?? h.hearingType}</b> <span style={{ color: '#9ca3af', fontSize: '0.82rem', fontFamily: 'monospace' }}>{h.case.filingNumber}</span></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <b>{HEARING_TYPE_LABELS[h.hearingType] ?? h.hearingType}</b>
+                        <span style={{ color: '#9ca3af', fontSize: '0.82rem', fontFamily: 'monospace' }}>{h.case.filingNumber}</span>
+                        {h.case.comisaria && (
+                          <span title={h.case.comisaria.name} style={{ background: '#eef2ff', color: '#3730a3', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.72rem', fontWeight: 700 }}>{h.case.comisaria.code}</span>
+                        )}
+                      </div>
                       <div style={{ color: '#6b7280', fontSize: '0.84rem' }}>{h.case.subject}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>

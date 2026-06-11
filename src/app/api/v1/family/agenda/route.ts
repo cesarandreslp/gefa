@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     const fromParam = searchParams.get('from');
     const toParam = searchParams.get('to');
     const mine = searchParams.get('mine') === 'true';
+    const comisariaId = searchParams.get('comisariaId')?.trim();
 
     const from = fromParam ? new Date(fromParam) : new Date();
     const to = toParam ? new Date(toParam) : new Date(from.getTime() + 30 * 24 * 3600 * 1000);
@@ -28,10 +29,16 @@ export async function GET(request: NextRequest) {
         tenantId: auth.user.tenantId,
         scheduledAt: { gte: from, lte: to },
         ...(mine ? { presidedByUserId: auth.user.userId } : {}),
+        ...(comisariaId ? { case: { comisariaId } } : {}),
       },
       include: {
         presidedBy: { select: { id: true, fullName: true } },
-        case: { select: { id: true, filingNumber: true, subject: true } },
+        case: {
+          select: {
+            id: true, filingNumber: true, subject: true,
+            comisaria: { select: { id: true, code: true, name: true } },
+          },
+        },
       },
       orderBy: { scheduledAt: 'asc' },
     });

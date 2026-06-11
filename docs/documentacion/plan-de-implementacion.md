@@ -30,6 +30,7 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 **Verificación fase 1:** `tsc --noEmit` exit=0; `next lint` sin warnings.
 **Fase 2 — HECHA:** `admin/page.tsx` (Tablero) oculta el botón "Radicar caso" cuando el rol es ADMIN (fetch a `/auth/me`). El menú ya lo ocultaba (fase 1).
 **Fase 3 — HECHA:** `admin/family/page.tsx` (listado) gana barra de filtros: comisaría (carga `/api/v1/comisarias`), tipo de caso (modalidad, `CASE_MODALITY_LABELS`), estado (`FAMILY_CASE_STATES`), y rango de fechas Desde/Hasta; botón "Limpiar". Oculta "Radicar caso" para ADMIN. La columna "Modalidad" se renombra a "Tipo". API `GET /family/cases` gana params `comisariaId`, `from`, `to` (filedAt; `to` cubre todo el día) además de los ya existentes `modality`/`stateCode`/`search`.
+**Fase 4 — HECHA:** agenda de audiencias total y por comisaría. API `GET /family/agenda` gana param `comisariaId` (filtra por `case.comisariaId`) e incluye `case.comisaria` en la respuesta. `admin/family/agenda/page.tsx` gana selector "Todas las comisarías / <comisaría>", muestra la sede en el subtítulo y un chip con el código de comisaría en cada audiencia (útil en la vista total).
 **Estado:** COMPLETADO
 **Objetivo:** El usuario pide que el modal de login mantenga la consistencia visual del menú mejorado. El modal activo ("Nuevo Modal Login", el que abre "Iniciar Sesión") era un card blanco plano sin lenguaje institucional.
 **Hecho (`src/app/components/LoginModal.tsx`):**
