@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HearingType } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
 import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
+import { notifyHearingScheduled } from '@/services/FamilyNotifications';
+import { HEARING_TYPE_LABELS } from '@/domain/catalogs/familyLabels';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +78,9 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
     });
 
     await auditFamily(db, request, auth.user, 'FAMILY_HEARING_SCHEDULED', 'Hearing', hearing.id, { caseId: params.caseId, metadata: { hearingType, scheduledAt } });
+
+    // Citación al ciudadano (no invasivo).
+    await notifyHearingScheduled(db, auth.user.tenantId, params.caseId, HEARING_TYPE_LABELS[hearingType] ?? hearingType, hearing.scheduledAt, hearing.location);
 
     return NextResponse.json(hearing, { status: 201 });
   } catch (error) {

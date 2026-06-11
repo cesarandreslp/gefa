@@ -5,6 +5,7 @@ import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, isValidEnum, auditFamily } from
 import { caseService } from '@/services/CaseService';
 import { LegalTermsCalculator } from '@/domain/rules/LegalTermsCalculator';
 import { CASE_TYPE_MODALITY } from '@/domain/catalogs/familyCaseTypes';
+import { notifyCaseFiled } from '@/services/FamilyNotifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -401,6 +402,9 @@ export async function POST(request: NextRequest) {
     });
 
     await auditFamily(db, request, auth.user, 'FAMILY_CASE_CREATED', 'Case', created.id, { caseId: created.id, metadata: { filingNumber: created.filingNumber, caseModality, parties: parties.length } });
+
+    // Confirmación de radicación al ciudadano (no invasivo).
+    await notifyCaseFiled(db, tenantId, created.id, caseType.name, filedAt, created.dueDate ?? dueDate);
 
     return NextResponse.json(
       {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProtectionMeasureType } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
 import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, findCaseInTenant, isValidEnum, auditFamily } from '@/lib/familyApi';
+import { notifyMeasureIssued } from '@/services/FamilyNotifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,9 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
     });
 
     await auditFamily(db, request, auth.user, 'FAMILY_MEASURE_ISSUED', 'ProtectionMeasure', measure.id, { caseId: params.caseId, metadata: { measureType } });
+
+    // Aviso de la medida de protección al ciudadano (no invasivo).
+    await notifyMeasureIssued(db, auth.user.tenantId, params.caseId, description);
 
     return NextResponse.json(measure, { status: 201 });
   } catch (error) {

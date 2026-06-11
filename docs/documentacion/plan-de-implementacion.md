@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 71. Adaptar el módulo de notificaciones al dominio de comisaría (acoplado a la norma)
+**Estado:** COMPLETADO (1ª iteración: eventos del ciudadano)
+**Objetivo:** El módulo de notificaciones es infra heredada de Ventanilla (tipos de evento y destinatario `firstName/lastName` del modelo de petición; no encolado por los flujos de familia). El usuario pide: adaptarlo a comisaría, **acoplado a la norma**, y que se dispare en TODOS los lugares donde se necesite (no solo registrar auditoría). Eventos relevantes de comisaría: radicación, cambio de estado del caso, medida de protección adoptada, citación/recordatorio de audiencia, vencimiento de término, PARD. Auditar la infra (modelo `Notification`, enum `NotificationType`, `NotificationService`/`EmailService`, APIs history/process/test) y construir el enganche en los flujos de familia + actualizar la pantalla admin.
+**Auditoría:** la infra existe pero estaba **desconectada** de familia: `NotificationService` (crea+procesa+envía vía `EmailService` con SMTP del tenant), `TemplateService` (plantillas por defecto, no truena si falta), `NotificationHooks` (hooks listos pero NO llamados por familia). El enum `NotificationType` ya trae `CASE_FILED/CASE_STATE_CHANGED/CASE_OVERDUE/GENERIC` → reutilizables **sin migrar el enum**.
+**Hecho (1ª iteración — eventos al ciudadano, acoplados a la norma):**
+- `src/services/FamilyNotifications.ts` (NUEVO) — helper no invasivo que **crea Y envía de inmediato** (no depende del cron) al ciudadano radicante: `notifyCaseFiled` (radicación + término legal), `notifyCaseStateChanged` (cambio de estado), `notifyHearingScheduled` (citación, Ley 575/2000 + 1098/2006), `notifyMeasureIssued` (medida, Ley 294/1996 + 575/2000 + 1257/2008). Resuelve el email del ciudadano desde el caso; si no hay email, no hace nada. Errores tragados.
+- Enganches en los flujos: `family/cases/[caseId]/transition` (cambio de estado), `family/cases` POST (radicación), `family/cases/[caseId]/hearings` POST (citación), `family/cases/[caseId]/measures` POST (medida). Todos tras su `auditFamily`.
+- `src/services/TemplateService.ts` — copy de las plantillas del ciudadano de "solicitud" → "caso", "fecha límite de respuesta" → "término legal", y pie de página con referencias normativas (Ley 2126/2021, 1098/2006, 1437/2011, 1257/2008).
+- `src/app/admin/notifications/page.tsx` — título "Notificaciones de la Comisaría" + intro que explica qué eventos la disparan y que requiere SMTP configurado.
+**Deuda conocida / próxima iteración (anotada):** (a) `NotificationService` usa el prisma GLOBAL → en demo (BD única) OK, pero para tenants con BD dedicada (Fase 2) hay que hacer el almacenamiento de notificaciones tenant-aware; (b) **vencimientos**: aún no se encola desde el cron `family-vencimientos` (hook `onCaseOverdue` existe, falta llamarlo); (c) recordatorio de audiencia (no solo citación inicial); (d) el envío real exige **SMTP del tenant** (en el demo BUGA/TULUA/PALMIRA está vacío) — sin SMTP, las notificaciones quedan en `PENDING`/`FAILED` pero se registran y se ven en la pantalla.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+
 ### 70. Rediseño del panel admin del tenant (sidebar institucional + RBAC/contenido)
 **Estado:** EN CURSO (por fases)
 **Objetivo:** El usuario detalla cómo debe comportarse y verse el panel del ADMIN del tenant. Captura completa del spec:

@@ -26,7 +26,7 @@ interface EmailTemplate {
  */
 export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = {
   CASE_FILED: {
-    subject: 'Radicado de su solicitud - {{filingNumber}}',
+    subject: 'Radicación de su caso ante la Comisaría de Familia - {{filingNumber}}',
     html: `
       <!DOCTYPE html>
       <html>
@@ -48,18 +48,18 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
           </div>
           <div class="content">
             <p>Estimado(a) {{citizenName}},</p>
-            <p>Su solicitud ha sido radicada exitosamente con el siguiente número:</p>
+            <p>Su caso ha sido radicado oficialmente ante la Comisaría de Familia con el siguiente número:</p>
             <div class="radicado">
               <h2 style="margin: 0; color: #0066cc;">{{filingNumber}}</h2>
               <p><strong>Tipo:</strong> {{caseType}}</p>
               <p><strong>Fecha de radicación:</strong> {{filedAt}}</p>
-              <p><strong>Fecha límite de respuesta:</strong> {{dueDate}}</p>
+              <p><strong>Término legal:</strong> {{dueDate}}</p>
             </div>
-            <p>Puede consultar el estado de su solicitud en cualquier momento a través de nuestro portal web.</p>
+            <p>Puede consultar el estado de su caso en cualquier momento a través del portal de la Comisaría en línea.</p>
             <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
-            <p>Este es un mensaje automático del sistema GEFA — Gestión Familiar</p>
+            <p>Mensaje automático del sistema GEFA — Gestión Familiar. Actuación conforme a la Ley 2126 de 2021, la Ley 1098 de 2006 y la Ley 1257 de 2008.</p>
           </div>
         </div>
       </body>
@@ -114,7 +114,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
   },
 
   CASE_STATE_CHANGED: {
-    subject: 'Actualización de su solicitud - {{filingNumber}}',
+    subject: 'Actualización del estado de su caso - {{filingNumber}}',
     html: `
       <!DOCTYPE html>
       <html>
@@ -136,19 +136,19 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<NotificationType, EmailTemplate> = 
           </div>
           <div class="content">
             <p>Estimado(a) {{citizenName}},</p>
-            <p>Su solicitud <strong>{{filingNumber}}</strong> ha cambiado de estado:</p>
+            <p>Su caso <strong>{{filingNumber}}</strong> ha cambiado de estado:</p>
             <div class="state-change">
               <p><strong>Estado anterior:</strong> {{previousState}}</p>
               <p><strong>Nuevo estado:</strong> {{newState}}</p>
               {{#if stateComment}}
-              <p><strong>Comentario:</strong> {{stateComment}}</p>
+              <p><strong>Observación:</strong> {{stateComment}}</p>
               {{/if}}
             </div>
-            <p>Puede consultar más detalles en nuestro portal web.</p>
+            <p>Puede consultar más detalles en el portal de la Comisaría en línea.</p>
             <p>Cordialmente,<br><strong>Comisaría de Familia</strong></p>
           </div>
           <div class="footer">
-            <p>GEFA — Gestión Familiar</p>
+            <p>Mensaje automático del sistema GEFA — Gestión Familiar. Se le mantiene informado(a) en el marco del debido proceso (Ley 1437 de 2011, Ley 2126 de 2021).</p>
           </div>
         </div>
       </body>

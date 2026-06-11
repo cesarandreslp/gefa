@@ -167,7 +167,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Sistema de Notificaciones 📧</h1>
+      <h1 className="text-3xl font-bold mb-2">Notificaciones de la Comisaría</h1>
+      <p className="text-gray-600 mb-6 text-sm">
+        Centro de avisos automáticos al ciudadano. El sistema notifica al radicante cuando se
+        <strong> radica el caso</strong>, <strong>cambia su estado</strong>, se <strong>cita a audiencia</strong> o se
+        <strong> adopta una medida de protección</strong> (actuaciones conforme a la Ley 2126/2021, 1098/2006, 575/2000 y 1257/2008).
+        Requiere SMTP configurado en la entidad para el envío real.
+      </p>
 
       {message && (
         <div className={`mb-6 p-4 rounded ${

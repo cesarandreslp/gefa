@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
 import { FAMILY_READ_ROLES, FAMILY_WRITE_ROLES, auditFamily } from '@/lib/familyApi';
 import { validateFamilyTransition, availableFamilyTransitions } from '@/domain/rules/familyStateMachine';
+import { notifyCaseStateChanged } from '@/services/FamilyNotifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
 
     const caseRow = await db.case.findFirst({
       where: { id: params.caseId, tenantId: auth.user.tenantId },
-      select: { id: true, stateId: true, state: { select: { code: true } } },
+      select: { id: true, stateId: true, state: { select: { code: true, name: true } } },
     });
     if (!caseRow) {
       return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 });
@@ -100,6 +101,9 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
       caseId: caseRow.id,
       metadata: { from: caseRow.state.code, to: toStateCode, reopen: validation.isReopen ?? false },
     });
+
+    // Notificar al ciudadano radicante el cambio de estado (no invasivo).
+    await notifyCaseStateChanged(db, auth.user.tenantId, caseRow.id, caseRow.state.name, targetState.name, comment);
 
     return NextResponse.json({
       message: `Estado actualizado a ${targetState.name}`,
