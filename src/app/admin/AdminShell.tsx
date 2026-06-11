@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   LayoutDashboard, Folder, FilePlus, Calendar, Clock, BarChart3, TrendingUp,
   Building2, Users, FileText, Landmark, Settings, Bell, Server, ShieldCheck,
-  MapPin, UserCheck, Menu, ChevronLeft, ChevronRight, X, LogOut,
+  MapPin, UserCheck, FileSignature, Menu, ChevronLeft, ChevronRight, X, LogOut,
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Seguimiento', path: '/admin/seguimiento', Icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'], separatorBefore: true },
   { label: 'Comisarías', path: '/admin/comisarias', Icon: Building2, roles: ['ADMIN'] },
   { label: 'Equipo', path: '/admin/usuarios', Icon: Users, roles: ['ADMIN', 'DIRECTOR'] },
+  { label: 'Plantillas', path: '/admin/plantillas', Icon: FileSignature, roles: ['ADMIN', 'DIRECTOR'] },
   { label: 'Reportes', path: '/admin/reports', Icon: FileText, roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   { label: 'Entidad', path: '/admin/entidad', Icon: Landmark, roles: ['ADMIN', 'DIRECTOR'] },
   { label: 'Configuración', path: '/admin/settings', Icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },

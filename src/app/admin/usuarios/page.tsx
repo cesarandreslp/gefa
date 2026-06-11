@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff, Building2, FileSignature } from 'lucide-react';
 import AdminPageHeader from '../AdminPageHeader';
 
 interface Role {
@@ -49,6 +49,9 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [existingSignatureUrl, setExistingSignatureUrl] = useState<string | null>(null);
+  const [signatureMsg, setSignatureMsg] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -122,8 +125,22 @@ export default function UsersPage() {
     }
   };
 
+  // ¿El usuario (según rol/profesión elegidos) puede firmar documentos del despacho?
+  const selectedRoleCode = roles.find((r) => r.id === formData.roleId)?.code || '';
+  const canSign =
+    selectedRoleCode.toUpperCase().includes('DIRECTOR') ||
+    ['JURIDICA', 'PSICOLOGIA', 'TRABAJO_SOCIAL'].includes(formData.profesion);
+
   const handleOpenModal = (user?: User) => {
+    setSignatureFile(null);
+    setSignatureMsg(null);
+    setExistingSignatureUrl(null);
     if (user) {
+      // Cargar la firma activa existente (si tiene).
+      fetch(`/api/v1/users/${user.id}/signature`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => setExistingSignatureUrl(d?.signature?.blobUrl ?? null))
+        .catch(() => {});
       setEditingUser(user);
       setFormData({
         email: user.email,
@@ -189,6 +206,20 @@ export default function UsersPage() {
       });
 
       if (response.ok) {
+        // Si se adjuntó una firma y el usuario puede firmar, subirla tras guardar.
+        if (signatureFile && canSign) {
+          const saved = await response.json().catch(() => null);
+          const userId = editingUser ? editingUser.id : saved?.id;
+          if (userId) {
+            const fd = new FormData();
+            fd.append('file', signatureFile);
+            const sigRes = await fetch(`/api/v1/users/${userId}/signature`, { method: 'POST', body: fd });
+            if (!sigRes.ok) {
+              const e = await sigRes.json().catch(() => ({}));
+              alert(`Usuario guardado, pero la firma no se pudo subir: ${e.error || 'error'}`);
+            }
+          }
+        }
         setIsModalOpen(false);
         loadUsers();
       } else {
@@ -776,6 +807,44 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Firma electrónica — solo para roles/profesiones habilitados a firmar */}
+              {canSign && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FileSignature size={18} color="#0e7490" /> Firma del funcionario
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0 0 0.75rem' }}>
+                    Imagen de la firma (PNG con fondo transparente, máx. 2 MB). Se aplicará a los documentos del despacho que firme este usuario (firma electrónica, Ley 527/1999).
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    {(signatureFile || existingSignatureUrl) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={signatureFile ? URL.createObjectURL(signatureFile) : existingSignatureUrl!}
+                        alt="Firma"
+                        style={{ height: 56, maxWidth: 220, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', padding: '0.25rem' }}
+                      />
+                    )}
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1rem', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer' }}>
+                      {existingSignatureUrl || signatureFile ? 'Reemplazar firma' : 'Subir firma'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          if (f && f.size > 2 * 1024 * 1024) { setSignatureMsg('La imagen supera 2 MB'); return; }
+                          setSignatureMsg(null);
+                          setSignatureFile(f);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {signatureMsg && <p style={{ fontSize: '0.78rem', color: '#b91c1c', margin: '0.5rem 0 0' }}>{signatureMsg}</p>}
+                  {!editingUser && <p style={{ fontSize: '0.72rem', color: '#9ca3af', margin: '0.5rem 0 0' }}>La firma se guarda al crear el usuario.</p>}
+                </div>
+              )}
 
               {/* Botones */}
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>

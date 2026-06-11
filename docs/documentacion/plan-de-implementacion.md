@@ -6,6 +6,24 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 86. Documentos del despacho — FASE 1: schema + firmas + CRUD de plantillas
+**Estado:** COMPLETADO
+**Objetivo:** Cimientos del bloque de documentos: modelos `DocumentTemplate`/`DocumentDraft`/`UserSignature`/`DocumentSignature` (+enums, +`nit` de la Alcaldía, +tipos en `DocumentType`), captura de la firma (imagen) en el alta de usuario para roles firmantes (comisario + jurídica/psicología/trabajo social), y el CRUD de plantillas por los 11 tipos.
+**Hecho:**
+- `prisma/schema.prisma` — 4 modelos nuevos (`DocumentTemplate`, `DocumentDraft`, `UserSignature`, `DocumentSignature`) + enums `TemplateKind` (11 actos), `DocumentDraftStatus`, `SignatureType`. Extendido `DocumentType` con 7 tipos (DECLARACION, RESOLUCION, MEDIDA_PROTECCION, CONSTANCIA_CONCILIACION, INFORME_JURIDICO, SEGUIMIENTO, RECURSO). Añadido `Tenant.nit`. Relaciones inversas en Tenant/Case/User/Comisaria/Document. **db push aplicado** (aditivo) + `tenant-schema.sql` regenerado.
+- `src/lib/documentsApi.ts` (NUEVO) — RBAC (`TEMPLATE_ADMIN_ROLES`, `DOCUMENT_DRAFT_ROLES`, `SIGNING_PROFESSIONS`), `canUserSign`, labels/kinds, `documentTypeForKind`, `normalizeVariables`, `mergeTemplateBody` (escapa HTML → anti-inyección), `escapeHtml`.
+- `api/v1/users/[id]/signature` (NUEVO) — POST sube imagen PNG/JPG (≤2MB) → blob `firmas/` + SHA‑256 + desactiva firmas previas + audita `USER_SIGNATURE_UPLOADED`; GET metadata. Solo ADMIN/DIRECTOR o el dueño, y solo si `canUserSign`.
+- `api/v1/family/templates` + `templates/[id]` (NUEVOS) — CRUD de plantillas. Listar/leer: DOCUMENT_DRAFT_ROLES; crear/editar/desactivar (soft delete, sube `version`): TEMPLATE_ADMIN_ROLES. Auditado.
+- `admin/plantillas/page.tsx` (NUEVO) + ítem de nav "Plantillas" (FileSignature, ADMIN/DIRECTOR) — CRUD con editor de variables, roles firmantes y cuerpo HTML con `{{var}}`.
+- `admin/usuarios/page.tsx` — sección "Firma del funcionario" en el modal (solo si rol/profesión habilitado a firmar): sube/reemplaza/previsualiza; se guarda tras crear/editar.
+- `src/services/AuditService.ts` — acción `USER_SIGNATURE_UPLOADED`.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores (solo warnings preexistentes).
+
+### 85. Plantillas jurídicas + firmas — FASE DE DISEÑO (modelar antes de implementar)
+**Estado:** COMPLETADO
+**Objetivo:** Diseñar por fases el bloque de documentos del despacho: modelo de plantillas (11 tipos), editor WYSIWYG tipo Word con merge de encabezado (Alcaldía=tenant + comisaría=sede), corrección de redacción/gramática/ortografía por IA, captura de firmas (imagen + firma digital criptográfica) en el alta de usuario, y generación del documento final con encabezado + firmas. Antes de implementar se acuerdan decisiones transversales: formato de salida (PDF/DOCX), estándar de firma digital y librería del editor. La implementación se registrará en entradas posteriores.
+**Decisiones tomadas (2026-06-11):** (1) Salida = **PDF + DOCX** (PDF oficial firmado vía Chromium headless; .docx editable). (2) Firma = **electrónica Ley 527** (imagen estampada + SHA‑256 + sello de tiempo + traza); se descarta de momento la firma digital certificada/PAdES. (3) Editor = **TipTap** (ProseMirror/React, salida HTML). Con esto la Fase 4 (firma digital avanzada) queda fuera de alcance inicial; el plan son 3 fases.
+
 ### 83. RF‑12 sub‑paso 12c — Tablero de disponibilidad + UI del turno
 **Estado:** COMPLETADO
 **Objetivo:** Hacer visible el despacho: tablero en recepción (LIBRE/OCUPADO en vivo por polling) con asignación por radicado, y pantalla del profesional para diligenciar con autoguardado + "Guardar y terminar". Sin schema.
