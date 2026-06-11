@@ -323,6 +323,7 @@ export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { ca
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [prefilledCount, setPrefilledCount] = useState(0);
 
   const loadInstruments = async () => {
     if (instruments) return;
@@ -336,7 +337,24 @@ export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { ca
   const sel = instruments?.find((i) => i.id === selId);
   const setVal = (code: string, v: any) => setRespuestas((p) => ({ ...p, [code]: v }));
 
-  const reset = () => { setSelId(''); setRespuestas({}); setAssessedPersonId(''); setResult(null); setError(null); };
+  // Al elegir un instrumento, prellenar desde el expediente (RF‑02): identidad de
+  // la víctima/agresor y violencia que la recepción ya capturó. Solo lectura.
+  const onSelectInstrument = async (id: string) => {
+    setSelId(id);
+    setRespuestas({});
+    setPrefilledCount(0);
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/instrumentos/prefill?instrumentoId=${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const pre = (await res.json()).respuestasIniciales ?? {};
+        setRespuestas(pre);
+        setPrefilledCount(Object.keys(pre).length);
+      }
+    } catch { /* el prellenado es best-effort: si falla, el formato queda en blanco */ }
+  };
+
+  const reset = () => { setSelId(''); setRespuestas({}); setAssessedPersonId(''); setResult(null); setError(null); setPrefilledCount(0); };
 
   const submit = async () => {
     setError(null);
@@ -376,7 +394,7 @@ export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { ca
         <>
           <div style={{ fontSize: '0.75rem', color: '#92400e', marginBottom: '0.5rem' }}>🔒 Valoración confidencial — el puntaje y el nivel se calculan automáticamente.</div>
           <label style={label}>Instrumento</label>
-          <select value={selId} onChange={(e) => { setSelId(e.target.value); setRespuestas({}); }} style={input}>
+          <select value={selId} onChange={(e) => onSelectInstrument(e.target.value)} style={input}>
             <option value="">Seleccionar…</option>
             {(instruments ?? []).map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
@@ -384,6 +402,11 @@ export function ApplyInstrumentForm({ caseId, parties, modalidad, onDone }: { ca
           {sel && (
             <>
               {sel.description && <div style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0.5rem 0' }}>{sel.description}</div>}
+              {prefilledCount > 0 && (
+                <div style={{ fontSize: '0.78rem', color: '#1e40af', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '0.45rem 0.7rem', margin: '0.5rem 0' }}>
+                  ✓ {prefilledCount} campo{prefilledCount === 1 ? '' : 's'} prellenado{prefilledCount === 1 ? '' : 's'} desde el expediente. Verifíquelo{prefilledCount === 1 ? '' : 's'} antes de guardar.
+                </div>
+              )}
               <div style={{ marginTop: '0.5rem' }}>
                 <label style={label}>Persona valorada (opcional)</label>
                 <select value={assessedPersonId} onChange={(e) => setAssessedPersonId(e.target.value)} style={input}>

@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 77. Herencia de datos (RF‑01/02): prellenado de lectura de instrumentos
+**Estado:** COMPLETADO
+**Objetivo:** Primer corte de los requisitos del flujo (ver memoria flujo-paso2-despacho-disponibilidad). Aditivo y sin migración: un mapa de campos canónicos (campoCode → dato en Person/CaseParty/Case) + un resolver + endpoint que devuelve `respuestasIniciales` para que cada instrumento se abra prellenado. Elimina el re-tecleo sin tocar BD ni RBAC.
+**Hecho:**
+- `src/domain/catalogs/instrumentoFieldMap.ts` (NUEVO) — mapa `campoCode → origen canónico`. Cobertura inicial: caracterización Res. 0362/2026 (identidad de víctima y agresor/a) + tipo de violencia (`viol_tipo` ← `case.violenceTypes`, colapsa a `MULTIPLE` si hay varios). Solo se mapean campos con dato estructurado real hoy; ampliable sin migración.
+- `src/lib/instrumentoPrefill.ts` (NUEVO) — resolver puro `resolveInstrumentoPrefill(campoCodes, caseData)`. Lee la `Person` de la parte (VICTIMA/AGRESOR/NNA) con fallback de víctima al `Citizen` radicante; transforms `dateISO`, `age`, `docTypeCaracterizacion`, `docTypeAgresor`, `sexo` (M/F→HOMBRE/MUJER). Omite vacíos para no pisar el formulario.
+- `src/app/api/v1/family/cases/[caseId]/instrumentos/prefill/route.ts` (NUEVO) — `GET ?instrumentoId=`; valida caso del tenant, carga los `campos` del instrumento, devuelve `{ respuestasIniciales }`. RBAC `FAMILY_CONFIDENTIAL_ROLES` (mismos que aplican instrumentos). Solo lectura.
+- `src/app/admin/family/[caseId]/ExpedienteActions.tsx` — al elegir un instrumento (`ApplyInstrumentForm`) hace fetch del prellenado y siembra `respuestas`; banner "N campos prellenados desde el expediente, verifíquelos". Best-effort: si falla, el formato queda en blanco.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Pendiente (siguiente tanda):** RF‑04 profesión Jurídico, RF‑06 triage, RF‑12/13 Atención+autoguardado (estos sí tocan schema → requieren plan de migración multitenant).
+
 ### 76. Mostrar la dirección física de la comisaría en el localizador
 **Estado:** COMPLETADO
 **Objetivo:** La consulta del localizador debe arrojar de forma visible la dirección física de la comisaría donde reposa el proceso (es el dato que el ciudadano necesita para saber a dónde ir). El API ya la devolvía mezclada con código/teléfono; se le da línea propia destacada.
