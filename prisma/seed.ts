@@ -26,27 +26,14 @@ import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { FAMILY_CASE_TYPES } from '../src/domain/catalogs/familyCaseTypes';
 import { FAMILY_CASE_STATES } from '../src/domain/catalogs/familyCaseStates';
+import { FAMILY_ROLES } from '../src/domain/catalogs/familyRoles';
 
 const prisma = new PrismaClient();
 
 const DEFAULT_PASSWORD = 'Gefa2026!';
 
-const ROLES = [
-  { code: 'ADMIN', name: 'Administrador', level: 100, permissions: ['*:*:*'], canApprove: true, canReassign: true, canSign: true,
-    description: 'Administrador del municipio (Alcaldía): gestiona usuarios y configuración. No es autoridad procesal ni equipo clínico.' },
-  { code: 'DIRECTOR', name: 'Comisario/a de Familia', level: 100, permissions: ['*:*:*'], canApprove: true, canReassign: true, canSign: true,
-    description: 'Autoridad de la comisaría de familia. Toma declaraciones, valora pruebas y aprueba/firma los informes; sus actos tienen peso procesal.' },
-  { code: 'SECRETARIA_GOBIERNO', name: 'Secretaría de Gobierno', level: 95, permissions: ['stats:read:*'], canApprove: false, canReassign: false, canSign: false,
-    description: 'Supervisión municipal: tablero de control con estadísticas agregadas de todas las comisarías. No accede a expedientes ni a datos confidenciales.' },
-  { code: 'ASIGNACION_DE_CASOS', name: 'Asignación de Casos (IA)', level: 90, permissions: ['cases:assign:*', 'cases:read:*'], canApprove: false, canReassign: true, canSign: false,
-    description: 'Agente de IA para la asignación inteligente de casos entre funcionarios.' },
-  { code: 'FUNCIONARIO', name: 'Funcionario (equipo interdisciplinario)', level: 85, permissions: ['cases:read:*', 'cases:update:assigned'], canApprove: true, canReassign: false, canSign: true,
-    description: 'Equipo interdisciplinario de la comisaría (psicología / trabajo social): atiende casos, aplica instrumentos y elabora valoraciones.' },
-  { code: 'VENTANILLA_UNICA', name: 'Ventanilla Única', level: 80, permissions: ['cases:*:*', 'users:read:*'], canApprove: false, canReassign: true, canSign: false,
-    description: 'Recibe y radica las solicitudes ciudadanas en la comisaría.' },
-  { code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', level: 75, permissions: ['cases:read:*', 'citizens:read:*'], canApprove: false, canReassign: false, canSign: false,
-    description: 'Apoyo en la atención directa al usuario en la comisaría.' },
-];
+// Roles base desde el catálogo canónico (misma fuente que el provisioning Fase 2).
+const ROLES = FAMILY_ROLES;
 
 // Estados del workflow de comisaría de familia (fuente única: FAMILY_CASE_STATES).
 const STATES = FAMILY_CASE_STATES;

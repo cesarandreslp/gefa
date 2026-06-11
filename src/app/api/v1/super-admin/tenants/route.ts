@@ -6,6 +6,7 @@ import { getClientIp, getUserAgent } from '@/lib/validation';
 import { getTenantPrisma } from '@/lib/tenantDb';
 import { FAMILY_CASE_TYPES } from '@/domain/catalogs/familyCaseTypes';
 import { FAMILY_CASE_STATES } from '@/domain/catalogs/familyCaseStates';
+import { FAMILY_ROLES } from '@/domain/catalogs/familyRoles';
 import {
   createTenantProject,
   applyTenantSchema,
@@ -204,25 +205,15 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Create 6 standard roles in tenant DB
-        const adminRole = await tx.role.create({
-          data: { tenantId: tenant.id, code: 'ADMIN', name: 'Administrador', description: 'Gestión técnica del sistema. NO opera casos.', level: 100, isActive: true }
-        });
-        const iaRoleRecord = await tx.role.create({
-          data: { tenantId: tenant.id, code: 'ASIGNACION_DE_CASOS', name: 'Asignación de Casos (IA)', description: 'Agente de IA que distribuye automáticamente los casos entre funcionarios.', level: 90, isActive: true }
-        });
-        await tx.role.create({
-          data: { tenantId: tenant.id, code: 'DIRECTOR', name: 'Director', description: 'Máxima autoridad institucional. Atiende casos críticos y es fallback de la IA.', level: 100, isActive: true }
-        });
-        await tx.role.create({
-          data: { tenantId: tenant.id, code: 'FUNCIONARIO', name: 'Funcionario', description: 'Personal técnico o profesional. La IA le asigna casos según su especialidad.', level: 85, isActive: true }
-        });
-        await tx.role.create({
-          data: { tenantId: tenant.id, code: 'VENTANILLA_UNICA', name: 'Ventanilla Única', description: 'Recibe, radica y tramita solicitudes ciudadanas en el mostrador.', level: 80, isActive: true }
-        });
-        await tx.role.create({
-          data: { tenantId: tenant.id, code: 'AUXILIAR_ATENCION_USUARIO', name: 'Auxiliar de Atención al Usuario', description: 'Atención directa al ciudadano. Solo lectura de casos y ciudadanos.', level: 75, isActive: true }
-        });
+        // Crear los roles base desde el catálogo canónico (paridad con el seed demo).
+        const roleByCode: Record<string, { id: string }> = {};
+        for (const r of FAMILY_ROLES) {
+          roleByCode[r.code] = await tx.role.create({
+            data: { tenantId: tenant.id, ...r, isActive: true },
+          });
+        }
+        const adminRole = roleByCode['ADMIN'];
+        const iaRoleRecord = roleByCode['ASIGNACION_DE_CASOS'];
 
         // Seed workflow states (estados de comisaría de familia) in tenant DB
         for (const st of FAMILY_CASE_STATES) {

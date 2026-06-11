@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 72. Paridad de tenants: que las correcciones de la sesión apliquen a todos (nuevos y existentes)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario pide que lo corregido esta sesión respecto al tenant se herede en tenants NUEVOS (provisioning Fase 2) y se refleje en los EXISTENTES.
+**Análisis:** la mayoría son cambios de CÓDIGO compartido (rediseño público, login, sidebar/panel admin, filtros, agenda, equipo, notificaciones, limpieza personería) → ya aplican a todos los tenants por host, existentes y nuevos, sin acción. Los cambios de DATOS/semilla por tenant los siembra el provisioning. Auditoría del provisioning vs demo: estados (FAMILY_CASE_STATES) ✅, tipos (FAMILY_CASE_TYPES) ✅, instrumentos (seedTenantInstrumentos) ✅, roles ❌ **brecha: faltaba `SECRETARIA_GOBIERNO`** (el provisioning creaba 6 roles; el demo tiene 7). Sin ese rol, un tenant nuevo no puede tener la Secretaría de Gobierno ni su confinamiento a estadística/reportes. Tenants EXISTENTES (BUGA/TULUA/PALMIRA) ya tienen el rol (sembrado por `prisma/seed.ts`) y comparten los estados globales ya corregidos → cubiertos.
+**Hecho (fix de fondo contra la deriva, no solo el síntoma):**
+- `src/domain/catalogs/familyRoles.ts` (NUEVO) — catálogo canónico `FAMILY_ROLES` (7 roles con `permissions`/`canApprove`/`canReassign`/`canSign`), fuente única igual que `FAMILY_CASE_STATES`/`FAMILY_CASE_TYPES`.
+- `super-admin/tenants/route.ts` (provisioning) — reemplaza los 7 `role.create` inline por un loop sobre `FAMILY_ROLES`; antes faltaba `SECRETARIA_GOBIERNO` y los flags `can*`/`permissions`. Ahora un tenant nuevo hereda los 7 roles idénticos al demo.
+- `prisma/seed.ts` — su `ROLES` inline pasa a ser `= FAMILY_ROLES` (misma fuente). Seed demo y provisioning ya no pueden divergir.
+**Conclusión para el usuario:** (1) lo de CÓDIGO ya aplica a todos por despliegue compartido; (2) lo de DATOS por tenant ahora se siembra desde catálogos únicos (estados, tipos, roles, instrumentos) → un tenant NUEVO hereda todo; (3) los tenants EXISTENTES ya tenían los 7 roles y comparten los estados corregidos. No se requiere migración de datos en los existentes.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` solo warnings `any` preexistentes.
+
 ### 71. Adaptar el módulo de notificaciones al dominio de comisaría (acoplado a la norma)
 **Estado:** COMPLETADO (1ª iteración: eventos del ciudadano)
 **Objetivo:** El módulo de notificaciones es infra heredada de Ventanilla (tipos de evento y destinatario `firstName/lastName` del modelo de petición; no encolado por los flujos de familia). El usuario pide: adaptarlo a comisaría, **acoplado a la norma**, y que se dispare en TODOS los lugares donde se necesite (no solo registrar auditoría). Eventos relevantes de comisaría: radicación, cambio de estado del caso, medida de protección adoptada, citación/recordatorio de audiencia, vencimiento de término, PARD. Auditar la infra (modelo `Notification`, enum `NotificationType`, `NotificationService`/`EmailService`, APIs history/process/test) y construir el enganche en los flujos de familia + actualizar la pantalla admin.
