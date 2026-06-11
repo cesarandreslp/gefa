@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       where: { id: auth.user.userId },
       include: {
         role: true,
+        comisaria: { select: { id: true, code: true, name: true } },
         supervisor: { include: { role: true } },
       },
     });
@@ -62,6 +63,11 @@ export async function GET(request: NextRequest) {
               canApprove: user.role.canApprove,
               canReassign: user.role.canReassign,
               canSign: user.role.canSign,
+            } : null,
+            comisaria: user.comisaria ? {
+              id: user.comisaria.id,
+              code: user.comisaria.code,
+              name: user.comisaria.name,
             } : null,
             tenant: tenant ? {
               id: tenant.id,

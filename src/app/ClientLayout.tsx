@@ -119,6 +119,29 @@ export default function ClientLayout({
     );
   }
 
+  // Panel admin del tenant: SIN header público institucional ni footer.
+  // El chrome (sidebar + barra superior) lo provee AdminShell. Se conserva el
+  // estilo de color del tenant y el favicon.
+  if (isDashboard) {
+    return (
+      <html lang="es">
+        <head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          {faviconUrl && <link rel="icon" type="image/png" href={faviconUrl} />}
+          {(primaryColor || secondaryColor) && (
+            <style dangerouslySetInnerHTML={{
+              __html: `:root{${primaryColor ? `--color-primary:${primaryColor};` : ''}${secondaryColor ? `--color-secondary:${secondaryColor};` : ''}}`
+            }} />
+          )}
+        </head>
+        <body style={{ margin: 0, padding: 0 }}>
+          {children}
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="es">
       <head>

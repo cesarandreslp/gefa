@@ -6,7 +6,28 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
-### 69. Modal de login consistente con el menú (cabecera institucional azul)
+### 70. Rediseño del panel admin del tenant (sidebar institucional + RBAC/contenido)
+**Estado:** EN CURSO (por fases)
+**Objetivo:** El usuario detalla cómo debe comportarse y verse el panel del ADMIN del tenant. Captura completa del spec:
+- **Casos:** el admin SOLO ve el listado de casos y lo filtra por comisaría, tipo, rango de fechas y estado. **NO radica casos.**
+- **Agenda de audiencias:** el admin puede verla en total y por comisaría.
+- **Vencimientos:** OK como está.
+- **Tablero:** debe omitir lo que el admin NO hace (radicar, etc.).
+- **Estadísticas / Seguimiento / Comisarías / Reportes / Entidad / Configuración / Sistema:** OK como están.
+- **Equipo:** debe crearse/asignarse DENTRO de la opción "Comisarías" (para ver visualmente a qué comisaría pertenece cada usuario) — hoy está en "Usuarios" aparte.
+- **Notificaciones:** el usuario aún no lo revisó / no lo entiende → pendiente de explicar, no tocar todavía.
+- **UI:** el panel debe mantener la consistencia visual de la cara pública del tenant (gov.co institucional); el menú pasa de barra horizontal a **sidebar que se expande/contrae**, coherente y responsive (móvil = patrón coherente con el cajón hamburguesa).
+**Plan por fases:** (1) Sidebar institucional colapsable + responsive (reemplaza `AdminNav` horizontal; layout flex sidebar+contenido). (2) RBAC/nav del ADMIN: quitar "Radicar caso", Tablero sin acciones de radicación. (3) Filtros del listado de casos (comisaría/tipo/fechas/estado). (4) Agenda total y por comisaría. (5) Gestión de equipo dentro de Comisarías. (6) Explicar Notificaciones.
+**Estado actual del código (auditoría):** `AdminNav.tsx` = barra horizontal con emojis y roles por item; `admin/layout.tsx` la renderiza arriba del `<main>`; el Tablero (`admin/page.tsx`) tiene botón "Radicar caso"; "Equipo" hoy es `/admin/usuarios`.
+**Aclaraciones añadidas por el usuario (mitad de la fase 1):** (a) el header público institucional NO debe aparecer en el admin; (b) en el sidebar va solo el menú del admin; (c) debe haber un lugar con nombre/rol/comisaría del usuario + "Cerrar sesión" que lleve a la página principal del tenant.
+**Fase 1 — HECHA (commit pendiente):**
+- `src/app/admin/AdminShell.tsx` (NUEVO, client) — sidebar institucional azul (`var(--color-primary)`), íconos lucide, ítem activo blanco/azul (coherente con el cajón móvil público), colapsable (persiste en localStorage), y en móvil se oculta → barra superior con hamburguesa que abre un cajón. Incluye **panel de usuario** (avatar con iniciales, nombre, rol, comisaría) y botón **Cerrar sesión** → `router.push('/')` (página principal del tenant) + limpieza de sesión + POST logout.
+- `src/app/admin/layout.tsx` — resuelve nombre/logo del tenant (prisma control plane) y monta `AdminShell` en vez de `AdminNav`+`<main>`.
+- `src/app/ClientLayout.tsx` — nueva rama: si `isDashboard` (rutas `/admin`), devuelve shell mínimo (sin barra gov.co, nav pública ni footer), conservando estilo de color del tenant y favicon. → el header público ya NO aparece en el admin.
+- `src/app/api/v1/auth/me/route.ts` — ahora incluye la `comisaria` del usuario (code/name) para el panel.
+- RBAC nav (parte de la fase 2 adelantada): "Radicar caso" queda restringido a `DIRECTOR/FUNCIONARIO/VENTANILLA_UNICA` (el ADMIN ya no lo ve).
+- Limpieza: eliminado `AdminNav.tsx` y su render redundante en `admin/metrics` y `admin/reports`.
+**Verificación fase 1:** `tsc --noEmit` exit=0; `next lint` sin warnings.
 **Estado:** COMPLETADO
 **Objetivo:** El usuario pide que el modal de login mantenga la consistencia visual del menú mejorado. El modal activo ("Nuevo Modal Login", el que abre "Iniciar Sesión") era un card blanco plano sin lenguaje institucional.
 **Hecho (`src/app/components/LoginModal.tsx`):**
