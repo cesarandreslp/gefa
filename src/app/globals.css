@@ -337,6 +337,40 @@ select {
     font-size: 0.75rem !important;
   }
   
+  /* Cabecera institucional en móvil: la marca encoge y la hamburguesa queda a la
+     derecha en la MISMA fila (la nav de escritorio se oculta por .desktop-nav). */
+  nav .container {
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .brand-link {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    gap: 0.5rem !important;
+  }
+
+  .brand-link h1 {
+    font-size: 0.92rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .brand-link p {
+    font-size: 0.68rem !important;
+  }
+
+  /* Caja del ícono de marca (solo cuando no hay logo) más pequeña en móvil */
+  .brand-link > div:first-child {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  /* La hamburguesa no debe encogerse ni saltar de línea */
+  .mobile-menu-button {
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
+  }
+
   /* Contenedor principal con padding móvil REDUCIDO */
   .container {
     padding-left: 0.5rem !important;

@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 66. Responsive de la cabecera nueva: hamburguesa en móvil + marca que encoge
+**Estado:** COMPLETADO
+**Objetivo:** Tras el rediseño (entrada 64) la marca pasó a `<a class="brand-link">`; las reglas responsive viejas apuntaban a `nav .container > div:first-child` (un div), así que ya no aplican a la marca → en móvil el nombre largo no encoge y el layout puede empujarse. Asegurar que el menú aparezca como hamburguesa en dispositivos y que la banda de marca sea compacta. El toggle `.mobile-menu-button`/`.desktop-nav` ya existe y no se tocó; falta el ajuste fino de la marca y la barra de contacto.
+**Hecho (`src/app/globals.css`, media query ≤768px):** `nav .container { flex-wrap: nowrap }` para que la hamburguesa quede a la derecha en la misma fila; `.brand-link { min-width:0; flex:1 }` + `h1` a 0.92rem y `p` a 0.68rem (la marca encoge en vez de empujar); caja del ícono a 38px; `.mobile-menu-button { flex:0 0 auto }` (no se encoge). `src/app/ClientLayout.tsx`: los enlaces Privacidad/Accesibilidad de la barra de contacto se marcan `desktop-only` (se ocultan en móvil para compactar). Confirmado por código que el toggle ya funcionaba: `.mobile-menu-button { display:block !important }` y `.desktop-nav { display:none !important }` a ≤768px ganan sobre los estilos inline → la hamburguesa SÍ aparece en móvil; estos cambios son el pulido del layout.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+
 ### 65. Fix: estados de familia ausentes en la BD (transición "no configurado")
 **Estado:** COMPLETADO
 **Objetivo:** Al cambiar el estado de un caso a "En Valoración" la UI da "Estado destino no configurado: EN_VALORACION". Causa: `prisma/seed.ts` (seed activo de la BD demo) siembra una lista INLINE de estados con los códigos VIEJOS de Ventanilla (EN_ESTUDIO, REQUIERE_INFORMACION, ESCALADO_A_OTRA_DEPENDENCIA, REMITIDO_A_ENTIDAD_EXTERNA, REMITIDO_POR_COMPETENCIA) en vez de importar `FAMILY_CASE_STATES`. El dropdown se llena del catálogo (que sí tiene EN_VALORACION) pero la tabla `caseState` no lo tiene → el POST de transición falla. Faltan en la BD: EN_VALORACION, EN_AUDIENCIA, MEDIDA_ADOPTADA, EN_SEGUIMIENTO, REMITIDO.

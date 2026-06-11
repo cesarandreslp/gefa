@@ -159,7 +159,7 @@ export default function ClientLayout({
                   <span>Atención integral a la familia{city ? ` · ${city}` : ''}</span>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div className="desktop-only" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <a href="/privacidad" style={{ color: 'var(--color-text-light)', textDecoration: 'none' }}>Privacidad</a>
                 <a href="/accesibilidad" style={{ color: 'var(--color-text-light)', textDecoration: 'none' }}>Accesibilidad</a>
               </div>
