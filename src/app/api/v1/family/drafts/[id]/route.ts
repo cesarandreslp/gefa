@@ -25,6 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       include: {
         template: { select: { id: true, name: true, kind: true, variables: true, signerRoles: true } },
         case: { select: { id: true, filingNumber: true, comisariaId: true } },
+        document: { select: { id: true, fileUrl: true } },
         signatures: {
           select: { id: true, signerName: true, role: true, signedAt: true, signatureImageUrl: true },
           orderBy: { signedAt: 'asc' },

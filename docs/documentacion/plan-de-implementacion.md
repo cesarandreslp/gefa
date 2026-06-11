@@ -6,6 +6,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 88. Documentos del despacho — FASE 3: emisión PDF + DOCX con firma electrónica
+**Estado:** COMPLETADO
+**Objetivo:** "Emitir" el documento: armar el HTML final con encabezado (Alcaldía + sede) y bloques de firma, generar **PDF** (Chromium headless) y **DOCX** (html-to-docx), estampar la(s) firma(s) electrónica(s) (imagen + SHA‑256 + sello), subir a blob y materializar un `Document` oficial del expediente con su traza (`DocumentSignature`).
+**Hecho:**
+- Schema — `DocumentDraft.docxUrl` + `emittedAt`. **db push aplicado** + `tenant-schema.sql` regenerado.
+- Libs: `puppeteer-core` + `@sparticuz/chromium` (PDF en serverless) + `html-to-docx` (DOCX JS puro). `src/types/html-to-docx.d.ts` (declaración de tipos).
+- `src/lib/documentHtml.ts` (NUEVO) — arma el fragmento (encabezado institucional con escudo/NIT/sede + título + cuerpo + bloques de firma con imagen, sello de tiempo y huella SHA‑256 + nota Ley 527) y el HTML de página para el PDF. Imágenes incrustadas como data URI.
+- `src/services/DocumentGenerationService.ts` (NUEVO) — `fetchAsDataUri`, `htmlToPdf` (Chromium: binario empaquetado en Vercel; `PUPPETEER_EXECUTABLE_PATH` en local), `htmlToDocxBuffer`.
+- `api/v1/family/drafts/[id]/emit` (NUEVO, `runtime=nodejs`, `maxDuration=60`) — resuelve firmantes (valida rol/profesión habilitado + firma activa; default = emisor), arma HTML, genera PDF+DOCX, sube a blob, crea `Document` oficial (`isOfficial`/`isSigned`/`fileHash` SHA‑256 del PDF) + `DocumentSignature` (hash del contenido) y marca el borrador EMITIDO, en transacción. Auditado `FAMILY_DOCUMENT_EMITTED`.
+- `admin/documentos/[id]/page.tsx` — panel "Emitir" (firmantes elegibles, default usuario actual), enlaces de descarga PDF/DOCX tras emitir. GET de borrador incluye `document.fileUrl`.
+- `next.config.js` — `serverComponentsExternalPackages: ['@sparticuz/chromium','puppeteer-core']`.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+**Nota de despliegue:** el PDF depende de Chromium en serverless (función pesada/cold‑start; aislado al endpoint de emisión). Si Vercel reporta tamaño/timeout, subir `maxDuration` o usar un render externo. Firma electrónica (Ley 527); PAdES queda fuera de alcance por decisión del 2026‑06‑11.
+
 ### 87. Documentos del despacho — FASE 2: editor TipTap + corrección por IA
 **Estado:** COMPLETADO
 **Objetivo:** Redacción del documento en un editor WYSIWYG tipo Word (TipTap) que carga la plantilla, mergea variables y encabezado, autoguarda (patrón `Atencion`) y ofrece "Corregir con IA" (redacción/gramática/ortografía, sin alterar el sentido jurídico). Borradores (`DocumentDraft`) con su CRUD.

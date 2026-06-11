@@ -2073,6 +2073,8 @@ model DocumentDraft {
   // Document oficial resultante de la emisión (1-1).
   documentId  String?   @unique
   document    Document? @relation("DraftDocument", fields: [documentId], references: [id])
+  docxUrl     String?   // copia .docx editable del documento emitido (blob)
+  emittedAt   DateTime? // momento de la emisión (PDF/DOCX + firmas)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

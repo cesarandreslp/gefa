@@ -8,15 +8,17 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles, FileText, CheckCircle2, FileSignature, FileDown, FileType } from 'lucide-react';
 import AdminPageHeader from '../../AdminPageHeader';
 import RichTextEditor from '../RichTextEditor';
 
+interface Signer { id: string; fullName: string; role: string | null; profesion: string | null }
 interface Draft {
   id: string; title: string; documentType: string; status: string;
-  bodyHtml: string; data: Record<string, unknown> | null;
+  bodyHtml: string; data: Record<string, unknown> | null; docxUrl: string | null;
   case: { id: string; filingNumber: string } | null;
-  template: { id: string; name: string; kind: string } | null;
+  template: { id: string; name: string; kind: string; signerRoles: string[] | null } | null;
+  document: { id: string; fileUrl: string } | null;
 }
 
 const btnGhost: React.CSSProperties = { padding: '0.55rem 0.9rem', background: '#fff', color: '#334155', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 };
@@ -33,8 +35,18 @@ export default function DocumentEditorPage({ params }: { params: { id: string } 
   const [proofreading, setProofreading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
+  // Emisión
+  const [showEmit, setShowEmit] = useState(false);
+  const [eligibleSigners, setEligibleSigners] = useState<Signer[]>([]);
+  const [selectedSigners, setSelectedSigners] = useState<string[]>([]);
+  const [emitting, setEmitting] = useState(false);
+
   const skipAutosave = useRef(true);
   const emitted = draft?.status === 'EMITIDO';
+
+  const isEligible = (s: Signer) =>
+    (s.role ?? '').toUpperCase().includes('DIRECTOR') ||
+    ['JURIDICA', 'PSICOLOGIA', 'TRABAJO_SOCIAL'].includes(s.profesion ?? '');
 
   useEffect(() => {
     (async () => {
@@ -47,8 +59,47 @@ export default function DocumentEditorPage({ params }: { params: { id: string } 
       setLoading(false);
       // Permite el primer autosave recién tras la hidratación.
       setTimeout(() => { skipAutosave.current = false; }, 300);
+
+      // Firmantes elegibles para la emisión (rol/profesión habilitado).
+      if (d.status !== 'EMITIDO') {
+        try {
+          const [meRes, usersRes] = await Promise.all([
+            fetch('/api/v1/auth/me', { credentials: 'include' }),
+            fetch('/api/v1/users'),
+          ]);
+          const meId = meRes.ok ? (await meRes.json())?.data?.user?.id : null;
+          const users = usersRes.ok ? await usersRes.json() : [];
+          const mapped: Signer[] = (users as { id: string; fullName: string; isActive: boolean; role?: { code: string }; profesion?: string | null }[])
+            .filter((u) => u.isActive)
+            .map((u) => ({ id: u.id, fullName: u.fullName, role: u.role?.code ?? null, profesion: u.profesion ?? null }));
+          const eligibles = mapped.filter(isEligible);
+          setEligibleSigners(eligibles);
+          if (meId && eligibles.some((e) => e.id === meId)) setSelectedSigners([meId]);
+        } catch { /* opcional */ }
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
+
+  const emit = async () => {
+    setEmitting(true); setMsg(null);
+    try {
+      const res = await fetch(`/api/v1/family/drafts/${params.id}/emit`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ signerUserIds: selectedSigners }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMsg({ type: 'err', text: data.error || 'No se pudo emitir' }); return; }
+      setShowEmit(false);
+      // Recargar el borrador (ahora EMITIDO con enlaces).
+      const r2 = await fetch(`/api/v1/family/drafts/${params.id}`);
+      if (r2.ok) setDraft((await r2.json()).data as Draft);
+      setMsg({ type: 'ok', text: `Documento emitido con ${data.signers} firma(s). PDF y DOCX disponibles.` });
+    } catch { setMsg({ type: 'err', text: 'Error de red al emitir' }); } finally { setEmitting(false); }
+  };
+
+  const toggleSigner = (id: string) =>
+    setSelectedSigners((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const save = useCallback(async (silent = false) => {
     if (emitted) return;
@@ -100,13 +151,45 @@ export default function DocumentEditorPage({ params }: { params: { id: string } 
             <button style={btnGhost} onClick={() => router.push(draft.case ? `/admin/family/${draft.case.id}` : '/admin/family')}><ArrowLeft size={16} /> Volver</button>
             {!emitted && <button style={btnGhost} onClick={proofread} disabled={proofreading}><Sparkles size={16} /> {proofreading ? 'Corrigiendo…' : 'Corregir con IA'}</button>}
             {!emitted && <button style={btnPrimary} onClick={() => save(false)} disabled={saving}><Save size={16} /> {saving ? 'Guardando…' : 'Guardar'}</button>}
+            {!emitted && <button style={{ ...btnPrimary, background: '#16a34a' }} onClick={() => setShowEmit((v) => !v)}><FileSignature size={16} /> Emitir</button>}
           </div>
         }
       />
 
+      {showEmit && !emitted && (
+        <div style={{ background: '#fff', border: '1px solid #bbf7d0', borderRadius: 12, padding: '1.1rem', marginBottom: '1rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileSignature size={18} /> Emitir documento (firma electrónica)</h3>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.83rem', color: '#475569' }}>
+            Se generará el PDF y el DOCX con encabezado institucional y se estamparán las firmas seleccionadas (imagen + sello + huella SHA-256). Una vez emitido, el documento queda en firme (solo lectura).
+          </p>
+          {eligibleSigners.length === 0 ? (
+            <p style={{ fontSize: '0.84rem', color: '#b45309' }}>No hay firmantes con firma registrada disponibles. Se emitirá sin firma. Registra firmas en Equipo.</p>
+          ) : (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
+              {eligibleSigners.map((s) => (
+                <label key={s.id} style={{ fontSize: '0.85rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <input type="checkbox" checked={selectedSigners.includes(s.id)} onChange={() => toggleSigner(s.id)} />
+                  {s.fullName}{s.profesion ? ` (${s.profesion})` : ''}
+                </label>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button style={{ ...btnPrimary, background: '#16a34a' }} onClick={emit} disabled={emitting}><FileSignature size={16} /> {emitting ? 'Emitiendo…' : 'Confirmar emisión'}</button>
+            <button style={btnGhost} onClick={() => setShowEmit(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
       {emitted && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', marginBottom: '1rem', borderRadius: 10, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}>
-          <CheckCircle2 size={18} /> Este documento ya fue emitido. Es de solo lectura.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.75rem 1rem', marginBottom: '1rem', borderRadius: 10, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle2 size={18} /> Documento emitido (solo lectura).</span>
+          {draft.document?.fileUrl && (
+            <a href={draft.document.fileUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnGhost, color: '#b91c1c', borderColor: '#fecaca', textDecoration: 'none' }}><FileDown size={16} /> PDF</a>
+          )}
+          {draft.docxUrl && (
+            <a href={draft.docxUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnGhost, color: '#1d4ed8', borderColor: '#bfdbfe', textDecoration: 'none' }}><FileType size={16} /> DOCX</a>
+          )}
         </div>
       )}
       {msg && (

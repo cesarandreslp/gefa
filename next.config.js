@@ -14,6 +14,9 @@ const nextConfig = {
   // El alta de tenant (Fase 2) lee prisma/tenant-schema.sql en runtime para aplicar
   // el esquema a la BD nueva; hay que incluir el .sql en el bundle serverless de la ruta.
   experimental: {
+    // Chromium (PDF) y puppeteer-core no deben empaquetarse por webpack: se cargan
+    // como paquetes externos del servidor para que sus binarios/assets se tracen bien.
+    serverComponentsExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
     outputFileTracingIncludes: {
       '/api/v1/super-admin/tenants': ['./prisma/tenant-schema.sql'],
     },
