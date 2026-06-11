@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 76. Mostrar la dirección física de la comisaría en el localizador
+**Estado:** COMPLETADO
+**Objetivo:** La consulta del localizador debe arrojar de forma visible la dirección física de la comisaría donde reposa el proceso (es el dato que el ciudadano necesita para saber a dónde ir). El API ya la devolvía mezclada con código/teléfono; se le da línea propia destacada.
+**Hecho:** `src/app/admin/localizar/page.tsx` — la dirección sale de la línea secundaria (que ahora solo lleva código · teléfono) y pasa a una fila propia resaltada (recuadro azul con ícono `MapPin`, "Dirección: …"). Si la comisaría no tiene `address` registrada, muestra un aviso para configurarla. Sin cambios en el API (ya devolvía `comisaria.address`).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+
 ### 75. Consulta de localización de procesos para el Auxiliar de Atención al Usuario
 **Estado:** COMPLETADO
 **Objetivo:** El auxiliar necesita una pantalla de SOLO consulta que, buscando por nombre / número de proceso / número de radicado / cédula, le diga en qué comisaría(s) del mismo tenant tiene proceso(s) un ciudadano. Hoy el ciudadano va de comisaría en comisaría hasta dar con la suya; esto centraliza la búsqueda y mejora la atención.

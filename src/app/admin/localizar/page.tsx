@@ -170,7 +170,7 @@ export default function LocalizarProcesoPage() {
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
                       {r.comisaria
-                        ? [r.comisaria.code, r.comisaria.phone, r.comisaria.address].filter(Boolean).join(' · ')
+                        ? [r.comisaria.code, r.comisaria.phone].filter(Boolean).join(' · ')
                         : 'Consulte con la coordinación para asignar sede'}
                     </div>
                   </div>
@@ -181,6 +181,17 @@ export default function LocalizarProcesoPage() {
                   </span>
                 )}
               </div>
+
+              {/* Dirección física de la sede — dato clave para remitir al ciudadano */}
+              {r.comisaria && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '0.6rem 0.8rem', marginBottom: 12 }}>
+                  <MapPin size={16} color="var(--color-primary, #2563eb)" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <div style={{ fontSize: '0.86rem', color: '#1e3a8a' }}>
+                    <span style={{ fontWeight: 600 }}>Dirección: </span>
+                    {r.comisaria.address || 'No registrada — verifíquela en la configuración de comisarías.'}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, paddingTop: 12, borderTop: '1px solid #f1f5f9', fontSize: '0.85rem', color: '#374151' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
