@@ -56,6 +56,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim();
     const modality = searchParams.get('modality')?.trim();
     const stateCode = searchParams.get('stateCode')?.trim();
+    const comisariaId = searchParams.get('comisariaId')?.trim();
+    const from = searchParams.get('from')?.trim();
+    const to = searchParams.get('to')?.trim();
     const limit = Math.min(Number(searchParams.get('limit')) || 20, 100);
     const page = Math.max(Number(searchParams.get('page')) || 1, 1);
 
@@ -65,6 +68,14 @@ export async function GET(request: NextRequest) {
     };
     if (modality && isValidEnum(CaseModality, modality)) where.caseModality = modality;
     if (stateCode) where.state = { code: stateCode };
+    if (comisariaId) where.comisariaId = comisariaId;
+    // Rango de fechas de radicación (filedAt). `to` incluye todo el día.
+    if (from || to) {
+      const range: Record<string, Date> = {};
+      if (from) range.gte = new Date(`${from}T00:00:00`);
+      if (to) range.lte = new Date(`${to}T23:59:59.999`);
+      where.filedAt = range;
+    }
     if (search) {
       where.OR = [
         { filingNumber: { contains: search, mode: 'insensitive' } },

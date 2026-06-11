@@ -35,16 +35,22 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [venc, setVenc] = useState<Vencimientos | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string>('');
+
+  // El ADMIN no radica casos: el Tablero omite esa acción para ese rol.
+  const isAdmin = role === 'ADMIN';
 
   useEffect(() => {
     (async () => {
       try {
-        const [s, v] = await Promise.all([
+        const [s, v, me] = await Promise.all([
           fetch('/api/v1/family/stats').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/v1/family/vencimientos').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/v1/auth/me', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)),
         ]);
         setStats(s);
         setVenc(v);
+        setRole(me?.data?.user?.role?.code ?? '');
       } catch { /* noop */ } finally { setLoading(false); }
     })();
   }, []);
@@ -68,7 +74,7 @@ export default function AdminDashboard() {
           <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.95rem' }}>Resumen de la operación de casos de familia.</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Link href="/admin/family/nuevo" style={btnPrimary}><Plus size={16} /> Radicar caso</Link>
+          {!isAdmin && <Link href="/admin/family/nuevo" style={btnPrimary}><Plus size={16} /> Radicar caso</Link>}
           <Link href="/admin/family/agenda" style={btnGhost}><Calendar size={16} /> Agenda</Link>
           <Link href="/admin/family/vencimientos" style={btnGhost}><Clock size={16} /> Vencimientos</Link>
         </div>

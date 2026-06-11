@@ -28,6 +28,8 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 - RBAC nav (parte de la fase 2 adelantada): "Radicar caso" queda restringido a `DIRECTOR/FUNCIONARIO/VENTANILLA_UNICA` (el ADMIN ya no lo ve).
 - Limpieza: eliminado `AdminNav.tsx` y su render redundante en `admin/metrics` y `admin/reports`.
 **Verificación fase 1:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Fase 2 — HECHA:** `admin/page.tsx` (Tablero) oculta el botón "Radicar caso" cuando el rol es ADMIN (fetch a `/auth/me`). El menú ya lo ocultaba (fase 1).
+**Fase 3 — HECHA:** `admin/family/page.tsx` (listado) gana barra de filtros: comisaría (carga `/api/v1/comisarias`), tipo de caso (modalidad, `CASE_MODALITY_LABELS`), estado (`FAMILY_CASE_STATES`), y rango de fechas Desde/Hasta; botón "Limpiar". Oculta "Radicar caso" para ADMIN. La columna "Modalidad" se renombra a "Tipo". API `GET /family/cases` gana params `comisariaId`, `from`, `to` (filedAt; `to` cubre todo el día) además de los ya existentes `modality`/`stateCode`/`search`.
 **Estado:** COMPLETADO
 **Objetivo:** El usuario pide que el modal de login mantenga la consistencia visual del menú mejorado. El modal activo ("Nuevo Modal Login", el que abre "Iniciar Sesión") era un card blanco plano sin lenguaje institucional.
 **Hecho (`src/app/components/LoginModal.tsx`):**
