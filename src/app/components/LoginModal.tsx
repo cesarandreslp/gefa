@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogIn, X } from 'lucide-react';
+import { LogIn, X, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 /**
  * Modal de login para administradores
@@ -101,7 +101,6 @@ export default function LoginModal({
       // Redirigir según el nivel del rol del usuario
       // Level 85 = Funcionarios que gestionan casos (delegados, analistas, etc.)
       const roleCode = data.data?.user?.role?.code;
-      const roleLevel = data.data?.user?.role?.level;
 
       if (roleCode === 'SUPER_ADMIN') {
         router.push('/super-admin');
@@ -154,7 +153,6 @@ export default function LoginModal({
       sessionStorage.setItem('sessionActive', '1');
       console.log('Login exitoso, verificando rol...');
       const roleCode = data.user?.role?.code || data.data?.user?.role?.code;
-      const roleLevel = data.user?.role?.level || data.data?.user?.role?.level;
       if (roleCode === 'SUPER_ADMIN') {
         router.push('/super-admin');
       } else if (roleCode === 'SECRETARIA_GOBIERNO') {
@@ -441,56 +439,41 @@ export default function LoginModal({
           <div
             style={{
               backgroundColor: 'white',
-              borderRadius: '12px',
+              borderRadius: '14px',
               width: '100%',
-              maxWidth: '380px',
-              padding: '2.5rem',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              maxWidth: '400px',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.28)',
               position: 'relative',
+              overflow: 'hidden',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setIsLoginModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#6b7280',
-                padding: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              aria-label="Cerrar modal"
-            >
-              <X size={24} />
-            </button>
-
-            {/* Titulo / Logo */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
-              {logoUrl && !logoUrl.endsWith('/logo.png') ? (
-                <img src={logoUrl} alt={tenantName || 'Login'} style={{ maxHeight: '60px', marginBottom: '1rem' }} />
-              ) : (
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)', marginBottom: '1rem', textAlign: 'center' }}>
-                  {tenantName || 'Comisaría de Familia'}
-                </h2>
-              )}
-              <h3
-                style={{
-                  fontSize: '1.1rem',
-                  fontWeight: '500',
-                  color: '#4b5563',
-                  margin: 0,
-                  textAlign: 'center',
-                }}
+            {/* Header institucional (consistente con el menú y el hero) */}
+            <div style={{ background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%)', padding: '1.75rem 1.5rem 1.5rem', textAlign: 'center', position: 'relative' }}>
+              <button
+                onClick={() => setIsLoginModalOpen(false)}
+                style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: '0.4rem', display: 'flex', opacity: 0.85 }}
+                aria-label="Cerrar modal"
               >
-                Ingresa a tu cuenta para continuar
-              </h3>
+                <X size={22} />
+              </button>
+              <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.85rem' }}>
+                {logoUrl && !logoUrl.endsWith('/logo.png') ? (
+                  <img src={logoUrl} alt={tenantName || 'Login'} style={{ maxHeight: '40px', objectFit: 'contain' }} />
+                ) : (
+                  <ShieldCheck size={28} color="white" />
+                )}
+              </div>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'white', margin: 0, lineHeight: 1.2 }}>
+                {tenantName || 'Comisaría de Familia'}
+              </h2>
+              <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.85)', margin: '0.3rem 0 0' }}>
+                Acceso institucional
+              </p>
             </div>
+
+            {/* Body */}
+            <div style={{ padding: '1.5rem' }}>
 
             {/* Honeypot inputs — prevent browser autofill */}
             <input type="text"     name="username_fake2" style={{ display: 'none' }} autoComplete="username"         readOnly tabIndex={-1} aria-hidden />
@@ -578,7 +561,7 @@ export default function LoginModal({
                     fontSize: '1.2rem',
                   }}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -663,6 +646,7 @@ export default function LoginModal({
               >
                 Contacta soporte
               </a>
+            </div>
             </div>
           </div>
         </div>

@@ -6,6 +6,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 69. Modal de login consistente con el menú (cabecera institucional azul)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario pide que el modal de login mantenga la consistencia visual del menú mejorado. El modal activo ("Nuevo Modal Login", el que abre "Iniciar Sesión") era un card blanco plano sin lenguaje institucional.
+**Hecho (`src/app/components/LoginModal.tsx`):**
+- Cabecera institucional con degradado azul (`primary-dark → primary`, igual que el hero), esquinas redondeadas y `overflow:hidden`: caja con ícono `ShieldCheck` (o el logo del tenant) en círculo translúcido, nombre de la entidad en blanco/negrita y subtítulo "Acceso institucional". Botón cerrar (X) blanco dentro de la cabecera. El cuerpo del formulario queda en blanco debajo (envuelto en un div con padding).
+- El toggle de contraseña pasa de emoji 👁️ a íconos vectoriales `Eye`/`EyeOff` (consistente con los íconos lucide del menú).
+- Limpieza: se eliminan dos `const roleLevel` sin usar (lint errors preexistentes) en los dos handlers de login.
+**Verificación:** `tsc --noEmit` exit=0 (JSX balanceado); `next lint` solo el warning preexistente de `<img>`. Commit+push → auto-deploy.
+
 ### 68. Fix: título "Menú" del cajón móvil se veía azul → blanco y negrita
 **Estado:** COMPLETADO
 **Objetivo:** El `<h2>Menú</h2>` del header del cajón móvil heredaba el azul de la regla global `h1..h6 { color: var(--color-primary-dark) }`, que pisaba el blanco del contenedor. Forzarlo a blanco y negrita.
