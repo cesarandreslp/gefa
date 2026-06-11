@@ -29,6 +29,8 @@ interface Expediente {
   dueDate: string;
   priority: number;
   caseModality: string | null;
+  riesgoInminente?: boolean;
+  riesgoInminenteMotivo?: string | null;
   violenceTypes: string[];
   caseType: { code: string; name: string } | null;
   state: { code: string; name: string; color: string | null } | null;
@@ -144,12 +146,22 @@ export default function ExpedienteFamiliaPage() {
       <div style={card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.2rem' }}>{data.filingNumber}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.2rem' }}>{data.filingNumber}</span>
+              {data.riesgoInminente && (
+                <span title="Riesgo inminente / violencia física evidente" style={{ background: '#dc2626', color: 'white', borderRadius: '6px', padding: '0.1rem 0.5rem', fontSize: '0.72rem', fontWeight: 700 }}>⚠ URGENTE</span>
+              )}
+            </div>
             <h1 style={{ fontSize: '1.3rem', margin: '0.25rem 0' }}>{data.subject}</h1>
             <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>{data.caseType?.name} · {data.caseModality ? (CASE_MODALITY_LABELS[data.caseModality] ?? data.caseModality) : 'Sin modalidad'}</div>
           </div>
           <span style={pill(data.state?.color ?? '#6b7280')}>{data.state?.name ?? '—'}</span>
         </div>
+        {data.riesgoInminente && (
+          <div style={{ marginTop: '0.85rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '0.6rem 0.85rem', color: '#991b1b', fontSize: '0.85rem' }}>
+            <b>⚠ Riesgo inminente marcado en recepción.</b>{data.riesgoInminenteMotivo ? <> Motivo: {data.riesgoInminenteMotivo}</> : ' Sin motivo detallado.'}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem', fontSize: '0.85rem', color: '#374151', alignItems: 'center' }}>
           <span>📅 Radicado: <b>{new Date(data.filedAt).toLocaleDateString('es-CO')}</b></span>
           <span>⏰ Vence: <b>{new Date(data.dueDate).toLocaleDateString('es-CO')}</b></span>

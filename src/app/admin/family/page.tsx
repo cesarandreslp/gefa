@@ -13,6 +13,7 @@ interface FamilyCaseRow {
   filedAt: string;
   caseModality: string | null;
   priority: number;
+  riesgoInminente?: boolean;
   caseType: { code: string; name: string } | null;
   state: { code: string; name: string; color: string | null } | null;
   comisaria: { id: string; code: string; name: string } | null;
@@ -162,7 +163,12 @@ export default function FamilyCasesPage() {
             <tbody>
               {cases.map((c) => (
                 <tr key={c.id} onClick={() => router.push(`/admin/family/${c.id}`)} style={{ borderTop: '1px solid #f3f4f6', cursor: 'pointer' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600, fontFamily: 'monospace' }}>{c.filingNumber}</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600, fontFamily: 'monospace' }}>
+                    {c.filingNumber}
+                    {c.riesgoInminente && (
+                      <span title="Riesgo inminente / violencia física evidente" style={{ display: 'inline-block', marginLeft: '0.4rem', background: '#dc2626', color: 'white', borderRadius: '6px', padding: '0.05rem 0.4rem', fontSize: '0.68rem', fontWeight: 700, fontFamily: 'system-ui, sans-serif', verticalAlign: 'middle' }}>URGENTE</span>
+                    )}
+                  </td>
                   <td style={{ padding: '0.75rem 1rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.subject}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>{c.caseModality ? (CASE_MODALITY_LABELS[c.caseModality] ?? c.caseModality) : '—'}</td>
                   <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: c.comisaria ? '#374151' : '#9ca3af' }}>{c.comisaria ? c.comisaria.code : '—'}</td>

@@ -49,6 +49,8 @@ export default function NuevoFamilyCasePage() {
   const [description, setDescription] = useState('');
   const [channel, setChannel] = useState('PRESENCIAL');
   const [violence, setViolence] = useState<string[]>([]);
+  const [riesgoInminente, setRiesgoInminente] = useState(false);
+  const [riesgoMotivo, setRiesgoMotivo] = useState('');
   const [parties, setParties] = useState<PartyForm[]>([emptyParty('VICTIMA')]);
   const [comisarias, setComisarias] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [comisariaId, setComisariaId] = useState('');
@@ -97,6 +99,8 @@ export default function NuevoFamilyCasePage() {
         channel,
         comisariaId: comisariaId || undefined,
         violenceTypes: violence,
+        riesgoInminente,
+        riesgoInminenteMotivo: riesgoInminente ? riesgoMotivo.trim() || undefined : undefined,
         parties: parties.map((p) => ({
           role: p.role,
           legalRepresentativeName: p.legalRepresentativeName.trim() || undefined,
@@ -195,6 +199,25 @@ export default function NuevoFamilyCasePage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Triage de recepción (RF‑06) */}
+          <div style={{ marginTop: '1rem', border: '1px solid', borderColor: riesgoInminente ? '#fca5a5' : '#e5e7eb', background: riesgoInminente ? '#fef2f2' : '#fafafa', borderRadius: '10px', padding: '0.9rem 1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer' }}>
+              <input type="checkbox" checked={riesgoInminente} onChange={(e) => setRiesgoInminente(e.target.checked)} style={{ marginTop: '0.2rem', width: 16, height: 16 }} />
+              <span>
+                <span style={{ fontWeight: 700, color: riesgoInminente ? '#991b1b' : '#374151' }}>⚠ Violencia física evidente / riesgo inminente</span>
+                <span style={{ display: 'block', fontSize: '0.78rem', color: '#6b7280', marginTop: '0.15rem' }}>
+                  Márquelo si al recibir el caso hay peligro inmediato. Eleva la prioridad y habilita la atención urgente del comisario.
+                </span>
+              </span>
+            </label>
+            {riesgoInminente && (
+              <div style={{ marginTop: '0.7rem' }}>
+                <label style={labelStyle}>Motivo del riesgo (qué evidenció)</label>
+                <textarea value={riesgoMotivo} onChange={(e) => setRiesgoMotivo(e.target.value)} style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Ej: lesiones visibles, amenazas de muerte, presencia del agresor…" />
+              </div>
+            )}
           </div>
         </div>
 

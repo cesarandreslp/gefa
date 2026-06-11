@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
     const {
       caseTypeCode, subject, description, channel,
       violenceTypes, modality, priority, folios, comisariaId,
+      riesgoInminente, riesgoInminenteMotivo,
     } = body;
     const parties: PartyInput[] = Array.isArray(body.parties) ? body.parties : [];
 
@@ -229,7 +230,10 @@ export async function POST(request: NextRequest) {
     // Prioridad: explícita; si hay NNA o es VIF/PARD/PNNA, elevar
     const hasNNA = parties.some((p) => p.role === PartyRole.NNA);
     const sensitiveModality = ['VIOLENCIA_INTRAFAMILIAR', 'PARD', 'MEDIDA_PROTECCION_NNA'].includes(caseModality || '');
-    const finalPriority = typeof priority === 'number' ? priority : (hasNNA || sensitiveModality ? 60 : 40);
+    const esUrgente = riesgoInminente === true;
+    let finalPriority = typeof priority === 'number' ? priority : (hasNNA || sensitiveModality ? 60 : 40);
+    // Triage de riesgo inminente (RF‑06): eleva la prioridad para que encabece colas.
+    if (esUrgente) finalPriority = Math.max(finalPriority, 90);
 
     // --- Transacción: personas + citizen espejo + caso + historial + partes ---
     const created = await db.$transaction(async (tx) => {
@@ -354,6 +358,8 @@ export async function POST(request: NextRequest) {
           legalTermDays: caseType.defaultLegalTermDays,
           caseModality,
           violenceTypes: validViolence,
+          riesgoInminente: esUrgente,
+          riesgoInminenteMotivo: esUrgente ? (typeof riesgoInminenteMotivo === 'string' ? riesgoInminenteMotivo.trim() || null : null) : null,
           comisariaId: comisariaId || null,
           metadata: { radicadoPor: auth.user!.userId, origen: 'family_intake' },
         },

@@ -292,6 +292,11 @@ model Case {
   violenceTypes  ViolenceType[]
   caseModality   CaseModality?
 
+  // Triage de recepción (RF‑06): violencia física evidente / riesgo inminente.
+  // Habilita la priorización y la ruta urgente directa al comisario (RF‑07).
+  riesgoInminente       Boolean @default(false)
+  riesgoInminenteMotivo String? @db.Text
+
   // Pre-informe consolidado por IA (Fase C4): integra los informes preliminares
   // de los instrumentos diligenciados en un BORRADOR único del caso. Sin peso
   // procesal: lo edita el equipo y lo aprueba la autoridad (Fase C5).
@@ -339,6 +344,7 @@ model Case {
   @@index([dueDate])
   @@index([filedAt])
   @@index([isOverdue])
+  @@index([riesgoInminente])
   @@map("cases")
 }
 

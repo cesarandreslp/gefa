@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 79. RF‑06 — Triage de riesgo inminente en recepción + badge URGENTE
+**Estado:** COMPLETADO
+**Objetivo:** Que quien recepciona marque "violencia física evidente / riesgo inminente" al radicar, para priorizar y (RF‑07, aparte) habilitar la ruta urgente. Aditivo: campos en `Case` + checkbox en radicación + badge URGENTE en listado/expediente.
+**Hecho:**
+- `prisma/schema.prisma` — `Case` suma `riesgoInminente Boolean @default(false)` + `riesgoInminenteMotivo String? @db.Text` + `@@index([riesgoInminente])`. Aditivo (default false → casos existentes quedan no-urgentes). `prisma generate` OK.
+- `api/v1/family/cases` POST — acepta `riesgoInminente`/`riesgoInminenteMotivo`, los persiste y **eleva la prioridad a ≥90** si está marcado (encabeza colas).
+- `admin/family/nuevo` — checkbox "⚠ Violencia física evidente / riesgo inminente" + textarea de motivo condicional; se envían en el body.
+- `admin/family` (listado) — badge rojo **URGENTE** junto al radicado.
+- `admin/family/[caseId]` — badge ⚠ URGENTE en el encabezado + franja roja con el motivo. El GET del detalle usa `include` → ya devolvía los escalares.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**ACCIÓN MANUAL REQUERIDA (BD demo):** aplicar las columnas nuevas a la BD principal: `prisma db push` (o `ALTER TABLE "cases" ADD COLUMN "riesgoInminente" boolean NOT NULL DEFAULT false, ADD COLUMN "riesgoInminenteMotivo" text;`). Tenants nuevos lo reciben vía `tenant-schema.sql` (postinstall). Sin esto, radicar fallaría al escribir los campos nuevos → aplicar antes de desplegar el uso.
+**Pendiente:** RF‑07 (transición directa RADICADO→MEDIDA_ADOPTADA cuando hay triage), RF‑12/13 (Atención+autoguardado).
+
 ### 78. RF‑04 — Habilitar la profesión Jurídico en el equipo interdisciplinario
 **Estado:** COMPLETADO
 **Objetivo:** El paso 2 del flujo necesita al jurídico como tercer profesional; hoy `User.profesion` solo admite PSICOLOGIA/TRABAJO_SOCIAL/AMBOS y no hay UI para asignarla. Cambio aditivo (enum + asignación desde la gestión de equipo).
