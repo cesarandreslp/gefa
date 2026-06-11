@@ -106,6 +106,17 @@ export const FAMILY_LOCATE_ROLES = [
 ];
 
 /**
+ * Roles que DESPACHAN turnos de atención (RF‑12): la recepción asigna un caso a
+ * un profesional libre del equipo. La dirección también puede, para coordinar.
+ */
+export const FAMILY_DISPATCH_ROLES = [
+  'ADMIN',
+  'DIRECTOR',
+  'VENTANILLA_UNICA',
+  'AUXILIAR_ATENCION_USUARIO',
+];
+
+/**
  * Verifica que un caso exista y pertenezca al tenant del usuario.
  * Devuelve el caso (id) o null. Evita fuga de datos entre comisarías.
  */

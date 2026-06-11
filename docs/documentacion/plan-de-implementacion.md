@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 82. RF‑12/13 sub‑paso 12b — Ciclo del turno: abrir · autoguardar · finalizar
+**Estado:** COMPLETADO
+**Objetivo:** Endpoints del turno de atención: recepción abre/asigna, el profesional autoguarda el borrador, y "Guardar y terminar" promueve a `Assessment` y libera al profesional.
+**Hecho:**
+- `src/lib/instrumentoAssessment.ts` (NUEVO) — helper `aplicarInstrumentoEnCaso` que centraliza: carga instrumento, RBAC por profesión, validación de persona, puntaje y creación del `Assessment`. **Refactorizado** `instrumentos/aplicar` para usarlo (evita divergencia entre aplicación directa y finalización del turno). Movido `nivelToRiskLevel` al helper.
+- `src/lib/familyApi.ts` — `FAMILY_DISPATCH_ROLES` (ADMIN/DIRECTOR/VENTANILLA_UNICA/AUXILIAR_ATENCION_USUARIO): quién asigna turnos.
+- `cases/[caseId]/atenciones` — POST abre turno (valida profesional activo con profesión; rechaza si ya está OCUPADO con un turno EN_CURSO; `asignadoPorUserId`=recepción; audita `FAMILY_ATENCION_ABIERTA`). GET lista los turnos del caso.
+- `atenciones/[id]` — GET restaura el borrador (dueño o ADMIN/DIRECTOR); PATCH autoguarda `borrador`+`lastAutosaveAt` (solo el profesional dueño y si EN_CURSO).
+- `atenciones/[id]/finalizar` — POST "Guardar y terminar": valida dueño/EN_CURSO, aplica el instrumento (helper), marca FINALIZADA+endedAt+assessmentId, audita `FAMILY_ATENCION_FINALIZADA`. Al no quedar atención EN_CURSO, el profesional vuelve a LIBRE (disponibilidad derivada).
+- **db push aplicado** a la BD principal (tabla `atenciones` + enum `AtencionEstado`), aditivo. Pre‑autorizado por el usuario.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Pendiente:** 12c (tablero de disponibilidad + UI de asignar/atender/finalizar) y 12d (jornada + excepción autorizada).
+
 ### 81. RF‑12/13 sub‑paso 12a — Modelo `Atencion` (turno) en el schema
 **Estado:** COMPLETADO
 **Objetivo:** Cimiento del despacho por disponibilidad: la tabla del turno de atención. Decisión del usuario: **la recepción ASIGNA el turno** (no lo toma el profesional).

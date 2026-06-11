@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AssessmentType, RiskLevel } from '@prisma/client';
 import { protectAPIRoute } from '@/lib/auth';
 import { FAMILY_CONFIDENTIAL_ROLES, findCaseInTenant, auditFamily } from '@/lib/familyApi';
-import { computeInstrumentoScore } from '@/lib/instrumentoScoring';
+import { aplicarInstrumentoEnCaso } from '@/lib/instrumentoAssessment';
 
 export const dynamic = 'force-dynamic';
-
-// Nivel propio del instrumento (BAJO/MODERADO/ALTO) → enum RiskLevel del expediente.
-function nivelToRiskLevel(nivel: string | null): RiskLevel {
-  switch (nivel) {
-    case 'ALTO': return RiskLevel.ALTO;
-    case 'EXTREMO': return RiskLevel.EXTREMO;
-    case 'MODERADO':
-    case 'MEDIO': return RiskLevel.MEDIO;
-    case 'BAJO': return RiskLevel.BAJO;
-    default: return RiskLevel.BAJO;
-  }
-}
 
 // POST /api/v1/family/cases/[caseId]/instrumentos/aplicar
 // Diligencia un instrumento del catálogo: calcula puntaje/nivel y lo guarda como
@@ -40,74 +27,25 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
       return NextResponse.json({ error: 'instrumentoId y respuestas son obligatorios' }, { status: 400 });
     }
 
-    const instrumento = await db.instrumento.findFirst({
-      where: { id: instrumentoId, isActive: true },
-      include: { campos: true },
-    });
-    if (!instrumento) {
-      return NextResponse.json({ error: 'Instrumento no encontrado o inactivo' }, { status: 404 });
-    }
-
-    // RBAC por profesión: un funcionario con profesión solo puede aplicar
-    // instrumentos de su profesión o de AMBOS (psicólogo no aplica F5, ni
-    // viceversa). El comisario (DIRECTOR, sin profesión) no tiene esta restricción.
     const me = await db.user.findUnique({ where: { id: auth.user.userId }, select: { profesion: true } });
-    if (me?.profesion && instrumento.profesion !== 'AMBOS' && instrumento.profesion !== me.profesion) {
-      return NextResponse.json(
-        { error: `Este instrumento es de ${instrumento.profesion}; su perfil profesional (${me.profesion}) no puede aplicarlo.` },
-        { status: 403 }
-      );
-    }
 
-    if (assessedPersonId) {
-      const person = await db.person.findFirst({
-        where: { id: assessedPersonId, tenantId: auth.user.tenantId },
-        select: { id: true },
-      });
-      if (!person) {
-        return NextResponse.json({ error: 'La persona valorada no existe en la entidad' }, { status: 404 });
-      }
-    }
-
-    const score = computeInstrumentoScore(
-      instrumento.campos.map((c) => ({ code: c.code, tipo: c.tipo, peso: c.peso, esCritico: c.esCritico, opciones: c.opciones })),
-      respuestas as Record<string, unknown>,
-      instrumento.scoringConfig as never
-    );
-
-    const max = (instrumento.scoringConfig as { maxScore?: number } | null)?.maxScore;
-    const findings =
-      `Instrumento aplicado: ${instrumento.name} (${instrumento.norma}). ` +
-      `Puntaje directo: ${score.scoreDirecto} · ponderado: ${score.scorePonderado}${max ? `/${max}` : ''}` +
-      `${score.nivelCalculado ? ` · nivel: ${score.nivelCalculado}` : ' · interpretación de continuo'}.` +
-      `${score.criticosActivos.length > 0 ? ` Ítems críticos afirmativos: ${score.criticosActivos.length}.` : ''}`;
-
-    const assessment = await db.assessment.create({
-      data: {
-        tenantId: auth.user.tenantId,
-        caseId: params.caseId,
-        assessmentType: (instrumento.assessmentType as AssessmentType) ?? AssessmentType.INTERDISCIPLINARIA,
-        findings,
-        riskLevel: nivelToRiskLevel(score.nivelCalculado),
-        assessedPersonId: assessedPersonId || null,
-        assessorUserId: auth.user.userId,
-        conductedAt: new Date(),
-        isConfidential: true,
-        instrumentoId: instrumento.id,
-        respuestas: respuestas as never,
-        scoreDirecto: score.scoreDirecto,
-        scorePonderado: score.scorePonderado,
-        nivelCalculado: score.nivelCalculado,
-      },
-      include: {
-        assessor: { select: { id: true, fullName: true } },
-        instrumento: { select: { id: true, name: true, norma: true } },
-      },
+    const result = await aplicarInstrumentoEnCaso(db, {
+      tenantId: auth.user.tenantId,
+      caseId: params.caseId,
+      instrumentoId,
+      respuestas: respuestas as Record<string, unknown>,
+      assessedPersonId,
+      assessorUserId: auth.user.userId,
+      assessorProfesion: me?.profesion ?? null,
     });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status ?? 400 });
+    }
 
+    const assessment = result.assessment;
     await auditFamily(db, request, auth.user, 'FAMILY_INSTRUMENT_APPLIED', 'Assessment', assessment.id, {
       caseId: params.caseId,
-      metadata: { instrumento: instrumento.code, scorePonderado: score.scorePonderado, nivel: score.nivelCalculado },
+      metadata: { instrumento: assessment.instrumento?.code, scorePonderado: assessment.scorePonderado, nivel: assessment.nivelCalculado },
     });
 
     return NextResponse.json(assessment, { status: 201 });
