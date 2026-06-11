@@ -6,6 +6,18 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 75. Consulta de localización de procesos para el Auxiliar de Atención al Usuario
+**Estado:** COMPLETADO
+**Objetivo:** El auxiliar necesita una pantalla de SOLO consulta que, buscando por nombre / número de proceso / número de radicado / cédula, le diga en qué comisaría(s) del mismo tenant tiene proceso(s) un ciudadano. Hoy el ciudadano va de comisaría en comisaría hasta dar con la suya; esto centraliza la búsqueda y mejora la atención.
+**Diseño (minimización de datos por NNA/víctimas):** la consulta es SOLO de localización — devuelve comisaría (sede + tel + dirección), radicado, tipo, estado, fecha y las personas coincidentes; NO expone el contenido del expediente (asunto, descripción, tipos de violencia, valoraciones). Cada búsqueda se audita en `ActionLog` (Ley 1581/2012). Aislamiento por tenant: busca en todas las comisarías de la misma Alcaldía, nunca cruza tenants.
+**Hecho:**
+- `src/lib/familyApi.ts` — nuevo grupo `FAMILY_LOCATE_ROLES` = ADMIN, DIRECTOR, FUNCIONARIO, VENTANILLA_UNICA, **AUXILIAR_ATENCION_USUARIO** (el rol ya existía en `familyRoles.ts` con permisos `cases:read`/`citizens:read`, pero no estaba en ningún grupo RBAC).
+- `src/app/api/v1/family/locate/route.ts` (NUEVO) — `GET ?q=`. Busca por `filingNumber` (radicado/proceso), y por cédula/nombre tanto en el radicante (`Citizen`) como en las partes (`Person` vía `CaseParty`). Tokeniza el nombre; el documento se compara por dígitos. Devuelve `data` (casos con sede + personas) y `sedes` (resumen de comisarías distintas). Audita con `FAMILY_CASE_LOCATE_SEARCH`.
+- `src/app/admin/localizar/page.tsx` (NUEVO) — pantalla de consulta con `AdminPageHeader` (inline), buscador, nota de uso, banner-resumen de sedes (chips), tarjetas por proceso que destacan la SEDE, con radicado/tipo/estado/fecha y chips de personas (badge NNA). Estados de carga / sin resultados / error.
+- `src/app/admin/AdminShell.tsx` — ítem de nav "Localizar proceso" (ícono `MapPin`) visible a los `FAMILY_LOCATE_ROLES`.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings.
+**Observación para el usuario (no corregida — pre-existente):** el `AUXILIAR_ATENCION_USUARIO` ya ve en el nav los ítems sin restricción de rol (Tablero, Casos de Familia, Agenda, Vencimientos), pero sus APIs (`family/cases`) exigen `FAMILY_READ_ROLES`, que NO lo incluye → esas páginas le mostrarían 403. Conviene decidir si al auxiliar se le restringe el nav a solo "Localizar proceso" (coherente con "solo es consultar eso").
+
 ### 74. Alinear Entidad/Configuración/Sistema al encabezado y estilo del admin
 **Estado:** COMPLETADO
 **Objetivo:** Dejar las páginas restantes del admin (Entidad, Configuración, Sistema) con el mismo `AdminPageHeader` y estilo inline consistente que el resto, eliminando chrome redundante.

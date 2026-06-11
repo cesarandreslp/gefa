@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   LayoutDashboard, Folder, FilePlus, Calendar, Clock, BarChart3, TrendingUp,
   Building2, Users, FileText, Landmark, Settings, Bell, Server, ShieldCheck,
-  Menu, ChevronLeft, ChevronRight, X, LogOut,
+  MapPin, Menu, ChevronLeft, ChevronRight, X, LogOut,
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,6 +25,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Radicar caso', path: '/admin/family/nuevo', Icon: FilePlus, roles: ['DIRECTOR', 'FUNCIONARIO', 'VENTANILLA_UNICA'] },
   { label: 'Agenda', path: '/admin/family/agenda', Icon: Calendar },
   { label: 'Vencimientos', path: '/admin/family/vencimientos', Icon: Clock },
+  // Localizador de procesos: en qué comisaría tiene caso un ciudadano (atención al mostrador).
+  { label: 'Localizar proceso', path: '/admin/localizar', Icon: MapPin, roles: ['ADMIN', 'DIRECTOR', 'FUNCIONARIO', 'VENTANILLA_UNICA', 'AUXILIAR_ATENCION_USUARIO'] },
   { label: 'Estadísticas', path: '/admin/family/stats', Icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR'] },
   { label: 'Seguimiento', path: '/admin/seguimiento', Icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'], separatorBefore: true },
   { label: 'Comisarías', path: '/admin/comisarias', Icon: Building2, roles: ['ADMIN'] },

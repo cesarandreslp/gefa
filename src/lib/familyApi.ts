@@ -90,6 +90,22 @@ export const FAMILY_AUDIT_ROLES = ['ADMIN', 'DIRECTOR'];
 export const FAMILY_STATS_ROLES = ['ADMIN', 'DIRECTOR', 'SUPERVISOR', 'SECRETARIA_GOBIERNO'];
 
 /**
+ * Roles que pueden LOCALIZAR un proceso (consulta mínima: en qué comisaría del
+ * tenant tiene caso(s) una persona, buscando por radicado/proceso, cédula o
+ * nombre). Incluye al AUXILIAR_ATENCION_USUARIO: atiende al ciudadano en el
+ * mostrador y necesita saber a qué sede remitirlo sin que vaya de comisaría en
+ * comisaría. Es SOLO de localización — no expone el contenido del expediente
+ * (asunto, descripción, valoraciones), por minimización de datos de NNA/víctimas.
+ */
+export const FAMILY_LOCATE_ROLES = [
+  'ADMIN',
+  'DIRECTOR',
+  'FUNCIONARIO',
+  'VENTANILLA_UNICA',
+  'AUXILIAR_ATENCION_USUARIO',
+];
+
+/**
  * Verifica que un caso exista y pertenezca al tenant del usuario.
  * Devuelve el caso (id) o null. Evita fuga de datos entre comisarías.
  */
