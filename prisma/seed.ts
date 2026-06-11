@@ -25,6 +25,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { FAMILY_CASE_TYPES } from '../src/domain/catalogs/familyCaseTypes';
+import { FAMILY_CASE_STATES } from '../src/domain/catalogs/familyCaseStates';
 
 const prisma = new PrismaClient();
 
@@ -47,15 +48,8 @@ const ROLES = [
     description: 'Apoyo en la atención directa al usuario en la comisaría.' },
 ];
 
-const STATES = [
-  { code: 'RADICADO', name: 'Radicado', description: 'Solicitud recibida y radicada oficialmente', isInitial: true, isFinal: false, requiresComment: false, color: '#3B82F6', displayOrder: 1 },
-  { code: 'EN_ESTUDIO', name: 'En Estudio', description: 'El funcionario está analizando el caso', isInitial: false, isFinal: false, requiresComment: false, color: '#F59E0B', displayOrder: 2 },
-  { code: 'REQUIERE_INFORMACION', name: 'Requiere Información', description: 'Se necesita información adicional', isInitial: false, isFinal: false, requiresComment: true, color: '#EAB308', displayOrder: 3 },
-  { code: 'ESCALADO_A_OTRA_DEPENDENCIA', name: 'Escalado a Otra Dependencia', description: 'Enviado a otra dependencia', isInitial: false, isFinal: false, requiresComment: true, color: '#9333EA', displayOrder: 4 },
-  { code: 'REMITIDO_A_ENTIDAD_EXTERNA', name: 'Remitido a Entidad Externa', description: 'Remitido a una entidad externa', isInitial: false, isFinal: false, requiresComment: true, color: '#0891B2', displayOrder: 5 },
-  { code: 'REMITIDO_POR_COMPETENCIA', name: 'Rechazado por Improcedencia', description: 'No es competencia de la comisaría', isInitial: false, isFinal: true, requiresComment: true, color: '#DC2626', displayOrder: 6 },
-  { code: 'CERRADO', name: 'Cerrado', description: 'Trámite finalizado definitivamente', isInitial: false, isFinal: true, requiresComment: true, color: '#6B7280', displayOrder: 7 },
-];
+// Estados del workflow de comisaría de familia (fuente única: FAMILY_CASE_STATES).
+const STATES = FAMILY_CASE_STATES;
 
 const TENANTS = [
   { sigla: 'BUGA', name: 'Alcaldía de Guadalajara de Buga', domain: 'gefa-cfbuga.vercel.app' },

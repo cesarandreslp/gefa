@@ -6,6 +6,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-10
 
+### 65. Fix: estados de familia ausentes en la BD (transición "no configurado")
+**Estado:** COMPLETADO
+**Objetivo:** Al cambiar el estado de un caso a "En Valoración" la UI da "Estado destino no configurado: EN_VALORACION". Causa: `prisma/seed.ts` (seed activo de la BD demo) siembra una lista INLINE de estados con los códigos VIEJOS de Ventanilla (EN_ESTUDIO, REQUIERE_INFORMACION, ESCALADO_A_OTRA_DEPENDENCIA, REMITIDO_A_ENTIDAD_EXTERNA, REMITIDO_POR_COMPETENCIA) en vez de importar `FAMILY_CASE_STATES`. El dropdown se llena del catálogo (que sí tiene EN_VALORACION) pero la tabla `caseState` no lo tiene → el POST de transición falla. Faltan en la BD: EN_VALORACION, EN_AUDIENCIA, MEDIDA_ADOPTADA, EN_SEGUIMIENTO, REMITIDO.
+**Causa exacta:** [transition/route.ts:70-76](src/app/api/v1/family/cases/[caseId]/transition/route.ts) valida con la máquina de estados (catálogo, OK) pero luego hace `caseState.findFirst({ code, isActive:true })` y devuelve null → "no configurado". El catálogo (`FAMILY_CASE_STATES`) y la tabla `caseState` estaban desincronizados.
+**Hecho:**
+- **Código:** `prisma/seed.ts` ahora importa y usa `FAMILY_CASE_STATES` (se eliminó la lista inline legacy). Los otros caminos de alta (provisioning Fase 2, registro-entidad, seed-family) ya usaban el catálogo correcto.
+- **Datos (producción, autorizado por el usuario):** script one-off que (1) upsert de los 7 estados de familia (creó los 5 que faltaban: EN_VALORACION, EN_AUDIENCIA, MEDIDA_ADOPTADA, EN_SEGUIMIENTO, REMITIDO; actualizó RADICADO/CERRADO) y (2) desactivó los 5 estados legacy de Ventanilla que NO tenían ningún caso asociado (verificado: 0 casos cada uno → seguro). Script eliminado tras correr.
+**Verificación:** re-consulta a la BD → EN_VALORACION activo (1 fila); 7 estados de familia activos, 5 legacy inactivos. El fix es de DATOS (el endpoint lee la BD en runtime) → no requiere redeploy; la transición funciona de inmediato. `tsc --noEmit` exit=0.
+
 ### 64. Rediseño de la cara pública del tenant (look gov.co institucional)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario muestra que la landing del tenant (imagen 1) se ve pobre y pide unificar el criterio visual de dos sitios gov.co de referencia (imágenes 2 y 3: cabecera con logo+nombre+tagline, barra de contacto, nav, hero con degradado y badge, tarjetas de servicios). Adoptar ESE look profesional pero con contenido de COMISARÍA DE FAMILIA, sin reintroducir dominio de personería (Transparencia/PQRS/Información Pública/Normatividad) — principio rector. Mejorar `src/app/page.tsx` (hero+tarjetas+contacto) y `src/app/ClientLayout.tsx` (cabecera institucional + barra de contacto).
