@@ -6,6 +6,15 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 81. RF‑12/13 sub‑paso 12a — Modelo `Atencion` (turno) en el schema
+**Estado:** COMPLETADO
+**Objetivo:** Cimiento del despacho por disponibilidad: la tabla del turno de atención. Decisión del usuario: **la recepción ASIGNA el turno** (no lo toma el profesional).
+**Hecho:**
+- `prisma/schema.prisma` — nuevo modelo `Atencion` (`tenantId`, `caseId`→Case, `profesionalUserId`→User, `profesion`, `asignadoPorUserId` suelto, `estado` `AtencionEstado`, `startedAt/endedAt`, autoguardado `instrumentoId`→Instrumento + `assessedPersonId` + `borrador Json` + `lastAutosaveAt`, `assessmentId`→Assessment 1‑1 `@unique`) + enum `AtencionEstado {EN_CURSO|FINALIZADA|CANCELADA}`. Relaciones inversas añadidas en `Case`, `User`, `Instrumento`, `Assessment`. `tenantId`/`asignadoPorUserId`/`assessedPersonId` como escalares sueltos para minimizar ediciones.
+- `prisma validate` ✅, `prisma generate` ✅, `tsc` exit=0.
+- **No‑breaking sin db push**: ningún código usa la tabla todavía → seguro desplegar. El `db push` se hará junto con 12b (cuando los endpoints escriban `atenciones`). Tenants nuevos la reciben vía `tenant-schema.sql` (postinstall).
+**Pendiente:** 12b (endpoints: abrir turno por recepción · autoguardado PATCH · "Guardar y terminar" → Assessment + liberar) — incluirá el `db push`. Luego 12c (tablero) y 12d (jornada/excepción).
+
 ### 80. RF‑07 — Ruta urgente: transición directa RADICADO → MEDIDA_ADOPTADA con triage
 **Estado:** COMPLETADO
 **Objetivo:** Cuando el caso tiene `riesgoInminente` (RF‑06), permitir que el comisario adopte una medida de inmediato saltándose la valoración: habilitar la transición `RADICADO → MEDIDA_ADOPTADA` solo cuando hay triage. La valoración se hace después.

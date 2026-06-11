@@ -331,6 +331,7 @@ model Case {
   hearings            Hearing[]
   assessments         Assessment[]
   declaraciones       Declaracion[]
+  atenciones          Atencion[]
 
   // Comisaría (sede) del municipio a la que pertenece el caso
   comisariaId    String?
@@ -712,6 +713,7 @@ model User {
   tomadasDeclaraciones Declaracion[] @relation("DeclaracionTomadaPor")
   valoradasPruebas     Document[]    @relation("PruebaValoradaPor")
   aprobadosPreInformes Case[]        @relation("CasePreInformeAprobadoPor")
+  atenciones           Atencion[]
 
   // Relación recursiva para conectar Auxiliares con el Oficial que los creó
   supervisorId String?
@@ -1605,11 +1607,67 @@ model Assessment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Turno de atención que produjo esta valoración (RF‑12), si vino del paso 2.
+  atencion Atencion?
+
   @@index([caseId])
   @@index([assessedPersonId])
   @@index([conductedAt])
   @@index([isConfidential])
   @@map("assessments")
+}
+
+/// Turno de atención del paso 2 (RF‑12): un profesional del equipo atiende a un
+/// usuario en una sesión. La recepción lo ASIGNA; el profesional diligencia (con
+/// autoguardado del borrador, RF‑13) y al "Guardar y terminar" se promueve a un
+/// Assessment y el profesional queda libre. La disponibilidad (LIBRE/OCUPADO) se
+/// DERIVA de si el profesional tiene una atención EN_CURSO (RF‑17).
+model Atencion {
+  id String @id @default(uuid())
+
+  tenantId String
+
+  caseId String
+  case   Case   @relation(fields: [caseId], references: [id])
+
+  // Profesional que atiende (FUNCIONARIO con profesión)
+  profesionalUserId String
+  profesional       User   @relation(fields: [profesionalUserId], references: [id])
+  profesion         ProfesionInstrumento
+
+  // Quién asignó el turno (recepción) — referencia suelta para auditoría
+  asignadoPorUserId String?
+
+  estado    AtencionEstado @default(EN_CURSO)
+  startedAt DateTime       @default(now())
+  endedAt   DateTime?
+
+  // Autoguardado del instrumento en curso (RF‑13): borrador { campoCode: valor }
+  instrumentoId    String?
+  instrumento      Instrumento? @relation(fields: [instrumentoId], references: [id])
+  assessedPersonId String?
+  borrador         Json?
+  lastAutosaveAt   DateTime?
+
+  // Resultado al finalizar: el Assessment producido (1‑1)
+  assessmentId String?     @unique
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([caseId])
+  @@index([profesionalUserId])
+  @@index([estado])
+  @@map("atenciones")
+}
+
+/// Estado del turno de atención.
+enum AtencionEstado {
+  EN_CURSO    // el profesional está atendiendo (→ OCUPADO)
+  FINALIZADA  // "Guardar y terminar": valoración guardada, profesional liberado
+  CANCELADA   // turno anulado sin valoración
 }
 
 /// Declaración / testimonio con PESO PROCESAL, tomada por la autoridad.
@@ -1699,6 +1757,7 @@ model Instrumento {
 
   campos       InstrumentoCampo[]
   aplicaciones Assessment[]
+  atenciones   Atencion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
