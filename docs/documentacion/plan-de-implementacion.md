@@ -6,6 +6,20 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 83. RF‑12 sub‑paso 12c — Tablero de disponibilidad + UI del turno
+**Estado:** COMPLETADO
+**Objetivo:** Hacer visible el despacho: tablero en recepción (LIBRE/OCUPADO en vivo por polling) con asignación por radicado, y pantalla del profesional para diligenciar con autoguardado + "Guardar y terminar". Sin schema.
+**Hecho:**
+- `api/v1/family/atenciones/tablero` (NUEVO) — GET: profesionales (con profesión) + estado LIBRE/OCUPADO derivado del turno EN_CURSO, ordenados por el orden lógico (psico→social→jurídico). Roles: despacho + FUNCIONARIO (para que el profesional halle su turno).
+- `admin/atenciones/page.tsx` (NUEVO) — tablero con **polling 5 s**; panel "Asignar turno" (busca caso por radicado vía `family/cases?search=`, lista profesionales LIBRES, POST a `cases/[caseId]/atenciones`) **solo visible a recepción/dirección** (gate por rol vía `/auth/me`); cada OCUPADO enlaza a su turno.
+- `admin/atenciones/[id]/page.tsx` (NUEVO) — pantalla del profesional: carga turno+caso+instrumentos, prellena (RF‑02), **autoguardado debounced 2 s** (PATCH; `skipAutosave` evita guardar en la hidratación), "Guardar y terminar" (POST finalizar) → pantalla de éxito. Solo lectura si el turno ya está finalizado.
+- `admin/AdminShell.tsx` — ítem de nav "Atención (turnos)" (ícono UserCheck) para despacho + funcionario.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings. Sin schema → despliegue directo.
+
+### 84. RF‑16..19 sub‑paso 12d — Jornada laboral + disponibilidad derivada + excepción autorizada
+**Estado:** EN CURSO
+**Objetivo:** Jornada 7:30–17:00 con almuerzo (config); la disponibilidad se deriva (fuera de jornada/almuerzo → no disponible; OCUPADO si hay turno). Prohibido marcarse no-disponible a mano; única vía: solicitud que el comisario autoriza, trazada.
+
 ### 82. RF‑12/13 sub‑paso 12b — Ciclo del turno: abrir · autoguardar · finalizar
 **Estado:** COMPLETADO
 **Objetivo:** Endpoints del turno de atención: recepción abre/asigna, el profesional autoguarda el borrador, y "Guardar y terminar" promueve a `Assessment` y libera al profesional.
