@@ -6,6 +6,13 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 73. Pulir la presentación del contenido del admin + re-sync de roles
+**Estado:** EN CURSO
+**Objetivo:** El usuario dice que el contenido de las páginas del admin no se ve bonito/profesional, y pide re-sincronizar las descripciones de roles de los 3 tenants con el catálogo nuevo.
+**Hecho (re-sync):** script one-off (eliminado) que actualizó los 7 roles de BUGA/TULUA/PALMIRA contra `FAMILY_ROLES` (7 actualizados c/u, 0 creados → ya los tenían). Idempotente.
+**Visual:** problema principal — varias páginas (Comisarías, Usuarios) traen su propio chrome de página (fondo gris, barra blanca con "Volver al panel") que se anida raro dentro del nuevo AdminShell. Se crea `src/app/admin/AdminPageHeader.tsx` (encabezado institucional consistente: ícono en color primario + título + subtítulo + acciones) y se limpia el chrome redundante de `comisarias/page.tsx` y `usuarios/page.tsx` (se quita el fondo gris, la barra y el botón "Volver"; botón de acción al color primario). `tsc` exit=0; lint sin warnings.
+**HALLAZGO (causa de fondo del "no profesional"):** **Tailwind NO está configurado** en el proyecto (no hay `tailwind.config`, ni `@tailwind` en CSS, ni dependencia). Las páginas que usan clases Tailwind — `admin/notifications`, `admin/metrics`, `admin/reports` — renderizan **sin estilo** (HTML crudo). El resto de la app usa estilos inline + `globals.css`/`utilities.css`. Pendiente decidir con el usuario: convertir esas 3 páginas a estilo inline (consistente, seguro) vs instalar Tailwind (riesgo: el preflight resetea el resto de la UI inline). Recomendado: convertir a inline.
+
 ### 72. Paridad de tenants: que las correcciones de la sesión apliquen a todos (nuevos y existentes)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario pide que lo corregido esta sesión respecto al tenant se herede en tenants NUEVOS (provisioning Fase 2) y se refleje en los EXISTENTES.

@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Building2, X, Phone, MapPin, Truck, Power, Users as UsersIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Building2, X, Phone, MapPin, Truck, Power, Users as UsersIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import ComisariaTeamPanel from './ComisariaTeamPanel';
+import AdminPageHeader from '../AdminPageHeader';
 
 interface Comisaria {
   id: string;
@@ -147,46 +148,29 @@ export default function ComisariasPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '1.5rem 2rem' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div>
+      <AdminPageHeader
+        title="Comisarías de Familia"
+        subtitle="Sedes de la Alcaldía. Crea y administra las comisarías a las que pertenecen el personal y los casos."
+        icon={<Building2 size={24} />}
+        actions={
           <button
-            onClick={() => router.push('/admin')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'white', border: '1px solid #d1d5db', color: '#374151', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', marginBottom: '1rem', padding: '0.625rem 1rem', borderRadius: '8px' }}
+            onClick={() => openModal()}
+            disabled={atCap}
+            title={atCap ? 'Cupo de comisarías contratadas alcanzado' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: atCap ? '#9ca3af' : 'var(--color-primary, #2563eb)', color: 'white', border: 'none', borderRadius: '8px', cursor: atCap ? 'not-allowed' : 'pointer' }}
           >
-            <ArrowLeft size={16} /> Volver al Panel
+            <Plus size={18} /> Crear Comisaría
           </button>
+        }
+      />
+      <p style={{ margin: '-0.75rem 0 1.25rem', fontSize: '0.82rem', fontWeight: 600, color: atCap ? '#b91c1c' : 'var(--color-primary, #2563eb)' }}>
+        {cap == null
+          ? `${activeCount} comisaría(s) activa(s) · sin límite contratado`
+          : `${activeCount} de ${cap} comisarías contratadas en uso${atCap ? ' · cupo alcanzado' : ''}`}
+      </p>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ backgroundColor: '#dbeafe', borderRadius: '12px', padding: '0.75rem', display: 'flex' }}>
-                <Building2 size={32} color="#2563eb" />
-              </div>
-              <div>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#111827', margin: 0 }}>Comisarías de Familia</h1>
-                <p style={{ color: '#6b7280', marginTop: '0.25rem', fontSize: '0.875rem' }}>
-                  Sedes de la Alcaldía. Crea y administra las comisarías a las que pertenecen el personal y los casos.
-                </p>
-                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', fontWeight: 600, color: atCap ? '#b91c1c' : '#2563eb' }}>
-                  {cap == null
-                    ? `${activeCount} comisaría(s) activa(s) · sin límite contratado`
-                    : `${activeCount} de ${cap} comisarías contratadas en uso${atCap ? ' · cupo alcanzado' : ''}`}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => openModal()}
-              disabled={atCap}
-              title={atCap ? 'Cupo de comisarías contratadas alcanzado' : undefined}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: atCap ? '#9ca3af' : '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: atCap ? 'not-allowed' : 'pointer' }}
-            >
-              <Plus size={18} /> Crear Comisaría
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <div>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
             <div style={{ width: 48, height: 48, border: '4px solid #e5e7eb', borderTop: '4px solid #2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />

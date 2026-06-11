@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Users as UsersIcon, Shield, Mail, X, Eye, EyeOff, Building2 } from 'lucide-react';
+import AdminPageHeader from '../AdminPageHeader';
 
 interface Role {
   id: string;
@@ -230,100 +231,32 @@ export default function UsersPage() {
   ];
 
   return (
-    <div style={{ backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #e5e7eb',
-        padding: '1.5rem 2rem'
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div>
+      <AdminPageHeader
+        title="Equipo y Usuarios"
+        subtitle="Directorio del personal de la entidad. También puedes crear y asignar el equipo por sede desde Comisarías."
+        icon={<UsersIcon size={24} />}
+        actions={
           <button
-            onClick={() => router.push('/admin/family')}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-              e.currentTarget.style.borderColor = '#9ca3af';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
-              e.currentTarget.style.borderColor = '#d1d5db';
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              backgroundColor: 'white',
-              border: '1px solid #d1d5db',
-              color: '#374151',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              marginBottom: '1rem',
-              padding: '0.625rem 1rem',
-              borderRadius: '8px',
-              transition: 'all 0.2s ease'
-            }}
+            onClick={() => handleOpenModal()}
+            disabled={atUserCap}
+            title={atUserCap ? 'Cupo de usuarios contratados alcanzado' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, backgroundColor: atUserCap ? '#9ca3af' : 'var(--color-primary, #2563eb)', color: 'white', border: 'none', borderRadius: '8px', cursor: atUserCap ? 'not-allowed' : 'pointer' }}
           >
-            <ArrowLeft size={16} />
-            Volver al Dashboard
+            <Plus size={18} /> Crear Usuario
           </button>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                backgroundColor: '#d1fae5',
-                borderRadius: '12px',
-                padding: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <UsersIcon size={32} color="#10b981" />
-              </div>
-              <div>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#111827', margin: 0 }}>
-                  Gestión de Usuarios
-                </h1>
-                <p style={{ color: '#6b7280', marginTop: '0.25rem', fontSize: '0.875rem' }}>
-                  Administra los usuarios del sistema
-                </p>
-                {limits && (
-                  <p style={{ marginTop: '0.4rem', fontSize: '0.8rem', fontWeight: 600, color: atUserCap ? '#b91c1c' : '#059669' }}>
-                    {limits.maxUsers == null
-                      ? `${limits.activeUsers} usuario(s) activo(s) · sin límite contratado`
-                      : `${limits.activeUsers} de ${limits.maxUsers} usuarios contratados en uso${atUserCap ? ' · cupo alcanzado' : ''}`}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleOpenModal()}
-              disabled={atUserCap}
-              title={atUserCap ? 'Cupo de usuarios contratados alcanzado' : undefined}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                backgroundColor: atUserCap ? '#9ca3af' : '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: atUserCap ? 'not-allowed' : 'pointer'
-              }}
-            >
-              <Plus size={18} />
-              Crear Usuario
-            </button>
-          </div>
-        </div>
-      </div>
+        }
+      />
+      {limits && (
+        <p style={{ margin: '-0.75rem 0 1.25rem', fontSize: '0.82rem', fontWeight: 600, color: atUserCap ? '#b91c1c' : 'var(--color-primary, #2563eb)' }}>
+          {limits.maxUsers == null
+            ? `${limits.activeUsers} usuario(s) activo(s) · sin límite contratado`
+            : `${limits.activeUsers} de ${limits.maxUsers} usuarios contratados en uso${atUserCap ? ' · cupo alcanzado' : ''}`}
+        </p>
+      )}
 
       {/* Contenido */}
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <div>
         {loading ? (
           <div style={{ 
             display: 'flex', 
