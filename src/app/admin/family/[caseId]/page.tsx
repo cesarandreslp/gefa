@@ -15,7 +15,7 @@ import {
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
   DeclaracionesSection, ApplyInstrumentForm, InstrumentReportControl,
-  ConsolidatedReportSection,
+  ConsolidatedReportSection, DocumentsSection,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -315,6 +315,9 @@ export default function ExpedienteFamiliaPage() {
 
       {/* Declaraciones (peso procesal — solo el Comisario) */}
       <DeclaracionesSection caseId={data.id} parties={data.caseParties} hearings={data.hearings} />
+
+      {/* Documentos del despacho (plantillas + editor + firmas) */}
+      <DocumentsSection caseId={data.id} />
 
       {/* Valoraciones (confidencial) */}
       <div style={{ ...card, borderColor: '#fde68a', background: '#fffbeb' }}>

@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 87. Documentos del despacho — FASE 2: editor TipTap + corrección por IA
+**Estado:** COMPLETADO
+**Objetivo:** Redacción del documento en un editor WYSIWYG tipo Word (TipTap) que carga la plantilla, mergea variables y encabezado, autoguarda (patrón `Atencion`) y ofrece "Corregir con IA" (redacción/gramática/ortografía, sin alterar el sentido jurídico). Borradores (`DocumentDraft`) con su CRUD.
+**Hecho:**
+- TipTap instalado (`@tiptap/react`, `starter-kit`, `pm`, `extension-underline`, `extension-text-align`).
+- `src/services/DocumentProofreadService.ts` (NUEVO) — `proofreadDocumentHtml`: reusa `callAI` + config IA del tenant; SYSTEM_PROMPT corrige SOLO la forma (no toca fondo/hechos/cifras/HTML); **no anonimiza** (nombres reales del acto jurídico). Quita ```html fence.
+- `api/v1/family/cases/[caseId]/documents/drafts` (NUEVO) — GET lista, POST crea (desde plantilla: mergea variables y fija `documentType`; o en blanco). `family/drafts/[id]` (NUEVO) — GET (con template/case/firmas), PATCH autoguardado (bloquea EMITIDO), DELETE (no emitido). `family/drafts/[id]/proofread` (NUEVO, `maxDuration=60`) — corrige el HTML recibido, audita, no persiste.
+- `admin/documentos/RichTextEditor.tsx` (NUEVO) — editor TipTap (toolbar tipo Word, `immediatelyRender:false`, lienzo tipo hoja). `admin/documentos/[id]/page.tsx` (NUEVO) — editor con autoguardado debounced 2 s + "Corregir con IA" + título; solo lectura si EMITIDO. `admin/documentos/nuevo/page.tsx` (NUEVO, Suspense) — elegir plantilla, diligenciar variables, crear borrador → editor.
+- `ExpedienteActions.tsx` — nueva `DocumentsSection` (lista de documentos + "Redactar documento"); conectada en el expediente `family/[caseId]/page.tsx`.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos (único error preexistente en seguimiento/page.tsx, ajeno). `next.config` ya tiene `eslint.ignoreDuringBuilds`.
+
 ### 86. Documentos del despacho — FASE 1: schema + firmas + CRUD de plantillas
 **Estado:** COMPLETADO
 **Objetivo:** Cimientos del bloque de documentos: modelos `DocumentTemplate`/`DocumentDraft`/`UserSignature`/`DocumentSignature` (+enums, +`nit` de la Alcaldía, +tipos en `DocumentType`), captura de la firma (imagen) en el alta de usuario para roles firmantes (comisario + jurídica/psicología/trabajo social), y el CRUD de plantillas por los 11 tipos.

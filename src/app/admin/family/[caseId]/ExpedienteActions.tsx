@@ -902,6 +902,70 @@ export function DeclaracionesSection({ caseId, parties, hearings }: { caseId: st
   );
 }
 
+// ── Documentos del despacho (plantillas + editor + firmas) ───────────────────
+// Lista los borradores/documentos del expediente y enlaza al editor. Se auto-oculta
+// si el rol no tiene acceso (endpoint 401/403). Crear/redactar: DOCUMENT_DRAFT_ROLES.
+const DOC_DRAFT_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
+  BORRADOR: { label: 'Borrador', bg: '#f3f4f6', fg: '#4b5563' },
+  REVISADO_IA: { label: 'Revisado (IA)', bg: '#eff6ff', fg: '#1e40af' },
+  FIRMADO: { label: 'Firmado', bg: '#fef9c3', fg: '#854d0e' },
+  EMITIDO: { label: 'Emitido', bg: '#dcfce7', fg: '#166534' },
+};
+export function DocumentsSection({ caseId }: { caseId: string }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [items, setItems] = useState<any[] | null>(null);
+  const [denied, setDenied] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/documents/drafts`);
+      if (res.status === 401 || res.status === 403) { setDenied(true); return; }
+      if (res.ok) setItems((await res.json()).data ?? []);
+    } catch { /* noop */ }
+  }, [caseId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (denied) return null;
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0 }}>Documentos del despacho ({items?.length ?? 0})</h2>
+        <a href={`/admin/documentos/nuevo?caseId=${caseId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', ...primaryBtn, textDecoration: 'none' }}>
+          <Plus size={14} /> Redactar documento
+        </a>
+      </div>
+      {!items || items.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin documentos. Usa “Redactar documento” para crear uno desde una plantilla.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.5rem' }}>
+          {items.map((d) => {
+            const st = DOC_DRAFT_STATUS[d.status] ?? DOC_DRAFT_STATUS.BORRADOR;
+            return (
+              <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '0.6rem 0.85rem' }}>
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ color: '#111827' }}>{d.title}</b>
+                  {d.template?.name && <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.82rem' }}>{d.template.name}</span>}
+                  <div style={{ fontSize: '0.76rem', color: '#9ca3af', marginTop: '0.2rem' }}>
+                    Actualizado {new Date(d.updatedAt).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                  <span style={{ background: st.bg, color: st.fg, borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.74rem', fontWeight: 700 }}>{st.label}</span>
+                  <a href={`/admin/documentos/${d.id}`} style={{ ...ghostBtn, textDecoration: 'none', color: '#1a5fb4', borderColor: '#cfe0f4', fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}>
+                    {d.status === 'EMITIDO' ? 'Ver' : 'Abrir editor'}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {
