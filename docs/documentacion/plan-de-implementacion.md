@@ -4,7 +4,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ---
 
-## 2026-06-10
+## 2026-06-11
+
+### 67. Menú hamburguesa: íconos lucide + inversión de colores (azul translúcido / activo blanco)
+**Estado:** COMPLETADO
+**Objetivo:** El usuario nota que los íconos de la previsualización (vectoriales) se ven más profesionales que los emojis actuales del menú móvil, y pide invertir colores: el cajón desplegado en azul con algo de transparencia y texto blanco; el ítem seleccionado (página actual) en blanco con letra azul.
+**Hecho (`src/app/ClientLayout.tsx`):**
+- Los 4 enlaces del menú móvil (antes emojis 🏠🏛️👥📝 repetidos en JSX) se refactorizan a un arreglo `.map` con íconos lucide: `Home` (Inicio), `Building2` (La Comisaría), `Users` (Atención y Servicios), `FileText` (Consultar Solicitud). "Mi Panel" usa `LayoutDashboard`.
+- Cajón (`.mobile-menu`): fondo `color-mix(in srgb, var(--color-primary) 90%, transparent)` + `backdrop-filter: blur(8px)`, con fallback sólido `backgroundColor: var(--color-primary)` si el navegador no soporta color-mix. Texto blanco. Header y separadores con bordes `rgba(255,255,255,0.15-0.18)`.
+- **Ítem activo** (página actual, vía `pathname`): `backgroundColor: white` + `color: var(--color-primary)` + `aria-current="page"`. Resto: texto blanco sobre azul.
+**Hecho (`src/app/globals.css`):** `.mobile-menu-link:hover/active` pasan de gris (`#f3f4f6`) a blanco translúcido (`rgba(255,255,255,0.15/0.25)`) para encajar en el cajón azul (no pisan el ítem activo, que es blanco inline). El `padding-left` móvil del item baja de 2.5rem (indent para emoji) a 1.5rem (consistente con el ícono).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin warnings. Commit+push → auto-deploy de Vercel (ver [[flujo-commit-push-deploy-auto]]).
 
 ### 66. Responsive de la cabecera nueva: hamburguesa en móvil + marca que encoge
 **Estado:** COMPLETADO

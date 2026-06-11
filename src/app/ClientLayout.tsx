@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, Phone, Mail } from 'lucide-react';
+import { ShieldCheck, Phone, Mail, Home, Building2, Users, FileText, LayoutDashboard } from 'lucide-react';
 import './globals.css';
 import './styles/utilities.css';
 import SkipLink from './components/SkipLink';
@@ -263,7 +263,7 @@ export default function ClientLayout({
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <div 
+              <div
                 className="mobile-menu"
                 style={{
                   position: 'absolute',
@@ -272,8 +272,12 @@ export default function ClientLayout({
                   bottom: 0,
                   width: '85%',
                   maxWidth: '320px',
-                  backgroundColor: 'white',
-                  boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
+                  backgroundColor: 'var(--color-primary)',
+                  background: 'color-mix(in srgb, var(--color-primary) 90%, transparent)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  color: 'white',
+                  boxShadow: '-2px 0 12px rgba(0,0,0,0.25)',
                   overflowY: 'auto',
                   animation: 'slideInRight 0.3s ease-out'
                 }}
@@ -282,7 +286,7 @@ export default function ClientLayout({
                 {/* Header del menú móvil */}
                 <div style={{
                   padding: '1.5rem',
-                  backgroundColor: 'var(--color-primary)',
+                  borderBottom: '1px solid rgba(255,255,255,0.18)',
                   color: 'white',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -315,95 +319,69 @@ export default function ClientLayout({
 
                 {/* Enlaces del menú */}
                 <nav style={{ padding: '0.5rem 0' }}>
-                  <a 
-                    href="/" 
-                    className="mobile-menu-link"
-                    style={{
-                      display: 'block',
-                      padding: '1rem 1.5rem',
-                      color: '#1f2937',
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    🏠 Inicio
-                  </a>
-                  <a
-                    href="/la-entidad"
-                    className="mobile-menu-link"
-                    style={{
-                      display: 'block',
-                      padding: '1rem 1.5rem',
-                      color: '#1f2937',
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    🏛️ La Comisaría
-                  </a>
-                  <a 
-                    href="/atencion-ciudadano" 
-                    className="mobile-menu-link"
-                    style={{
-                      display: 'block',
-                      padding: '1rem 1.5rem',
-                      color: '#1f2937',
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    👥 Atención y Servicios a la Ciudadanía
-                  </a>
-                  <a 
-                    href="/atencion-ciudadano/consultar" 
-                    className="mobile-menu-link"
-                    style={{
-                      display: 'block',
-                      padding: '1rem 1.5rem',
-                      color: '#1f2937',
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      transition: 'background-color 0.2s',
-                      backgroundColor: '#eff6ff'
-                    }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    📝 Consultar Solicitud
-                  </a>
+                  {[
+                    { href: '/', label: 'Inicio', Icon: Home },
+                    { href: '/la-entidad', label: 'La Comisaría', Icon: Building2 },
+                    { href: '/atencion-ciudadano', label: 'Atención y Servicios a la Ciudadanía', Icon: Users },
+                    { href: '/atencion-ciudadano/consultar', label: 'Consultar Solicitud', Icon: FileText },
+                  ].map(({ href, label, Icon }) => {
+                    const active = pathname === href;
+                    return (
+                      <a
+                        key={href}
+                        href={href}
+                        className="mobile-menu-link"
+                        aria-current={active ? 'page' : undefined}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '1rem 1.5rem',
+                          color: active ? 'var(--color-primary)' : 'white',
+                          backgroundColor: active ? 'white' : 'transparent',
+                          fontWeight: active ? 600 : 400,
+                          textDecoration: 'none',
+                          fontSize: '1rem',
+                          borderBottom: '1px solid rgba(255,255,255,0.15)',
+                          transition: 'background-color 0.2s, color 0.2s',
+                        }}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Icon size={18} /> {label}
+                      </a>
+                    );
+                  })}
                 </nav>
 
                 {/* Mi Panel (solo cuando está logueado y fuera del dashboard) */}
-                {mounted && isLoggedIn && !isDashboard && (
-                  <a
-                    href="/admin/family"
-                    className="mobile-menu-link"
-                    style={{
-                      display: 'block',
-                      padding: '1rem 1.5rem',
-                      color: 'var(--color-primary)',
-                      textDecoration: 'none',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      borderBottom: '1px solid #f3f4f6',
-                    }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    🏠 Mi Panel
-                  </a>
-                )}
+                {mounted && isLoggedIn && !isDashboard && (() => {
+                  const active = pathname?.startsWith('/admin');
+                  return (
+                    <a
+                      href="/admin/family"
+                      className="mobile-menu-link"
+                      aria-current={active ? 'page' : undefined}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '1rem 1.5rem',
+                        color: active ? 'var(--color-primary)' : 'white',
+                        backgroundColor: active ? 'white' : 'transparent',
+                        textDecoration: 'none',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        borderBottom: '1px solid rgba(255,255,255,0.15)',
+                      }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <LayoutDashboard size={18} /> Mi Panel
+                    </a>
+                  );
+                })()}
 
                 {/* Login/User en menú móvil */}
-                <div style={{ padding: '1.5rem 1.5rem 1.5rem 2.5rem', borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.18)' }}>
                   {mounted && (
                     isDashboard ? (
                       <div>
