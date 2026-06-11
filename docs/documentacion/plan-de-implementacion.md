@@ -6,6 +6,11 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 68. Fix: título "Menú" del cajón móvil se veía azul → blanco y negrita
+**Estado:** COMPLETADO
+**Objetivo:** El `<h2>Menú</h2>` del header del cajón móvil heredaba el azul de la regla global `h1..h6 { color: var(--color-primary-dark) }`, que pisaba el blanco del contenedor. Forzarlo a blanco y negrita.
+**Hecho:** `src/app/ClientLayout.tsx` — al h2 "Menú" se le añade `color: 'white'` y `fontWeight: 700`. Commit+push → auto-deploy.
+
 ### 67. Menú hamburguesa: íconos lucide + inversión de colores (azul translúcido / activo blanco)
 **Estado:** COMPLETADO
 **Objetivo:** El usuario nota que los íconos de la previsualización (vectoriales) se ven más profesionales que los emojis actuales del menú móvil, y pide invertir colores: el cajón desplegado en azul con algo de transparencia y texto blanco; el ítem seleccionado (página actual) en blanco con letra azul.
