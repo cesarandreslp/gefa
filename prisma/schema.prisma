@@ -308,6 +308,16 @@ model Case {
   // informe consolidado por IA. Solo se captura si el comisario habilitó la capacidad.
   descripcionPreliminar String? @db.Text
 
+  // Versión de los hechos del comisario: su relato/valoración propia del caso, que
+  // redacta aparte del informe del equipo. Insumo del informe final compilado.
+  versionHechosComisario String?  @db.Text
+  versionHechosAt        DateTime?
+
+  // Informe final compilado por IA: integra el pre‑informe consolidado del equipo
+  // con la versión de los hechos del comisario. Lo decide el comisario.
+  informeCompilado   String?   @db.Text
+  informeCompiladoAt DateTime?
+
   // Pre-informe consolidado por IA (Fase C4): integra los informes preliminares
   // de los instrumentos diligenciados en un BORRADOR único del caso. Sin peso
   // procesal: lo edita el equipo y lo aprueba la autoridad (Fase C5).

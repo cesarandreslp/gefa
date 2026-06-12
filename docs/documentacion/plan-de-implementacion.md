@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 93. Versión de hechos del comisario + informe final compilado + anexos — FASE 3
+**Estado:** COMPLETADO
+**Hecho:**
+- `prisma/schema.prisma` — `Case.versionHechosComisario`/`versionHechosAt`/`informeCompilado`/`informeCompiladoAt`. **db push** + `tenant-schema.sql` regenerado.
+- `src/services/FinalReportService.ts` (NUEVO) — `compileFinalReport`: IA compila pre‑informe consolidado del equipo + versión de hechos del comisario en el informe final (sin anonimizar; es el informe oficial de la autoridad).
+- `src/services/DocumentGenerationService.ts` — `htmlToPdfBatch` (un solo Chromium para varias piezas).
+- `family/cases/[caseId]/informe-final` (NUEVO, `runtime=nodejs`, `maxDuration=120`) — PATCH guarda la versión de hechos (DIRECTOR); POST exige pre‑informe APROBADO, compila por IA y **anexa un PDF por pieza** (descripción preliminar, informes del equipo, pre‑informe consolidado, versión del comisario, informe final) como `Document` del expediente (el final `isOfficial`; valoraciones `isConfidential`). Auditado.
+- `ExpedienteActions.tsx` — `InformeFinalSection` (solo el comisario): textarea de versión de hechos + "Generar informe final + anexar"; conectada en el expediente.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+**Nota:** la compilación genera varios PDF con Chromium en un request (mismo riesgo serverless que la emisión de documentos; aislado y con `maxDuration=120`).
+
 ### 92. Informe consolidado por IA incluye la descripción preliminar — FASE 2
 **Estado:** COMPLETADO
 **Hecho:** `ConsolidatedReportService` ahora carga `Case.descripcionPreliminar` + `Case.description` y los antepone como "RELATO INICIAL DEL CASO" a los insumos del equipo (instrumentos) antes de pedir el pre‑informe; SYSTEM_PROMPT pide integrar el relato con los hallazgos. Sigue anonimizando (nombres de las partes) y requiere ≥1 instrumento del equipo. Sin cambios de schema.

@@ -966,6 +966,72 @@ export function DocumentsSection({ caseId }: { caseId: string }) {
   );
 }
 
+// ── Informe final del comisario (versión de hechos + compilado IA + anexos) ──
+// Solo el comisario (canApprove). Registra su versión de los hechos y, cuando el
+// pre-informe del equipo está APROBADO, compila por IA el informe final y anexa al
+// expediente (un PDF por pieza: descripción preliminar, informes del equipo,
+// pre-informe consolidado, versión del comisario e informe final).
+export function InformeFinalSection({ caseId, version, compilado, preInformeEstado, canApprove, onDone }: {
+  caseId: string; version?: string | null; compilado?: string | null; preInformeEstado?: string | null; canApprove?: boolean; onDone: () => void;
+}) {
+  const cardStyle: React.CSSProperties = { border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [text, setText] = useState(version ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(compilado ?? null);
+  const [anexados, setAnexados] = useState<number | null>(null);
+  const aprobado = preInformeEstado === 'APROBADO';
+
+  if (!canApprove) return null;
+
+  const guardar = async () => {
+    setBusy(true); setError(null);
+    const r = await patch(`/api/v1/family/cases/${caseId}/informe-final`, { versionHechosComisario: text });
+    setBusy(false);
+    if (!r.ok) { setError(r.error!); return; }
+    onDone();
+  };
+  const compilar = async (force = false) => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/informe-final`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ force }) });
+      const d = await res.json();
+      if (!res.ok) { setError(d.error || 'No se pudo compilar.'); return; }
+      setResult(d.informeCompilado ?? ''); setAnexados(d.anexados ?? null); onDone();
+    } catch { setError('Error de conexión.'); } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#6d28d9', marginBottom: '0.3rem' }}>⚖️ Informe final del comisario</div>
+      <p style={{ fontSize: '0.8rem', color: '#7c3aed', margin: '0 0 0.7rem' }}>
+        Tu versión de los hechos se compila por IA con el pre-informe del equipo. Al generar el informe final, todas las piezas previas se anexan al expediente como documentos.
+      </p>
+      <ErrorBox msg={error} />
+
+      <label style={label}>Versión de los hechos del comisario</label>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Relato y valoración propia de la autoridad…" style={{ ...input, minHeight: '120px', resize: 'vertical', background: 'white' }} />
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+        <button onClick={guardar} disabled={busy} style={{ ...ghostBtn }}>{busy ? 'Guardando…' : 'Guardar versión'}</button>
+        <button onClick={() => compilar(false)} disabled={busy || !aprobado || !text.trim()} style={{ ...primaryBtn, background: '#7c3aed', opacity: (busy || !aprobado || !text.trim()) ? 0.6 : 1 }}>
+          {busy ? 'Compilando…' : 'Generar informe final + anexar'}
+        </button>
+      </div>
+      {!aprobado && <div style={{ fontSize: '0.78rem', color: '#b45309', marginTop: '0.5rem' }}>El pre-informe consolidado del equipo debe estar APROBADO para compilar el informe final.</div>}
+
+      {result && (
+        <div style={{ marginTop: '0.85rem', borderTop: '1px dashed #ddd6fe', paddingTop: '0.7rem' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6d28d9', marginBottom: '0.3rem' }}>
+            Informe final compilado{anexados != null ? ` · ${anexados} pieza(s) anexada(s) al expediente` : ''}
+          </div>
+          <p style={{ fontSize: '0.86rem', color: '#374151', whiteSpace: 'pre-wrap', margin: 0 }}>{result}</p>
+          <button onClick={() => compilar(true)} disabled={busy} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.7rem', marginTop: '0.5rem', color: '#7c3aed', borderColor: '#ddd6fe' }}>{busy ? 'Regenerando…' : 'Regenerar'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {

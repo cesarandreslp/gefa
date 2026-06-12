@@ -58,6 +58,46 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
   }
 }
 
+/**
+ * Renderiza varios HTML a PDF en UNA sola instancia de Chromium (para anexar varias
+ * piezas al expediente sin pagar el arranque del navegador por cada una).
+ */
+export async function htmlToPdfBatch(htmls: string[]): Promise<Buffer[]> {
+  if (htmls.length === 0) return [];
+  const onServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_VERSION;
+
+  const chromium = (await import('@sparticuz/chromium')).default;
+  const puppeteer = (await import('puppeteer-core')).default;
+
+  chromium.setHeadlessMode = true;
+  chromium.setGraphicsMode = false;
+
+  const executablePath = onServerless ? await chromium.executablePath() : process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (!executablePath) {
+    throw new Error('No hay un Chromium disponible para generar el PDF (configure PUPPETEER_EXECUTABLE_PATH en local).');
+  }
+
+  const browser = await puppeteer.launch({
+    args: onServerless ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath,
+    headless: true,
+    defaultViewport: chromium.defaultViewport,
+  });
+  try {
+    const out: Buffer[] = [];
+    for (const html of htmls) {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true });
+      out.push(Buffer.from(pdf));
+      await page.close();
+    }
+    return out;
+  } finally {
+    await browser.close();
+  }
+}
+
 /** Renderiza el fragmento HTML a un .docx editable. */
 export async function htmlToDocxBuffer(fragmentHtml: string, title: string): Promise<Buffer> {
   const full = `<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body>${fragmentHtml}</body></html>`;

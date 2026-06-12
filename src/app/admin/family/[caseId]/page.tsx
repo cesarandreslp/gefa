@@ -15,7 +15,7 @@ import {
   AddPardForm, PardStageControl,
   AddAssessmentForm, TeamSection, AuditSection,
   DeclaracionesSection, ApplyInstrumentForm, InstrumentReportControl,
-  ConsolidatedReportSection, DocumentsSection,
+  ConsolidatedReportSection, DocumentsSection, InformeFinalSection,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -26,6 +26,8 @@ interface Expediente {
   subject: string;
   description: string;
   descripcionPreliminar?: string | null;
+  versionHechosComisario?: string | null;
+  informeCompilado?: string | null;
   filedAt: string;
   dueDate: string;
   priority: number;
@@ -371,6 +373,16 @@ export default function ExpedienteFamiliaPage() {
           <ConsolidatedReportSection caseId={data.id} assessments={assessments} preInforme={preInforme} canApprove={canApprove} onDone={load} />
         )}
       </div>
+
+      {/* Informe final del comisario (versión de hechos + compilado IA + anexos) */}
+      <InformeFinalSection
+        caseId={data.id}
+        version={data.versionHechosComisario}
+        compilado={data.informeCompilado}
+        preInformeEstado={preInforme?.estado ?? null}
+        canApprove={canApprove}
+        onDone={load}
+      />
 
       {/* Historial de estados */}
       <div style={card}>
