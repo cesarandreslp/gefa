@@ -19,6 +19,8 @@ export interface VencimientosResult {
   measuresOverdue: any[];      // VIGENTE con expiresAt ya pasado (aún sin marcar)
   measuresUpcoming: any[];     // VIGENTE que vencen dentro de MEASURE_WARNING_DAYS
   pardOverdue: any[];          // PARD no cerrado con término vencido o seguimiento atrasado
+  recursosUpcoming: any[];     // notificaciones con plazo de recurso por vencer (sin recurso interpuesto)
+  recursosOverdue: any[];      // plazo de recurso vencido sin recurso interpuesto
 }
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -47,8 +49,12 @@ export async function computeVencimientos(
   const pardLimit = new Date(now.getTime() - PARD_TERM_DAYS * 24 * 3600 * 1000);
 
   const caseSelect = { select: { id: true, filingNumber: true, subject: true } };
+  const notiInclude = {
+    case: caseSelect,
+    party: { select: { role: true, person: { select: { firstName: true, firstLastName: true } } } },
+  };
 
-  const [measuresOverdue, measuresUpcoming, pardByFollowUp, pardByTerm] = await Promise.all([
+  const [measuresOverdue, measuresUpcoming, pardByFollowUp, pardByTerm, recursosUpcoming, recursosOverdue] = await Promise.all([
     db.protectionMeasure.findMany({
       where: { tenantId, status: 'VIGENTE', expiresAt: { not: null, lt: now } },
       include: { case: caseSelect },
@@ -67,6 +73,16 @@ export async function computeVencimientos(
       where: { tenantId, stage: { not: 'CIERRE' }, openedAt: { lt: pardLimit } },
       include: { case: caseSelect, child: { select: { firstName: true, firstLastName: true } } },
     }),
+    db.notificacionParte.findMany({
+      where: { tenantId, recursoInterpuesto: false, recursoVenceAt: { not: null, gte: now, lte: soon } },
+      include: notiInclude,
+      orderBy: { recursoVenceAt: 'asc' },
+    }),
+    db.notificacionParte.findMany({
+      where: { tenantId, recursoInterpuesto: false, recursoVenceAt: { not: null, lt: now } },
+      include: notiInclude,
+      orderBy: { recursoVenceAt: 'asc' },
+    }),
   ]);
 
   // Unir PARD atrasados (por seguimiento o por término) sin duplicar
@@ -77,5 +93,7 @@ export async function computeVencimientos(
     measuresOverdue,
     measuresUpcoming,
     pardOverdue: Array.from(pardMap.values()),
+    recursosUpcoming,
+    recursosOverdue,
   };
 }

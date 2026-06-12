@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertTriangle, Clock, Baby } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Clock, Baby, Gavel } from 'lucide-react';
 import { PROTECTION_MEASURE_TYPE_LABELS } from '@/domain/catalogs/familyLabels';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -10,8 +10,12 @@ interface Data {
   measuresOverdue: any[];
   measuresUpcoming: any[];
   pardOverdue: any[];
-  counts: { measuresOverdue: number; measuresUpcoming: number; pardOverdue: number };
+  recursosUpcoming: any[];
+  recursosOverdue: any[];
+  counts: { measuresOverdue: number; measuresUpcoming: number; pardOverdue: number; recursosUpcoming: number; recursosOverdue: number };
 }
+
+const TIPO_NOTI: Record<string, string> = { CITACION: 'Citación', MEDIDA_PROTECCION: 'Medida de protección', RESOLUCION: 'Resolución', AUTO: 'Auto', OTRO: 'Acto' };
 
 const card: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
 const empty: React.CSSProperties = { color: '#9ca3af', fontSize: '0.88rem', margin: 0 };
@@ -105,6 +109,46 @@ export default function VencimientosPage() {
                       <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>· <CaseLink c={p.case} router={router} /></span>
                     </div>
                     <span style={{ color: '#003d7a', fontSize: '0.82rem', fontWeight: 600 }}>abierto {new Date(p.openedAt).toLocaleDateString('es-CO')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recursos vencidos (plazo del recurso del querellado pasó sin interponerse) */}
+          <div style={{ ...card, borderColor: '#fecaca' }}>
+            <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#b91c1c' }}>
+              <Gavel size={18} /> Recursos con plazo vencido ({data.counts.recursosOverdue})
+            </h2>
+            {data.recursosOverdue.length === 0 ? <p style={empty}>Sin plazos de recurso vencidos.</p> : (
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {data.recursosOverdue.map((n) => (
+                  <div key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fee2e2', borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
+                    <div>
+                      <b>{TIPO_NOTI[n.tipo] ?? n.tipo}</b>
+                      <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>· {n.party?.person?.firstName} {n.party?.person?.firstLastName} · <CaseLink c={n.case} router={router} /></span>
+                    </div>
+                    <span style={{ color: '#b91c1c', fontSize: '0.82rem', fontWeight: 600 }}>venció {new Date(n.recursoVenceAt).toLocaleDateString('es-CO')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recursos por vencer */}
+          <div style={{ ...card, borderColor: '#fde68a' }}>
+            <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#b45309' }}>
+              <Gavel size={18} /> Recursos próximos a vencer ({data.counts.recursosUpcoming})
+            </h2>
+            {data.recursosUpcoming.length === 0 ? <p style={empty}>Sin plazos de recurso próximos a vencer.</p> : (
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {data.recursosUpcoming.map((n) => (
+                  <div key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fef3c7', borderRadius: '8px', padding: '0.55rem 0.8rem' }}>
+                    <div>
+                      <b>{TIPO_NOTI[n.tipo] ?? n.tipo}</b>
+                      <span style={{ color: '#6b7280', marginLeft: '0.5rem', fontSize: '0.85rem' }}>· {n.party?.person?.firstName} {n.party?.person?.firstLastName} · <CaseLink c={n.case} router={router} /></span>
+                    </div>
+                    <span style={{ color: '#b45309', fontSize: '0.82rem', fontWeight: 600 }}>vence {new Date(n.recursoVenceAt).toLocaleDateString('es-CO')}</span>
                   </div>
                 ))}
               </div>

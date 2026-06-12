@@ -1132,9 +1132,23 @@ export function NotificacionesSection({ caseId, parties }: { caseId: string; par
   const [fecha, setFecha] = useState('');
   const [plazo, setPlazo] = useState('3');
   const [notas, setNotas] = useState('');
+  // Documento emitido que se notifica (opcional): lo enlaza y mapea el tipo.
+  const [docs, setDocs] = useState<any[]>([]);
+  const [documentId, setDocumentId] = useState('');
+
+  const DOCTYPE_TO_TIPO: Record<string, string> = { RESOLUCION: 'RESOLUCION', MEDIDA_PROTECCION: 'MEDIDA_PROTECCION', AUTO: 'AUTO', CITACION: 'CITACION' };
+  const pickDoc = (docId: string) => {
+    setDocumentId(docId);
+    const d = docs.find((x) => x.documentId === docId);
+    if (d) setTipo(DOCTYPE_TO_TIPO[d.documentType] ?? 'OTRO');
+  };
 
   const load = useCallback(async () => {
     try { const res = await fetch(`/api/v1/family/cases/${caseId}/notificaciones`); if (res.ok) setItems((await res.json()).data ?? []); } catch { /* noop */ }
+    try {
+      const r = await fetch(`/api/v1/family/cases/${caseId}/documents/drafts`);
+      if (r.ok) setDocs(((await r.json()).data ?? []).filter((d: any) => d.status === 'EMITIDO' && d.documentId));
+    } catch { /* noop */ }
   }, [caseId]);
   useEffect(() => {
     load();
@@ -1152,10 +1166,11 @@ export function NotificacionesSection({ caseId, parties }: { caseId: string; par
       partyId, tipo, medio, estado, fechaNotificacion: fecha || undefined,
       plazoRecursoDias: RECURRIBLE.includes(tipo) ? Number(plazo) || 3 : undefined,
       notas: notas.trim() || undefined,
+      documentId: documentId || undefined,
     });
     setBusy(false);
     if (!r.ok) { setError(r.error!); return; }
-    setOpen(false); setNotas(''); setFecha(''); load();
+    setOpen(false); setNotas(''); setFecha(''); setDocumentId(''); load();
   };
 
   const marcar = async (id: string, body: Record<string, unknown>) => {
@@ -1179,6 +1194,15 @@ export function NotificacionesSection({ caseId, parties }: { caseId: string; par
       {open && canWrite && (
         <div style={formBox}>
           <ErrorBox msg={error} />
+          {docs.length > 0 && (
+            <div style={{ marginBottom: '0.6rem' }}>
+              <label style={label}>Documento notificado (opcional)</label>
+              <select value={documentId} onChange={(e) => pickDoc(e.target.value)} style={input}>
+                <option value="">— Sin documento vinculado —</option>
+                {docs.map((d) => <option key={d.id} value={d.documentId}>{d.title}</option>)}
+              </select>
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
             <div>
               <label style={label}>Parte notificada</label>

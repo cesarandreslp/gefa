@@ -6,6 +6,14 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 98. Notificaciones: enlazar documento emitido + alerta de vencimiento del recurso
+**Estado:** COMPLETADO
+**Hecho:**
+- `ExpedienteActions.tsx` (`NotificacionesSection`) — selector "Documento notificado": lista los documentos EMITIDOS del caso (drafts EMITIDO) y al elegir uno enlaza `documentId` y **mapea el tipo** (RESOLUCION/MEDIDA_PROTECCION/AUTO/CITACION). El POST de notificación envía `documentId`.
+- `admin/documentos/[id]` — tras emitir, botón "Registrar notificación →" que lleva al expediente.
+- `familyVencimientos.ts` — `computeVencimientos` ahora calcula `recursosUpcoming`/`recursosOverdue` (notificaciones con `recursoVenceAt` por vencer/vencido sin recurso interpuesto). `family/vencimientos` los expone; `admin/family/vencimientos` muestra dos tarjetas nuevas (recursos vencidos / próximos a vencer) con la parte y el caso.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores (solo warnings `any` preexistentes).
+
 ### 97. Módulo del querellado — FASE 3: notificaciones con acuse + seguimiento del recurso
 **Estado:** COMPLETADO
 **Hecho:**

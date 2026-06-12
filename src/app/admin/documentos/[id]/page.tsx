@@ -190,6 +190,9 @@ export default function DocumentEditorPage({ params }: { params: { id: string } 
           {draft.docxUrl && (
             <a href={draft.docxUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnGhost, color: '#1d4ed8', borderColor: '#bfdbfe', textDecoration: 'none' }}><FileType size={16} /> DOCX</a>
           )}
+          {draft.case && (
+            <button style={{ ...btnGhost, color: '#15803d', borderColor: '#bbf7d0' }} onClick={() => router.push(`/admin/family/${draft.case!.id}`)}>Registrar notificación →</button>
+          )}
         </div>
       )}
       {msg && (

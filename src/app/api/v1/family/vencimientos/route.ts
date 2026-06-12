@@ -20,10 +20,14 @@ export async function GET(request: NextRequest) {
       measuresOverdue: v.measuresOverdue,
       measuresUpcoming: v.measuresUpcoming,
       pardOverdue: v.pardOverdue,
+      recursosUpcoming: v.recursosUpcoming,
+      recursosOverdue: v.recursosOverdue,
       counts: {
         measuresOverdue: v.measuresOverdue.length,
         measuresUpcoming: v.measuresUpcoming.length,
         pardOverdue: v.pardOverdue.length,
+        recursosUpcoming: v.recursosUpcoming.length,
+        recursosOverdue: v.recursosOverdue.length,
       },
     });
   } catch (error) {
