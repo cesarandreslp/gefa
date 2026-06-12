@@ -63,6 +63,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         ? [...new Set(body.signerRoles.map(String).filter((r: string) => VALID_SIGNER_ROLES.includes(r)))]
         : []) as never;
     }
+    if (body.profesiones !== undefined) {
+      data.profesiones = Array.isArray(body.profesiones)
+        ? [...new Set(body.profesiones.map(String).filter((p: string) => SIGNING_PROFESSIONS.includes(p)))]
+        : [];
+    }
+    if (typeof body.requiereInformeFinal === 'boolean') data.requiereInformeFinal = body.requiereInformeFinal;
     if (typeof body.isActive === 'boolean') data.isActive = body.isActive;
     data.version = existing.version + 1;
 

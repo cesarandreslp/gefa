@@ -35,8 +35,15 @@ interface Variable { key: string; label: string; type?: string; required?: boole
 interface Template {
   id: string; kind: string; name: string; description: string | null;
   variables: Variable[] | null; signerRoles: string[] | null;
+  profesiones?: string[] | null; requiereInformeFinal?: boolean;
   isActive: boolean; version: number; comisariaId: string | null; updatedAt: string;
 }
+
+const PROFESION_OPTS: { value: string; label: string }[] = [
+  { value: 'JURIDICA', label: 'Jurídico' },
+  { value: 'PSICOLOGIA', label: 'Psicología' },
+  { value: 'TRABAJO_SOCIAL', label: 'Trabajo Social' },
+];
 
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.25rem' };
 const input: React.CSSProperties = { padding: '0.6rem 0.7rem', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.9rem', boxSizing: 'border-box', width: '100%' };
@@ -47,6 +54,7 @@ const btnGhost: React.CSSProperties = { padding: '0.5rem 0.8rem', background: '#
 const emptyForm = () => ({
   id: '' as string, kind: 'OFICIO', name: '', description: '', bodyHtml: '',
   variables: [] as Variable[], signerRoles: [] as string[], comisariaId: '',
+  profesiones: [] as string[], requiereInformeFinal: false,
 });
 
 export default function PlantillasPage() {
@@ -77,6 +85,7 @@ export default function PlantillasPage() {
       id: t.id, kind: t.kind, name: t.name, description: t.description ?? '',
       bodyHtml: t.bodyHtml ?? '', variables: t.variables ?? [], signerRoles: t.signerRoles ?? [],
       comisariaId: t.comisariaId ?? '',
+      profesiones: t.profesiones ?? [], requiereInformeFinal: !!t.requiereInformeFinal,
     });
     setEditing(true);
   };
@@ -92,6 +101,7 @@ export default function PlantillasPage() {
         kind: form.kind, name: form.name, description: form.description,
         bodyHtml: form.bodyHtml, variables: form.variables, signerRoles: form.signerRoles,
         comisariaId: form.comisariaId || null,
+        profesiones: form.profesiones, requiereInformeFinal: form.requiereInformeFinal,
       };
       const res = form.id
         ? await fetch(`/api/v1/family/templates/${form.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
@@ -115,6 +125,19 @@ export default function PlantillasPage() {
   const delVar = (i: number) => setForm((f) => ({ ...f, variables: f.variables.filter((_, idx) => idx !== i) }));
   const toggleSigner = (role: string) =>
     setForm((f) => ({ ...f, signerRoles: f.signerRoles.includes(role) ? f.signerRoles.filter((r) => r !== role) : [...f.signerRoles, role] }));
+  const toggleProfesion = (p: string) =>
+    setForm((f) => ({ ...f, profesiones: f.profesiones.includes(p) ? f.profesiones.filter((x) => x !== p) : [...f.profesiones, p] }));
+
+  const seedDefaults = async () => {
+    setMsg(null);
+    try {
+      const res = await fetch('/api/v1/family/templates/seed', { method: 'POST' });
+      const d = await res.json();
+      if (!res.ok) { setMsg({ type: 'err', text: d.error || 'No se pudo cargar' }); return; }
+      setMsg({ type: 'ok', text: d.created > 0 ? `Se cargaron ${d.created} plantilla(s) predefinida(s).` : 'Ya estaban cargadas todas las plantillas predefinidas.' });
+      await load();
+    } catch { setMsg({ type: 'err', text: 'Error de red' }); }
+  };
 
   return (
     <div>
@@ -122,7 +145,12 @@ export default function PlantillasPage() {
         title="Plantillas del despacho"
         subtitle="Los actos jurídicos plantillables. Usa {{variable}} en el cuerpo para los campos que se diligencian al redactar."
         icon={<FileSignature size={24} />}
-        actions={!editing && <button style={btnPrimary} onClick={openNew}><Plus size={16} /> Nueva plantilla</button>}
+        actions={!editing && (
+          <>
+            <button style={btnGhost} onClick={seedDefaults}>Cargar plantillas predefinidas</button>
+            <button style={btnPrimary} onClick={openNew}><Plus size={16} /> Nueva plantilla</button>
+          </>
+        )}
       />
 
       {msg && (
@@ -194,6 +222,25 @@ export default function PlantillasPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={label}>Profesiones que pueden usar esta plantilla</label>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {PROFESION_OPTS.map((p) => (
+                <label key={p.value} style={{ fontSize: '0.85rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <input type="checkbox" checked={form.profesiones.includes(p.value)} onChange={() => toggleProfesion(p.value)} /> {p.label}
+                </label>
+              ))}
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.3rem 0 0' }}>Vacío = todas. El comisario y el ADMIN siempre ven todas.</p>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ fontSize: '0.85rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <input type="checkbox" checked={form.requiereInformeFinal} onChange={(e) => setForm({ ...form, requiereInformeFinal: e.target.checked })} />
+              Requiere el informe final compilado (se prellena con <code>{'{{informe_final}}'}</code>)
+            </label>
           </div>
 
           <div style={{ display: 'flex', gap: '0.6rem' }}>

@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
     const name = String(body.name || '').trim();
     const address = body.address ? String(body.address).trim() : null;
     const phone = body.phone ? String(body.phone).trim() : null;
+    const email = body.email ? String(body.email).trim() : null;
+    const comisarioNombre = body.comisarioNombre ? String(body.comisarioNombre).trim() : null;
     const isMobile = Boolean(body.isMobile);
 
     if (!code || !name) {
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     const comisaria = await auth.db.comisaria.create({
-      data: { tenantId: auth.user.tenantId, code, name, address, phone, isMobile, isActive: true },
+      data: { tenantId: auth.user.tenantId, code, name, address, phone, email, comisarioNombre, isMobile, isActive: true },
     });
 
     await auditService.log({

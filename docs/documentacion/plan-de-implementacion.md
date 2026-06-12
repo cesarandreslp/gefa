@@ -6,6 +6,19 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 94. Plantillas jurídicas precargadas + encabezado completo + restricción por profesión + resolución ligada al informe final
+**Estado:** COMPLETADO
+**Hecho:**
+- `prisma/schema.prisma` — `Comisaria.email` + `Comisaria.comisarioNombre`; `DocumentTemplate.profesiones String[]` + `requiereInformeFinal`. **db push** + `tenant-schema.sql` regenerado.
+- Encabezado (`documentHtml.ts`) — ahora incluye correo del tenant + dirección/teléfono/correo de la sede + nombre del comisario/a; emit e informe-final pasan estos datos.
+- Comisarías — API (`/comisarias` POST/PUT) y formulario (`admin/comisarias`) capturan correo y nombre del comisario/a.
+- `src/lib/defaultTemplates.ts` (NUEVO) — 11 plantillas jurídicas predefinidas (citación, oficio, auto, constancia de conciliación, acta de audiencia, declaración, medida de protección, informe jurídico, seguimiento, recurso, resolución) + `seedDefaultTemplates` (idempotente).
+- `family/templates` GET — **auto‑seed perezoso** si el tenant no tiene plantillas + **filtro por profesión** (el jurídico solo ve las jurídicas; ADMIN/DIRECTOR ven todas). POST/PATCH aceptan `profesiones` + `requiereInformeFinal`. `family/templates/seed` (NUEVO) — carga predefinida bajo demanda.
+- `documents/drafts` POST — refuerza la restricción por profesión, **exige el informe final** para plantillas `requiereInformeFinal` (la resolución) y **prellena `{{informe_final}}`** con `Case.informeCompilado`.
+- `admin/plantillas` — botón "Cargar plantillas predefinidas" + controles de profesiones y "requiere informe final".
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos. Plantillas se precargan por tenant al primer acceso (lazy) o con el botón.
+**Objetivo:** Precargar un set de plantillas jurídicas; el encabezado de los documentos trae datos del tenant (logo, nombre, dirección, teléfono, correo, NIT) y de la comisaría (nombre, dirección, teléfono, correo, nombre del comisario/a). Restringir qué plantillas ve cada profesión (el jurídico solo las jurídicas). La resolución solo se habilita con el informe final compilado y se prellena con él.
+
 ### 93. Versión de hechos del comisario + informe final compilado + anexos — FASE 3
 **Estado:** COMPLETADO
 **Hecho:**

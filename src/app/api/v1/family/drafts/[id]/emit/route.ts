@@ -87,13 +87,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Encabezado: Alcaldía (tenant) + comisaría (sede).
     const tenant = await db.tenant.findUnique({
       where: { id: tenantId },
-      select: { name: true, nit: true, address: true, phone: true, logoUrl: true },
+      select: { name: true, nit: true, address: true, phone: true, institutionalEmail: true, logoUrl: true },
     });
-    let comisaria: { name: string; address: string | null; phone: string | null } | null = null;
+    let comisaria: { name: string; address: string | null; phone: string | null; email: string | null; comisarioNombre: string | null } | null = null;
     if (draft.case?.comisariaId) {
       comisaria = await db.comisaria.findFirst({
         where: { id: draft.case.comisariaId, tenantId },
-        select: { name: true, address: true, phone: true },
+        select: { name: true, address: true, phone: true, email: true, comisarioNombre: true },
       });
     }
     const logoDataUri = await fetchAsDataUri(tenant?.logoUrl);
@@ -101,9 +101,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const fragment = buildDocumentFragment({
       header: {
         tenantName: tenant?.name ?? 'Alcaldía',
-        tenantNit: tenant?.nit, tenantAddress: tenant?.address, tenantPhone: tenant?.phone,
+        tenantNit: tenant?.nit, tenantAddress: tenant?.address, tenantPhone: tenant?.phone, tenantEmail: tenant?.institutionalEmail,
         logoDataUri,
         comisariaName: comisaria?.name, comisariaAddress: comisaria?.address, comisariaPhone: comisaria?.phone,
+        comisariaEmail: comisaria?.email, comisarioNombre: comisaria?.comisarioNombre,
       },
       title: draft.title,
       bodyHtml: draft.bodyHtml,

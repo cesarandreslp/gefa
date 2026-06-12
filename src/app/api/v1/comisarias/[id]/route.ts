@@ -42,6 +42,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
     if (body.address !== undefined) data.address = body.address ? String(body.address).trim() : null;
     if (body.phone !== undefined) data.phone = body.phone ? String(body.phone).trim() : null;
+    if (body.email !== undefined) data.email = body.email ? String(body.email).trim() : null;
+    if (body.comisarioNombre !== undefined) data.comisarioNombre = body.comisarioNombre ? String(body.comisarioNombre).trim() : null;
     if (body.isMobile !== undefined) data.isMobile = Boolean(body.isMobile);
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
 

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TemplateKind } from '@prisma/client';
-import { protectAPIRoute } from '@/lib/auth';
+import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
 import {
   TEMPLATE_ADMIN_ROLES,
   DOCUMENT_DRAFT_ROLES,
@@ -15,6 +15,7 @@ import {
   normalizeVariables,
 } from '@/lib/documentsApi';
 import { auditFamily } from '@/lib/familyApi';
+import { seedDefaultTemplates } from '@/lib/defaultTemplates';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,11 @@ const VALID_SIGNER_ROLES = ['DIRECTOR', ...SIGNING_PROFESSIONS];
 function normalizeSignerRoles(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
   return [...new Set(input.map(String).filter((r) => VALID_SIGNER_ROLES.includes(r)))];
+}
+
+function normalizeProfesiones(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return [...new Set(input.map(String).filter((p) => SIGNING_PROFESSIONS.includes(p)))];
 }
 
 // GET /api/v1/family/templates
@@ -37,6 +43,12 @@ export async function GET(request: NextRequest) {
     const kind = searchParams.get('kind');
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
+    // Precarga perezosa: si el tenant no tiene plantillas, sembrar el set predefinido.
+    const total = await db.documentTemplate.count({ where: { tenantId: auth.user.tenantId } });
+    if (total === 0) {
+      try { await seedDefaultTemplates(db, auth.user.tenantId, auth.user.userId); } catch (e) { console.error('Seed plantillas:', e); }
+    }
+
     const templates = await db.documentTemplate.findMany({
       where: {
         tenantId: auth.user.tenantId,
@@ -45,12 +57,24 @@ export async function GET(request: NextRequest) {
       },
       select: {
         id: true, kind: true, name: true, description: true,
-        variables: true, signerRoles: true, isActive: true, version: true,
-        comisariaId: true, updatedAt: true,
+        variables: true, signerRoles: true, profesiones: true, requiereInformeFinal: true,
+        isActive: true, version: true, comisariaId: true, updatedAt: true,
       },
       orderBy: [{ kind: 'asc' }, { name: 'asc' }],
     });
-    return NextResponse.json({ data: templates });
+
+    // Restricción por profesión: el jurídico solo ve las jurídicas (o las sin
+    // restricción). ADMIN/DIRECTOR ven todas.
+    const baseRole = getBaseRoleCode(auth.user.roleCode);
+    const isAdminLike = ['ADMIN', 'DIRECTOR'].includes(baseRole);
+    let visibles = templates;
+    if (!isAdminLike) {
+      const u = await db.user.findFirst({ where: { id: auth.user.userId }, select: { profesion: true } });
+      const prof = u?.profesion ?? null;
+      visibles = templates.filter((t) => t.profesiones.length === 0 || (prof != null && t.profesiones.includes(prof)));
+    }
+
+    return NextResponse.json({ data: visibles });
   } catch (error) {
     console.error('Error listando plantillas:', error);
     return NextResponse.json({ error: 'Error al listar las plantillas' }, { status: 500 });
@@ -66,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
     const db = auth.db;
     const body = await request.json();
-    const { kind, name, description, bodyHtml, variables, signerRoles, comisariaId } = body;
+    const { kind, name, description, bodyHtml, variables, signerRoles, comisariaId, profesiones, requiereInformeFinal } = body;
 
     if (!kind || !TEMPLATE_KINDS.includes(kind)) {
       return NextResponse.json({ error: 'Tipo de plantilla inválido' }, { status: 400 });
@@ -99,6 +123,8 @@ export async function POST(request: NextRequest) {
         bodyHtml,
         variables: normalizeVariables(variables) as never,
         signerRoles: normalizeSignerRoles(signerRoles) as never,
+        profesiones: normalizeProfesiones(profesiones),
+        requiereInformeFinal: requiereInformeFinal === true,
         createdByUserId: auth.user.userId,
       },
       select: { id: true, kind: true, name: true, isActive: true, version: true },

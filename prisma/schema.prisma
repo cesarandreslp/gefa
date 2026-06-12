@@ -1910,6 +1910,8 @@ model Comisaria {
   code     String   // ej: "CF1" (único por municipio)
   address  String?
   phone    String?
+  email          String?  // correo de la sede — para el encabezado de documentos
+  comisarioNombre String? // nombre del comisario/a de la sede — para el encabezado
   isMobile Boolean  @default(false) // unidad móvil
   isActive Boolean  @default(true)
 
@@ -2053,6 +2055,13 @@ model DocumentTemplate {
   bodyHtml    String   @db.Text  // cuerpo HTML con marcadores {{variable}}
   variables   Json?    // [{ key, label, type, required }] — campos a diligenciar
   signerRoles Json?    // ["DIRECTOR","JURIDICA","PSICOLOGIA","TRABAJO_SOCIAL"] que firman
+
+  // Profesiones que pueden USAR la plantilla (visibilidad). Vacío = todas. El
+  // comisario (DIRECTOR) y ADMIN ven todas. Ej: ["JURIDICA"] → solo el jurídico.
+  profesiones String[]
+  // Si true, el documento solo puede crearse cuando el caso tiene el informe final
+  // compilado; además se prellena con `{{informe_final}}`. Ej: la resolución.
+  requiereInformeFinal Boolean @default(false)
 
   isActive    Boolean  @default(true)
   version     Int      @default(1)

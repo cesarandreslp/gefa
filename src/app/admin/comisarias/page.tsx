@@ -12,6 +12,8 @@ interface Comisaria {
   name: string;
   address?: string | null;
   phone?: string | null;
+  email?: string | null;
+  comisarioNombre?: string | null;
   isMobile: boolean;
   isActive: boolean;
   _count?: { users: number; cases: number };
@@ -23,7 +25,7 @@ interface TeamUser {
   role?: RoleOpt; comisaria?: { id: string; code: string; name: string } | null; isActive: boolean;
 }
 
-const EMPTY = { code: '', name: '', address: '', phone: '', isMobile: false };
+const EMPTY = { code: '', name: '', address: '', phone: '', email: '', comisarioNombre: '', isMobile: false };
 
 export default function ComisariasPage() {
   const router = useRouter();
@@ -84,7 +86,7 @@ export default function ComisariasPage() {
   const openModal = (c?: Comisaria) => {
     if (c) {
       setEditing(c);
-      setForm({ code: c.code, name: c.name, address: c.address || '', phone: c.phone || '', isMobile: c.isMobile });
+      setForm({ code: c.code, name: c.name, address: c.address || '', phone: c.phone || '', email: c.email || '', comisarioNombre: c.comisarioNombre || '', isMobile: c.isMobile });
     } else {
       setEditing(null);
       setForm(EMPTY);
@@ -292,6 +294,16 @@ export default function ComisariasPage() {
               <div style={{ marginBottom: '1rem' }}>
                 <label style={labelStyle}>Teléfono</label>
                 <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(602) 000 0000" style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Correo electrónico de la sede</label>
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="comisaria1@alcaldia.gov.co" style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Nombre del comisario/a</label>
+                <input type="text" value={form.comisarioNombre} onChange={(e) => setForm({ ...form, comisarioNombre: e.target.value })} placeholder="Dra. Nombre Apellido" style={inputStyle} />
               </div>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1.5rem' }}>

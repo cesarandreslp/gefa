@@ -13,10 +13,13 @@ export interface HeaderInfo {
   tenantNit?: string | null;
   tenantAddress?: string | null;
   tenantPhone?: string | null;
+  tenantEmail?: string | null;
   logoDataUri?: string | null;
   comisariaName?: string | null;
   comisariaAddress?: string | null;
   comisariaPhone?: string | null;
+  comisariaEmail?: string | null;
+  comisarioNombre?: string | null;
 }
 
 export interface SignatureBlock {
@@ -38,11 +41,22 @@ function headerHtml(h: HeaderInfo): string {
   const lines: string[] = [];
   lines.push(`<div style="font-size:13pt;font-weight:bold;text-transform:uppercase;">${escapeHtml(h.tenantName)}</div>`);
   if (h.comisariaName) lines.push(`<div style="font-size:11pt;font-weight:bold;">${escapeHtml(h.comisariaName)}</div>`);
-  const contact: string[] = [];
-  if (h.tenantNit) contact.push(`NIT ${escapeHtml(h.tenantNit)}`);
-  if (h.comisariaAddress || h.tenantAddress) contact.push(escapeHtml((h.comisariaAddress || h.tenantAddress)!));
-  if (h.comisariaPhone || h.tenantPhone) contact.push(`Tel. ${escapeHtml((h.comisariaPhone || h.tenantPhone)!)}`);
-  if (contact.length) lines.push(`<div style="font-size:8.5pt;color:#444;">${contact.join(' · ')}</div>`);
+
+  // Línea 1: identificación de la Alcaldía (NIT + contacto del tenant).
+  const lineaTenant: string[] = [];
+  if (h.tenantNit) lineaTenant.push(`NIT ${escapeHtml(h.tenantNit)}`);
+  if (h.tenantAddress) lineaTenant.push(escapeHtml(h.tenantAddress));
+  if (h.tenantPhone) lineaTenant.push(`Tel. ${escapeHtml(h.tenantPhone)}`);
+  if (h.tenantEmail) lineaTenant.push(escapeHtml(h.tenantEmail));
+  if (lineaTenant.length) lines.push(`<div style="font-size:8.5pt;color:#444;">${lineaTenant.join(' · ')}</div>`);
+
+  // Línea 2: contacto de la sede (comisaría), si difiere.
+  const lineaSede: string[] = [];
+  if (h.comisariaAddress) lineaSede.push(escapeHtml(h.comisariaAddress));
+  if (h.comisariaPhone) lineaSede.push(`Tel. ${escapeHtml(h.comisariaPhone)}`);
+  if (h.comisariaEmail) lineaSede.push(escapeHtml(h.comisariaEmail));
+  if (lineaSede.length) lines.push(`<div style="font-size:8.5pt;color:#444;">${lineaSede.join(' · ')}</div>`);
+  if (h.comisarioNombre) lines.push(`<div style="font-size:8.5pt;color:#444;">Comisario/a: ${escapeHtml(h.comisarioNombre)}</div>`);
 
   const logo = h.logoDataUri
     ? `<td style="width:90px;vertical-align:middle;"><img src="${h.logoDataUri}" style="max-height:70px;max-width:90px;" /></td>`

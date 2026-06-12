@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { DocumentType } from '@prisma/client';
-import { protectAPIRoute } from '@/lib/auth';
+import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
 import { findCaseInTenant, auditFamily } from '@/lib/familyApi';
 import { DOCUMENT_DRAFT_ROLES, documentTypeForKind, mergeTemplateBody } from '@/lib/documentsApi';
 
@@ -63,9 +63,28 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
     if (templateId) {
       const tpl = await db.documentTemplate.findFirst({
         where: { id: templateId, tenantId: auth.user.tenantId, isActive: true },
-        select: { id: true, kind: true, name: true, bodyHtml: true },
+        select: { id: true, kind: true, name: true, bodyHtml: true, profesiones: true, requiereInformeFinal: true },
       });
       if (!tpl) return NextResponse.json({ error: 'Plantilla no encontrada o inactiva' }, { status: 404 });
+
+      // Restricción por profesión (defensa en profundidad; la lista ya se filtra al mostrar).
+      const baseRole = getBaseRoleCode(auth.user.roleCode);
+      if (!['ADMIN', 'DIRECTOR'].includes(baseRole) && tpl.profesiones.length > 0) {
+        const u = await db.user.findFirst({ where: { id: auth.user.userId }, select: { profesion: true } });
+        if (!u?.profesion || !tpl.profesiones.includes(u.profesion)) {
+          return NextResponse.json({ error: 'Su profesión no está habilitada para esta plantilla.' }, { status: 403 });
+        }
+      }
+
+      // Plantillas ligadas al informe final (p. ej. resolución): exigirlo y prellenar.
+      if (tpl.requiereInformeFinal || tpl.bodyHtml.includes('{{informe_final}}')) {
+        const c = await db.case.findFirst({ where: { id: params.caseId, tenantId: auth.user.tenantId }, select: { informeCompilado: true } });
+        if (tpl.requiereInformeFinal && !c?.informeCompilado?.trim()) {
+          return NextResponse.json({ error: 'Este documento requiere el informe final compilado. Genérelo primero (Informe final del comisario).' }, { status: 409 });
+        }
+        if (c?.informeCompilado && values.informe_final === undefined) values.informe_final = c.informeCompilado;
+      }
+
       resolvedType = documentTypeForKind(tpl.kind);
       bodyHtml = mergeTemplateBody(tpl.bodyHtml, values);
       if (!resolvedTitle) resolvedTitle = tpl.name;

@@ -92,15 +92,16 @@ export async function POST(request: NextRequest, { params }: { params: { caseId:
     await db.case.update({ where: { id: params.caseId }, data: { informeCompilado: compiled.report, informeCompiladoAt: compiledAt } });
 
     // 2. Encabezado institucional (Alcaldía + sede) para los PDF.
-    const tenant = await db.tenant.findUnique({ where: { id: tenantId }, select: { name: true, nit: true, address: true, phone: true, logoUrl: true } });
-    let comisaria: { name: string; address: string | null; phone: string | null } | null = null;
+    const tenant = await db.tenant.findUnique({ where: { id: tenantId }, select: { name: true, nit: true, address: true, phone: true, institutionalEmail: true, logoUrl: true } });
+    let comisaria: { name: string; address: string | null; phone: string | null; email: string | null; comisarioNombre: string | null } | null = null;
     if (caseRow.comisariaId) {
-      comisaria = await db.comisaria.findFirst({ where: { id: caseRow.comisariaId, tenantId }, select: { name: true, address: true, phone: true } });
+      comisaria = await db.comisaria.findFirst({ where: { id: caseRow.comisariaId, tenantId }, select: { name: true, address: true, phone: true, email: true, comisarioNombre: true } });
     }
     const header: HeaderInfo = {
-      tenantName: tenant?.name ?? 'Alcaldía', tenantNit: tenant?.nit, tenantAddress: tenant?.address, tenantPhone: tenant?.phone,
+      tenantName: tenant?.name ?? 'Alcaldía', tenantNit: tenant?.nit, tenantAddress: tenant?.address, tenantPhone: tenant?.phone, tenantEmail: tenant?.institutionalEmail,
       logoDataUri: await fetchAsDataUri(tenant?.logoUrl),
       comisariaName: comisaria?.name, comisariaAddress: comisaria?.address, comisariaPhone: comisaria?.phone,
+      comisariaEmail: comisaria?.email, comisarioNombre: comisaria?.comisarioNombre,
     };
 
     // 3. Piezas a anexar (todo lo previo + el informe final).
