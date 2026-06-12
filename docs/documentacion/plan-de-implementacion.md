@@ -6,6 +6,14 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 97. Módulo del querellado — FASE 3: notificaciones con acuse + seguimiento del recurso
+**Estado:** COMPLETADO
+**Hecho:**
+- `prisma/schema.prisma` — modelo `NotificacionParte` (caseId, partyId→CaseParty, tipo/medio/estado, fechaNotificacion, notas, documentId, plazoRecursoDias, recursoVenceAt, recursoInterpuesto/recursoAt) + enums `TipoNotificacion`/`MedioNotificacion`/`EstadoNotificacion`; relaciones inversas en Case y CaseParty. **db push** + `tenant-schema.sql`.
+- `family/cases/[caseId]/notificaciones` (NUEVO) GET/POST y `family/notificaciones/[id]` (NUEVO) PATCH — registrar acuse (citación/medida/resolución/auto) y marcar notificado / recurso interpuesto. Para decisiones recurribles ya notificadas calcula `recursoVenceAt` con `LegalTermsCalculator` (def. 3 días hábiles). Auditado.
+- `ExpedienteActions.tsx` — `NotificacionesSection` (lista + formulario; por defecto notifica al AGRESOR; muestra vencimiento del recurso y permite registrar recurso interpuesto); conectada en el expediente.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos. Con esto se cierra el módulo del querellado (descargos presencial+portal + notificaciones/recurso).
+
 ### 96. Módulo del querellado — FASE 2: descargos por el portal
 **Estado:** COMPLETADO
 **Hecho:**

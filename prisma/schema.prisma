@@ -360,6 +360,7 @@ model Case {
   declaraciones       Declaracion[]
   atenciones          Atencion[]
   documentDrafts      DocumentDraft[]
+  notificaciones      NotificacionParte[]
 
   // Comisaría (sede) del municipio a la que pertenece el caso
   comisariaId    String?
@@ -1440,6 +1441,9 @@ model CaseParty {
   // Pruebas (acervo probatorio) aportadas por esta parte
   documentosAportados Document[] @relation("DocumentoAportante")
 
+  // Notificaciones dirigidas a esta parte (citación, medida, resolución…)
+  notificaciones NotificacionParte[]
+
   // Auditoría
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2168,4 +2172,72 @@ model DocumentSignature {
   @@index([draftId])
   @@index([tenantId])
   @@map("document_signatures")
+}
+
+// ============================================================================
+// MÓDULO: NOTIFICACIONES A LAS PARTES (debido proceso del querellado)
+// ============================================================================
+// Acuse de notificación de los actos del proceso (citación, medida, resolución) a
+// una parte —típicamente el querellado—, con el medio, el estado y, para decisiones
+// recurribles, el plazo del recurso y si se interpuso. Da trazabilidad al debido proceso.
+
+enum TipoNotificacion {
+  CITACION
+  MEDIDA_PROTECCION
+  RESOLUCION
+  AUTO
+  OTRO
+}
+
+enum MedioNotificacion {
+  PERSONAL
+  CORREO
+  TELEFONO
+  AVISO     // notificación por aviso (no localizado)
+  OTRO
+}
+
+enum EstadoNotificacion {
+  PENDIENTE
+  NOTIFICADO
+  NO_LOCALIZADO
+}
+
+model NotificacionParte {
+  id String @id @default(uuid())
+
+  tenantId String
+
+  caseId String
+  case   Case   @relation(fields: [caseId], references: [id])
+
+  // Parte notificada (querellado/AGRESOR u otra). Suelto+relación para listarla.
+  partyId String
+  party   CaseParty @relation(fields: [partyId], references: [id])
+
+  tipo   TipoNotificacion
+  medio  MedioNotificacion
+  estado EstadoNotificacion @default(PENDIENTE)
+
+  fechaNotificacion DateTime?
+  notas             String?  @db.Text
+
+  // Documento notificado (citación/decisión), si aplica — referencia suelta.
+  documentId String?
+
+  // Recurso: para decisiones recurribles, plazo y si se interpuso.
+  plazoRecursoDias Int?
+  recursoVenceAt   DateTime?
+  recursoInterpuesto Boolean  @default(false)
+  recursoAt          DateTime?
+
+  createdByUserId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([caseId])
+  @@index([partyId])
+  @@index([estado])
+  @@map("notificaciones_parte")
 }

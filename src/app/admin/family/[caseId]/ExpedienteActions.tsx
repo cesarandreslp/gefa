@@ -1105,6 +1105,165 @@ export function DescargosSection({ caseId }: { caseId: string }) {
   );
 }
 
+// ── Notificaciones a las partes (acuse + recurso — debido proceso) ───────────
+const TIPO_NOTI_LBL: Record<string, string> = { CITACION: 'Citación', MEDIDA_PROTECCION: 'Medida de protección', RESOLUCION: 'Resolución', AUTO: 'Auto', OTRO: 'Otro' };
+const MEDIO_NOTI_LBL: Record<string, string> = { PERSONAL: 'Personal', CORREO: 'Correo', TELEFONO: 'Teléfono', AVISO: 'Aviso', OTRO: 'Otro' };
+const ESTADO_NOTI: Record<string, { t: string; bg: string; fg: string }> = {
+  PENDIENTE: { t: 'Pendiente', bg: '#fef9c3', fg: '#854d0e' },
+  NOTIFICADO: { t: 'Notificado', bg: '#dcfce7', fg: '#166534' },
+  NO_LOCALIZADO: { t: 'No localizado', bg: '#fee2e2', fg: '#991b1b' },
+};
+const RECURRIBLE = ['MEDIDA_PROTECCION', 'RESOLUCION', 'AUTO'];
+
+export function NotificacionesSection({ caseId, parties }: { caseId: string; parties: any[] }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [items, setItems] = useState<any[] | null>(null);
+  const [canWrite, setCanWrite] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Por defecto, notificar al querellado (AGRESOR).
+  const defaultParty = parties.find((p) => p.role === 'AGRESOR')?.id ?? parties[0]?.id ?? '';
+  const [partyId, setPartyId] = useState(defaultParty);
+  const [tipo, setTipo] = useState('CITACION');
+  const [medio, setMedio] = useState('PERSONAL');
+  const [estado, setEstado] = useState('NOTIFICADO');
+  const [fecha, setFecha] = useState('');
+  const [plazo, setPlazo] = useState('3');
+  const [notas, setNotas] = useState('');
+
+  const load = useCallback(async () => {
+    try { const res = await fetch(`/api/v1/family/cases/${caseId}/notificaciones`); if (res.ok) setItems((await res.json()).data ?? []); } catch { /* noop */ }
+  }, [caseId]);
+  useEffect(() => {
+    load();
+    fetch('/api/v1/auth/me', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      const code = String(d?.data?.user?.role?.code ?? '').toUpperCase();
+      setCanWrite(['ADMIN', 'DIRECTOR', 'FUNCIONARIO'].some((r) => code === r || code.startsWith(r + '_')));
+    }).catch(() => {});
+  }, [load]);
+
+  const crear = async () => {
+    setError(null);
+    if (!partyId) { setError('Seleccione la parte a notificar.'); return; }
+    setBusy(true);
+    const r = await post(`/api/v1/family/cases/${caseId}/notificaciones`, {
+      partyId, tipo, medio, estado, fechaNotificacion: fecha || undefined,
+      plazoRecursoDias: RECURRIBLE.includes(tipo) ? Number(plazo) || 3 : undefined,
+      notas: notas.trim() || undefined,
+    });
+    setBusy(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setOpen(false); setNotas(''); setFecha(''); load();
+  };
+
+  const marcar = async (id: string, body: Record<string, unknown>) => {
+    setBusyId(id);
+    await patch(`/api/v1/family/notificaciones/${id}`, body);
+    setBusyId(null); load();
+  };
+
+  const fmt = (s: string) => new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0 }}>Notificaciones a las partes ({items?.length ?? 0})</h2>
+        {canWrite && <ToggleButton open={open} onClick={() => setOpen(!open)} label="Registrar notificación" />}
+      </div>
+      <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '0 0 0.6rem' }}>
+        Acuse de notificación al querellado y demás partes; para decisiones recurribles se calcula el plazo del recurso.
+      </p>
+
+      {open && canWrite && (
+        <div style={formBox}>
+          <ErrorBox msg={error} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <div>
+              <label style={label}>Parte notificada</label>
+              <select value={partyId} onChange={(e) => setPartyId(e.target.value)} style={input}>
+                {parties.map((p) => <option key={p.id} value={p.id}>{p.person?.firstName} {p.person?.firstLastName} — {PARTY_ROLE_LABELS[p.role] ?? p.role}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={label}>Acto notificado</label>
+              <select value={tipo} onChange={(e) => setTipo(e.target.value)} style={input}>
+                {Object.entries(TIPO_NOTI_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={label}>Medio</label>
+              <select value={medio} onChange={(e) => setMedio(e.target.value)} style={input}>
+                {Object.entries(MEDIO_NOTI_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={label}>Estado</label>
+              <select value={estado} onChange={(e) => setEstado(e.target.value)} style={input}>
+                <option value="NOTIFICADO">Notificado</option>
+                <option value="NO_LOCALIZADO">No localizado</option>
+                <option value="PENDIENTE">Pendiente</option>
+              </select>
+            </div>
+            <div>
+              <label style={label}>Fecha de notificación</label>
+              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} style={input} />
+            </div>
+            {RECURRIBLE.includes(tipo) && (
+              <div>
+                <label style={label}>Plazo del recurso (días hábiles)</label>
+                <input type="number" min={1} value={plazo} onChange={(e) => setPlazo(e.target.value)} style={input} />
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: '0.6rem' }}>
+            <label style={label}>Notas</label>
+            <input value={notas} onChange={(e) => setNotas(e.target.value)} style={input} placeholder="Observaciones de la diligencia de notificación" />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+            <button onClick={crear} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.6 : 1 }}>{busy ? 'Guardando…' : 'Registrar'}</button>
+            <button onClick={() => setOpen(false)} style={ghostBtn}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {!items || items.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin notificaciones registradas.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.5rem' }}>
+          {items.map((n) => {
+            const est = ESTADO_NOTI[n.estado] ?? ESTADO_NOTI.PENDIENTE;
+            const vencido = n.recursoVenceAt && new Date(n.recursoVenceAt) < new Date() && !n.recursoInterpuesto;
+            return (
+              <div key={n.id} style={{ border: '1px solid #f3f4f6', borderRadius: 8, padding: '0.6rem 0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.88rem', color: '#374151' }}>
+                    <b>{TIPO_NOTI_LBL[n.tipo] ?? n.tipo}</b> · {n.party?.person?.firstName} {n.party?.person?.firstLastName} · {MEDIO_NOTI_LBL[n.medio] ?? n.medio}
+                    {n.fechaNotificacion && <span style={{ color: '#9ca3af' }}> · {fmt(n.fechaNotificacion)}</span>}
+                  </div>
+                  <span style={{ background: est.bg, color: est.fg, borderRadius: 999, padding: '0.15rem 0.6rem', fontSize: '0.75rem', fontWeight: 700 }}>{est.t}</span>
+                </div>
+                {n.recursoVenceAt && (
+                  <div style={{ fontSize: '0.78rem', marginTop: '0.3rem', color: n.recursoInterpuesto ? '#166534' : vencido ? '#991b1b' : '#b45309' }}>
+                    {n.recursoInterpuesto ? `Recurso interpuesto${n.recursoAt ? ` el ${fmt(n.recursoAt)}` : ''}` : `Recurso: vence el ${fmt(n.recursoVenceAt)}${vencido ? ' (vencido)' : ''}`}
+                  </div>
+                )}
+                {canWrite && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+                    {n.estado !== 'NOTIFICADO' && <button onClick={() => marcar(n.id, { estado: 'NOTIFICADO' })} disabled={busyId === n.id} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem', color: '#166534', borderColor: '#bbf7d0' }}>Marcar notificado</button>}
+                    {RECURRIBLE.includes(n.tipo) && n.recursoVenceAt && !n.recursoInterpuesto && <button onClick={() => marcar(n.id, { recursoInterpuesto: true })} disabled={busyId === n.id} style={{ ...ghostBtn, fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}>Registrar recurso interpuesto</button>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {

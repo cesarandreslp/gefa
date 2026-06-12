@@ -16,6 +16,7 @@ import {
   AddAssessmentForm, TeamSection, AuditSection,
   DeclaracionesSection, ApplyInstrumentForm, InstrumentReportControl,
   ConsolidatedReportSection, DocumentsSection, InformeFinalSection, DescargosSection,
+  NotificacionesSection,
 } from './ExpedienteActions';
 import { CaseDocuments } from './CaseDocuments';
 
@@ -330,6 +331,9 @@ export default function ExpedienteFamiliaPage() {
 
       {/* Documentos del despacho (plantillas + editor + firmas) */}
       <DocumentsSection caseId={data.id} />
+
+      {/* Notificaciones a las partes (acuse + recurso) */}
+      <NotificacionesSection caseId={data.id} parties={data.caseParties} />
 
       {/* Valoraciones (confidencial) */}
       <div style={{ ...card, borderColor: '#fde68a', background: '#fffbeb' }}>
