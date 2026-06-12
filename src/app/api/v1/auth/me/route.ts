@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
               canApprove: user.role.canApprove,
               canReassign: user.role.canReassign,
               canSign: user.role.canSign,
+              permissions: user.role.permissions ?? [],
             } : null,
             comisaria: user.comisaria ? {
               id: user.comisaria.id,

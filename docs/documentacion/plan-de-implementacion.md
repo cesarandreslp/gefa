@@ -6,6 +6,26 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 91. Descripción preliminar + permiso del auxiliar — FASE 1
+**Estado:** COMPLETADO
+**Hecho:**
+- `prisma/schema.prisma` — `Case.descripcionPreliminar String?`. **db push** + `tenant-schema.sql` regenerado.
+- `src/lib/familyApi.ts` — `PERM_DESCRIPCION_PRELIMINAR`, `AUXILIAR_ROLE_CODES`, `roleHasPermission`.
+- `auth/me` — el rol expone `permissions`.
+- `family/cases` POST — admite al `AUXILIAR_ATENCION_USUARIO`; si es auxiliar exige el permiso `family:descripcion-preliminar` (si no, 403). Captura `descripcionPreliminar` en el caso.
+- `family/config/auxiliar-preliminar` (NUEVO) — GET/POST (ADMIN/DIRECTOR) que activa/desactiva el permiso sobre los roles auxiliares del tenant (nivel 75 / código). Auditado.
+- `AdminShell.tsx` — el nav muestra "Radicar caso" al auxiliar si su rol tiene el permiso.
+- `admin/family/nuevo` — campo "Descripción preliminar"; se envía al radicar.
+- `admin/usuarios` — tarjeta para el comisario que habilita/inhabilita la capacidad del rol auxiliar.
+- `admin/family/[caseId]` — muestra la descripción preliminar en el expediente.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+**Objetivo:** `Case.descripcionPreliminar`; permiso de rol `family:descripcion-preliminar` que el comisario (DIRECTOR/ADMIN) activa/desactiva al rol auxiliar; con el permiso, el auxiliar puede RADICAR el caso (paso 1) e incluir la descripción preliminar y el triage. /auth/me expone los permisos del rol; el nav muestra "Radicar caso" al auxiliar con permiso.
+
+### 90. Descripción preliminar + informe consolidado + versión de hechos del comisario — DISEÑO
+**Estado:** COMPLETADO
+**Decisiones (usuario):** permiso a nivel de ROL (Role.permissions) · el auxiliar RADICA · el compilado lo genera la IA · anexar un documento (PDF) por pieza (reusa emisión Fase 3 de documentos). Plan: F1 descripción preliminar+permiso, F2 IA consolidada incluye descripción preliminar, F3 versión de hechos del comisario + compilado IA + anexos.
+**Objetivo:** (A) Campo `descripcionPreliminar` (igual que descripción de los hechos) capturado en el paso 1; el comisario habilita/inhabilita esa capacidad al rol auxiliar. (B) La IA integra descripción preliminar + insumos del equipo (psico/social/jurídico) en el informe consolidado que revisa el comisario (extiende el pre‑informe existente). (C) El comisario registra aparte su "versión de los hechos" y, si lo decide, genera un compilado de ambos informes. (D) Todo lo generado por el equipo y la comisaría previo al informe final se anexa al expediente. Se confirman decisiones con el usuario antes de implementar.
+
 ### 89. Despacho — asignación automática rotativa + número de turno diario (01‑999)
 **Estado:** COMPLETADO
 **Objetivo:** (A) Asignar el caso automáticamente al equipo siguiendo un ciclo rotativo de profesiones psicología→trabajo social→jurídico→(psicología): se toma el primer profesional LIBRE recorriendo el ciclo desde el siguiente al último asignado (balancea carga y resuelve los empates de "ocupado"). (B) Cada asignación recibe un **número de turno diario 01‑999** que enmascara el radicado (turno 01 ↔ rad40124) para que el usuario no memorice el radicado; el contador reinicia cada día (zona America/Bogotá), los radicados mantienen su consecutivo.

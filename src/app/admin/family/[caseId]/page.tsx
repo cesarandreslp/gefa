@@ -25,6 +25,7 @@ interface Expediente {
   filingNumber: string;
   subject: string;
   description: string;
+  descripcionPreliminar?: string | null;
   filedAt: string;
   dueDate: string;
   priority: number;
@@ -191,6 +192,12 @@ export default function ExpedienteFamiliaPage() {
           </div>
         )}
         <p style={{ marginTop: '1rem', whiteSpace: 'pre-wrap', color: '#374151', fontSize: '0.92rem' }}>{data.description}</p>
+        {data.descripcionPreliminar && (
+          <div style={{ marginTop: '1rem', borderLeft: '3px solid #cbd5e1', background: '#f8fafc', borderRadius: 8, padding: '0.7rem 0.9rem' }}>
+            <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Descripción preliminar (paso 1)</div>
+            <p style={{ margin: '0.35rem 0 0', whiteSpace: 'pre-wrap', color: '#475569', fontSize: '0.9rem' }}>{data.descripcionPreliminar}</p>
+          </div>
+        )}
       </div>
 
       {/* Cambiar estado */}

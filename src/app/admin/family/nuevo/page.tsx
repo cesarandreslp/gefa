@@ -47,6 +47,7 @@ export default function NuevoFamilyCasePage() {
   const [caseTypeCode, setCaseTypeCode] = useState(FAMILY_CASE_TYPES[0].code);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const [descripcionPreliminar, setDescripcionPreliminar] = useState('');
   const [channel, setChannel] = useState('PRESENCIAL');
   const [violence, setViolence] = useState<string[]>([]);
   const [riesgoInminente, setRiesgoInminente] = useState(false);
@@ -96,6 +97,7 @@ export default function NuevoFamilyCasePage() {
         caseTypeCode,
         subject: subject.trim(),
         description: description.trim(),
+        descripcionPreliminar: descripcionPreliminar.trim() || undefined,
         channel,
         comisariaId: comisariaId || undefined,
         violenceTypes: violence,
@@ -188,6 +190,10 @@ export default function NuevoFamilyCasePage() {
           <div style={{ marginTop: '1rem' }}>
             <label style={labelStyle}>Descripción de los hechos *</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inputStyle, minHeight: '110px', resize: 'vertical' }} />
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            <label style={labelStyle}>Descripción preliminar (relato en el primer contacto)</label>
+            <textarea value={descripcionPreliminar} onChange={(e) => setDescripcionPreliminar(e.target.value)} style={{ ...inputStyle, minHeight: '90px', resize: 'vertical' }} placeholder="Relato de la persona tal como se recibe en el triage (paso 1). Es un insumo del informe consolidado por IA." />
           </div>
           <div style={{ marginTop: '1rem' }}>
             <label style={labelStyle}>Tipos de violencia (si aplica)</label>

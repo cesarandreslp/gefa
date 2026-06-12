@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PartyRole, ViolenceType, CaseModality } from '@prisma/client';
-import { protectAPIRoute } from '@/lib/auth';
-import { FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, isValidEnum, auditFamily } from '@/lib/familyApi';
+import { protectAPIRoute, getBaseRoleCode } from '@/lib/auth';
+import {
+  FAMILY_READ_ROLES, FAMILY_INTAKE_ROLES, isValidEnum, auditFamily,
+  AUXILIAR_ROLE_CODES, PERM_DESCRIPCION_PRELIMINAR, roleHasPermission,
+} from '@/lib/familyApi';
 import { caseService } from '@/services/CaseService';
 import { LegalTermsCalculator } from '@/domain/rules/LegalTermsCalculator';
 import { CASE_TYPE_MODALITY } from '@/domain/catalogs/familyCaseTypes';
@@ -115,18 +118,31 @@ export async function GET(request: NextRequest) {
 // crea/vincula las personas como partes y siembra el estado inicial.
 export async function POST(request: NextRequest) {
   try {
-    const auth = await protectAPIRoute(request, FAMILY_INTAKE_ROLES);
+    const auth = await protectAPIRoute(request, [...FAMILY_INTAKE_ROLES, 'AUXILIAR_ATENCION_USUARIO']);
     if (!auth.authorized || !auth.user) {
       return auth.response ?? NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const db = auth.db;
     const tenantId = auth.user.tenantId;
+
+    // El auxiliar del triage solo puede radicar (paso 1) si el comisario habilitó la
+    // capacidad de "descripción preliminar" en su rol.
+    if (AUXILIAR_ROLE_CODES.includes(getBaseRoleCode(auth.user.roleCode))) {
+      const permitido = await roleHasPermission(db, auth.user.roleCode, tenantId, PERM_DESCRIPCION_PRELIMINAR);
+      if (!permitido) {
+        return NextResponse.json(
+          { error: 'El auxiliar no está habilitado para radicar. El comisario debe activar la descripción preliminar para el rol.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const body = await request.json();
     const {
       caseTypeCode, subject, description, channel,
       violenceTypes, modality, priority, folios, comisariaId,
-      riesgoInminente, riesgoInminenteMotivo,
+      riesgoInminente, riesgoInminenteMotivo, descripcionPreliminar,
     } = body;
     const parties: PartyInput[] = Array.isArray(body.parties) ? body.parties : [];
 
@@ -360,6 +376,7 @@ export async function POST(request: NextRequest) {
           violenceTypes: validViolence,
           riesgoInminente: esUrgente,
           riesgoInminenteMotivo: esUrgente ? (typeof riesgoInminenteMotivo === 'string' ? riesgoInminenteMotivo.trim() || null : null) : null,
+          descripcionPreliminar: typeof descripcionPreliminar === 'string' ? descripcionPreliminar.trim() || null : null,
           comisariaId: comisariaId || null,
           metadata: { radicadoPor: auth.user!.userId, origen: 'family_intake' },
         },

@@ -46,7 +46,7 @@ const SECRETARIA_PATHS = new Set(['/admin/seguimiento', '/admin/family/stats', '
 interface MeUser {
   fullName: string;
   email: string;
-  role?: { code: string; name: string } | null;
+  role?: { code: string; name: string; permissions?: string[] } | null;
   comisaria?: { code: string; name: string } | null;
 }
 
@@ -103,11 +103,14 @@ export default function AdminShell({
   const isActive = (path: string, exact?: boolean) =>
     exact ? pathname === path : (pathname === path || pathname?.startsWith(path + '/'));
 
-  const visible = NAV_ITEMS.filter((item) =>
-    userRole === 'SECRETARIA_GOBIERNO'
-      ? SECRETARIA_PATHS.has(item.path)
-      : (!item.roles || item.roles.includes(userRole))
-  );
+  const perms = me?.role?.permissions ?? [];
+  const visible = NAV_ITEMS.filter((item) => {
+    if (userRole === 'SECRETARIA_GOBIERNO') return SECRETARIA_PATHS.has(item.path);
+    if (!item.roles || item.roles.includes(userRole)) return true;
+    // Excepción: el auxiliar con la capacidad habilitada puede radicar (paso 1).
+    if (item.path === '/admin/family/nuevo' && perms.includes('family:descripcion-preliminar')) return true;
+    return false;
+  });
 
   const hasLogo = !!logoUrl && !logoUrl.endsWith('/logo.png');
   const sbWidth = collapsed ? 68 : 248;

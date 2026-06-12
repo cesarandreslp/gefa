@@ -117,6 +117,31 @@ export const FAMILY_DISPATCH_ROLES = [
 ];
 
 /**
+ * Permiso de rol (Role.permissions[]) que habilita al AUXILIAR del triage a radicar
+ * el caso y registrar la DESCRIPCIÓN PRELIMINAR (paso 1). Lo activa/desactiva el
+ * comisario sobre el rol auxiliar; por defecto el auxiliar no radica.
+ */
+export const PERM_DESCRIPCION_PRELIMINAR = 'family:descripcion-preliminar';
+
+/** Códigos de rol del auxiliar de atención al usuario (incluye el legacy AUXILIAR). */
+export const AUXILIAR_ROLE_CODES = ['AUXILIAR_ATENCION_USUARIO', 'AUXILIAR'];
+
+/** ¿El rol (por su código) tiene un permiso en su arreglo `permissions`? */
+export async function roleHasPermission(
+  db: PrismaClient,
+  roleCode: string | null | undefined,
+  tenantId: string,
+  perm: string
+): Promise<boolean> {
+  if (!roleCode) return false;
+  const role = await db.role.findFirst({
+    where: { code: roleCode, tenantId },
+    select: { permissions: true },
+  });
+  return !!role?.permissions?.includes(perm);
+}
+
+/**
  * Verifica que un caso exista y pertenezca al tenant del usuario.
  * Devuelve el caso (id) o null. Evita fuga de datos entre comisarías.
  */

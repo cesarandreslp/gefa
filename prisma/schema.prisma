@@ -303,6 +303,11 @@ model Case {
   riesgoInminente       Boolean @default(false)
   riesgoInminenteMotivo String? @db.Text
 
+  // Descripción preliminar (paso 1): el relato que toma el auxiliar del triage en el
+  // primer contacto, igual en naturaleza a la descripción de los hechos. Insumo del
+  // informe consolidado por IA. Solo se captura si el comisario habilitó la capacidad.
+  descripcionPreliminar String? @db.Text
+
   // Pre-informe consolidado por IA (Fase C4): integra los informes preliminares
   // de los instrumentos diligenciados en un BORRADOR único del caso. Sin peso
   // procesal: lo edita el equipo y lo aprueba la autoridad (Fase C5).

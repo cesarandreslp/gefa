@@ -52,6 +52,10 @@ export default function UsersPage() {
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [existingSignatureUrl, setExistingSignatureUrl] = useState<string | null>(null);
   const [signatureMsg, setSignatureMsg] = useState<string | null>(null);
+  // Capacidad del rol auxiliar: registrar descripción preliminar / radicar (paso 1).
+  const [preliminarEnabled, setPreliminarEnabled] = useState<boolean | null>(null);
+  const [preliminarHasRole, setPreliminarHasRole] = useState(true);
+  const [preliminarBusy, setPreliminarBusy] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -76,7 +80,23 @@ export default function UsersPage() {
     loadUsers();
     loadRoles();
     loadComisarias();
+    fetch('/api/v1/family/config/auxiliar-preliminar')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) { setPreliminarEnabled(!!d.enabled); setPreliminarHasRole(d.hasAuxiliarRole !== false); } })
+      .catch(() => {});
   }, [router]);
+
+  const togglePreliminar = async () => {
+    setPreliminarBusy(true);
+    try {
+      const res = await fetch('/api/v1/family/config/auxiliar-preliminar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !preliminarEnabled }),
+      });
+      if (res.ok) setPreliminarEnabled((await res.json()).enabled);
+      else alert((await res.json()).error || 'No se pudo actualizar');
+    } catch { alert('Error de red'); } finally { setPreliminarBusy(false); }
+  };
 
   const loadUsers = async () => {
     try {
@@ -295,6 +315,27 @@ export default function UsersPage() {
             ? `${limits.activeUsers} usuario(s) activo(s) · sin límite contratado`
             : `${limits.activeUsers} de ${limits.maxUsers} usuarios contratados en uso${atUserCap ? ' · cupo alcanzado' : ''}`}
         </p>
+      )}
+
+      {/* Capacidad del rol auxiliar: descripción preliminar / radicar (paso 1) */}
+      {preliminarEnabled !== null && preliminarHasRole && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, color: '#111827', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <FileSignature size={16} color="#0e7490" /> Descripción preliminar del auxiliar (paso 1)
+            </div>
+            <p style={{ margin: '0.25rem 0 0', color: '#6b7280', fontSize: '0.82rem', maxWidth: 620 }}>
+              Si la activas, el rol auxiliar de atención podrá radicar el caso en el triage y registrar la descripción preliminar (relato del primer contacto), que alimenta el informe consolidado por IA.
+            </p>
+          </div>
+          <button
+            onClick={togglePreliminar}
+            disabled={preliminarBusy}
+            style={{ flexShrink: 0, padding: '0.5rem 1rem', borderRadius: 9999, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', color: '#fff', background: preliminarEnabled ? '#16a34a' : '#9ca3af' }}
+          >
+            {preliminarBusy ? '…' : preliminarEnabled ? 'Habilitada' : 'Inhabilitada'}
+          </button>
+        </div>
       )}
 
       {/* Contenido */}
