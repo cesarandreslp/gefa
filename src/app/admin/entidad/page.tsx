@@ -258,6 +258,7 @@ export default function TenantEntidadPage() {
                 <option value="GROQ">GROQ</option>
                 <option value="ANTHROPIC">Anthropic (Claude)</option>
                 <option value="OPENAI">OpenAI</option>
+                <option value="GEMINI">Google (Gemini)</option>
               </select>
             </div>
             <div>

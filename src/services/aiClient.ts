@@ -23,6 +23,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   GROQ: 'llama-3.3-70b-versatile',
   ANTHROPIC: 'claude-sonnet-4-6',
   OPENAI: 'gpt-4o-mini',
+  GEMINI: 'gemini-2.0-flash',
 };
 
 function resolveConfig(cfg: AIConfig): { provider: string; apiKey: string; model: string } {
@@ -32,6 +33,7 @@ function resolveConfig(cfg: AIConfig): { provider: string; apiKey: string; model
     (provider === 'GROQ' ? cfg.groqApiKey || process.env.GROQ_API_KEY : undefined) ||
     (provider === 'ANTHROPIC' ? process.env.ANTHROPIC_API_KEY : undefined) ||
     (provider === 'OPENAI' ? process.env.OPENAI_API_KEY : undefined) ||
+    (provider === 'GEMINI' ? process.env.GEMINI_API_KEY : undefined) ||
     '';
   const model = cfg.model || DEFAULT_MODELS[provider] || DEFAULT_MODELS.GROQ;
   return { provider, apiKey, model };
@@ -68,6 +70,23 @@ export async function callAI(cfg: AIConfig, input: AICallInput): Promise<string>
     if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const json = await res.json();
     return (json?.content?.[0]?.text ?? '').trim();
+  }
+
+  if (provider === 'GEMINI') {
+    // Google Gemini (Generative Language API). Esquema propio.
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'x-goog-api-key': apiKey, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: input.system }] },
+        contents: [{ role: 'user', parts: [{ text: input.user }] }],
+        generationConfig: { maxOutputTokens: maxTokens, temperature },
+      }),
+    });
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const json = await res.json();
+    const parts = json?.candidates?.[0]?.content?.parts;
+    return (Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('') : '').trim();
   }
 
   // GROQ y OpenAI comparten el esquema OpenAI-compatible.

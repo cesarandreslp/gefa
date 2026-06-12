@@ -6,6 +6,11 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 100. IA: agregar proveedor Google Gemini
+**Estado:** COMPLETADO
+**Hecho:** `src/services/aiClient.ts` — soporte de `GEMINI` (Generative Language API, esquema propio con `system_instruction`/`contents`/`generationConfig`; header `x-goog-api-key`; default `gemini-2.0-flash`; fallback `GEMINI_API_KEY`). `admin/entidad` — opción "Google (Gemini)" en el desplegable de proveedor. Aplica a todas las funciones IA (corrección, informe preliminar, consolidado, final).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+
 ### 99. Editor visual (TipTap) para el cuerpo de las plantillas
 **Estado:** COMPLETADO
 **Objetivo:** Que el cuerpo de la plantilla se edite como en un editor de texto (no HTML crudo) para usuarios sin conocimientos técnicos; internamente sigue guardándose como HTML.
