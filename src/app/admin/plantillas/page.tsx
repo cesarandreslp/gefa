@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FileSignature, Plus, Trash2, Pencil, X } from 'lucide-react';
 import AdminPageHeader from '../AdminPageHeader';
+import RichTextEditor from '../documentos/RichTextEditor';
 
 const KIND_LABELS: Record<string, string> = {
   DECLARACION: 'Declaración',
@@ -185,8 +186,11 @@ export default function PlantillasPage() {
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={label}>Cuerpo de la plantilla (HTML; usa {'{{clave}}'} para variables)</label>
-            <textarea style={{ ...input, minHeight: 220, fontFamily: 'ui-monospace, monospace', fontSize: '0.82rem' }} value={form.bodyHtml} onChange={(e) => setForm({ ...form, bodyHtml: e.target.value })} placeholder={'<p>En la ciudad de {{ciudad}}, a los {{fecha}}...</p>'} />
+            <label style={label}>Cuerpo de la plantilla</label>
+            <p style={{ color: '#64748b', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
+              Escríbalo como en un editor de texto. Donde quiera un dato variable, escriba la clave entre llaves, por ejemplo <code>{'{{ciudad}}'}</code> o <code>{'{{fecha}}'}</code>; se reemplazará al diligenciar el documento.
+            </p>
+            <RichTextEditor value={form.bodyHtml} onChange={(html) => setForm((f) => ({ ...f, bodyHtml: html }))} />
           </div>
 
           <div style={{ marginBottom: '1rem' }}>

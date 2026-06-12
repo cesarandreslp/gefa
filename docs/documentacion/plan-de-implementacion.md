@@ -6,6 +6,12 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 99. Editor visual (TipTap) para el cuerpo de las plantillas
+**Estado:** COMPLETADO
+**Objetivo:** Que el cuerpo de la plantilla se edite como en un editor de texto (no HTML crudo) para usuarios sin conocimientos técnicos; internamente sigue guardándose como HTML.
+**Hecho:** `admin/plantillas/page.tsx` — el `<textarea>` de HTML se reemplazó por `RichTextEditor` (TipTap). Los `{{variables}}` se escriben como texto y se conservan en el HTML. Nota guía sobre el uso de `{{clave}}`. Sin cambios de schema/API (el campo sigue siendo `bodyHtml`).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+
 ### 98. Notificaciones: enlazar documento emitido + alerta de vencimiento del recurso
 **Estado:** COMPLETADO
 **Hecho:**
