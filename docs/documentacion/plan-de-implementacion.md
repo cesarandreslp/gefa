@@ -6,6 +6,16 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 95. Módulo del querellado — FASE 1: descargos (campo + IA + UI presencial)
+**Estado:** COMPLETADO
+**Hecho:**
+- `prisma/schema.prisma` — `Case.descargosQuerellado`/`descargosAt`/`descargosOrigen`. **db push** + `tenant-schema.sql`.
+- `family/cases/[caseId]/descargos` (NUEVO) — GET (READ) / PATCH (WRITE: ADMIN/DIRECTOR/FUNCIONARIO) registra los descargos presenciales (`origen=PRESENCIAL`), auditado.
+- `ConsolidatedReportService` — suma los descargos del querellado al relato; SYSTEM_PROMPT contrasta ambas versiones y respeta la presunción.
+- `ExpedienteActions.tsx` — `DescargosSection` (ver/registrar/editar; gate de escritura por rol vía /auth/me); conectada en el expediente.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+**Objetivo:** Dar al querellado (AGRESOR) su derecho a ser oído: capturar sus descargos/versión de los hechos en el expediente y que entren como insumo al informe consolidado por IA (debido proceso: el informe contempla ambas versiones). Registro presencial por el equipo (el portal es la Fase 2; el seguimiento de notificaciones la Fase 3).
+
 ### 94. Plantillas jurídicas precargadas + encabezado completo + restricción por profesión + resolución ligada al informe final
 **Estado:** COMPLETADO
 **Hecho:**

@@ -13,7 +13,8 @@ const SYSTEM_PROMPT = `Eres el equipo interdisciplinario de una comisaría de fa
 Reglas estrictas:
 - Básate ÚNICAMENTE en los insumos provistos; NO inventes hechos, antecedentes ni cifras.
 - NO incluyas datos identificables (nombres, documentos, direcciones, teléfonos); usa "la persona valorada", "el presunto agresor", "los NNA", etc.
-- Integra el RELATO inicial (descripción preliminar y de los hechos) con los hallazgos de los instrumentos del equipo (psicología, trabajo social, jurídico); contrasta y señala convergencias y discrepancias en el nivel de riesgo.
+- Integra el RELATO inicial (descripción preliminar, versión del querellante y descargos del querellado) con los hallazgos de los instrumentos del equipo (psicología, trabajo social, jurídico); contrasta AMBAS versiones y señala convergencias y discrepancias en el nivel de riesgo.
+- Respeta el debido proceso y la presunción: presenta los descargos del querellado de forma objetiva; no afirmes responsabilidades como hechos probados.
 - Lenguaje técnico, claro y respetuoso, con enfoque de género, diferencial y de derechos.
 - Estructura el pre-informe en: (1) Síntesis integral del caso, (2) Nivel de riesgo consolidado y su justificación, (3) Factores de riesgo y factores protectores, (4) Recomendaciones de protección, atención y seguimiento.
 - Cierra indicando que es un BORRADOR consolidado, sin peso procesal, sujeto a revisión y aprobación de la autoridad competente (comisario/a de familia).`;
@@ -25,7 +26,7 @@ export async function generateConsolidatedReport(
 ): Promise<{ ok: boolean; draft?: string; error?: string }> {
   const caseRow = await db.case.findFirst({
     where: { id: caseId, tenantId },
-    select: { id: true, description: true, descripcionPreliminar: true },
+    select: { id: true, description: true, descripcionPreliminar: true, descargosQuerellado: true },
   });
   if (!caseRow) return { ok: false, error: 'Caso no encontrado' };
 
@@ -72,8 +73,10 @@ export async function generateConsolidatedReport(
   // Relato inicial (paso 1): descripción preliminar del auxiliar + descripción de los hechos.
   const relato: string[] = [];
   if (caseRow.descripcionPreliminar?.trim()) relato.push(`Descripción preliminar (primer contacto, paso 1):\n${caseRow.descripcionPreliminar.trim()}`);
-  if (caseRow.description?.trim()) relato.push(`Descripción de los hechos (radicación):\n${caseRow.description.trim()}`);
-  const bloqueRelato = relato.length ? `RELATO INICIAL DEL CASO:\n\n${relato.join('\n\n')}\n\n---\n\n` : '';
+  if (caseRow.description?.trim()) relato.push(`Descripción de los hechos / versión del querellante:\n${caseRow.description.trim()}`);
+  // Versión del querellado (descargos) — debido proceso: el informe contempla ambas partes.
+  if (caseRow.descargosQuerellado?.trim()) relato.push(`Descargos / versión del querellado:\n${caseRow.descargosQuerellado.trim()}`);
+  const bloqueRelato = relato.length ? `RELATO INICIAL DEL CASO (ambas partes):\n\n${relato.join('\n\n')}\n\n---\n\n` : '';
 
   const userPrompt = anonymize(
     `${bloqueRelato}INSUMOS DEL EQUIPO (${assessments.length} instrumento(s) diligenciado(s)):\n\n${bloques.join('\n\n---\n\n')}\n\nRedacta el pre-informe consolidado del caso integrando el relato inicial con los hallazgos del equipo.`,

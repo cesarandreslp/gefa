@@ -1032,6 +1032,79 @@ export function InformeFinalSection({ caseId, version, compilado, preInformeEsta
   );
 }
 
+// ── Descargos del querellado (derecho a ser oído — debido proceso) ───────────
+// Muestra la versión del querellado y, si el usuario tiene rol de escritura, permite
+// registrarla/editarla (presencial). El querellado también puede enviarla por el
+// portal (Fase 2). Alimenta el informe consolidado por IA.
+export function DescargosSection({ caseId }: { caseId: string }) {
+  const cardStyle: React.CSSProperties = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' };
+  const [data, setData] = useState<{ descargosQuerellado?: string | null; descargosOrigen?: string | null; descargosAt?: string | null } | null>(null);
+  const [canWrite, setCanWrite] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/family/cases/${caseId}/descargos`);
+      if (res.ok) { const d = (await res.json()).data; setData(d); setText(d?.descargosQuerellado ?? ''); }
+    } catch { /* noop */ }
+  }, [caseId]);
+
+  useEffect(() => {
+    load();
+    fetch('/api/v1/auth/me', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const code = String(d?.data?.user?.role?.code ?? '').toUpperCase();
+        setCanWrite(['ADMIN', 'DIRECTOR', 'FUNCIONARIO'].some((r) => code === r || code.startsWith(r + '_')));
+      })
+      .catch(() => {});
+  }, [load]);
+
+  const guardar = async () => {
+    setBusy(true); setError(null);
+    const r = await patch(`/api/v1/family/cases/${caseId}/descargos`, { descargosQuerellado: text });
+    setBusy(false);
+    if (!r.ok) { setError(r.error!); return; }
+    setEditing(false); load();
+  };
+
+  const tiene = !!data?.descargosQuerellado?.trim();
+  const origenLbl = data?.descargosOrigen === 'PORTAL' ? 'presentados por el querellado (portal)' : data?.descargosOrigen === 'PRESENCIAL' ? 'registrados por el equipo' : '';
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <h2 style={{ fontSize: '1.05rem', margin: 0 }}>Descargos del querellado</h2>
+        {canWrite && !editing && <ToggleButton open={false} onClick={() => setEditing(true)} label={tiene ? 'Editar descargos' : 'Registrar descargos'} />}
+      </div>
+      <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '0 0 0.6rem' }}>
+        Versión de los hechos del querellado (derecho a ser oído). Se integra al informe consolidado por IA.
+      </p>
+      <ErrorBox msg={error} />
+
+      {editing ? (
+        <div style={formBox}>
+          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Versión / descargos del querellado…" style={{ ...input, minHeight: '110px', resize: 'vertical' }} />
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+            <button onClick={guardar} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.6 : 1 }}>{busy ? 'Guardando…' : 'Guardar descargos'}</button>
+            <button onClick={() => { setEditing(false); setText(data?.descargosQuerellado ?? ''); }} style={ghostBtn}>Cancelar</button>
+          </div>
+        </div>
+      ) : tiene ? (
+        <>
+          <p style={{ fontSize: '0.9rem', color: '#374151', whiteSpace: 'pre-wrap', margin: 0 }}>{data!.descargosQuerellado}</p>
+          {origenLbl && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.4rem' }}>Descargos {origenLbl}{data?.descargosAt ? ` · ${new Date(data.descargosAt).toLocaleString('es-CO')}` : ''}</div>}
+        </>
+      ) : (
+        <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: 0 }}>Sin descargos registrados. El querellado puede presentarlos presencialmente o por el portal.</p>
+      )}
+    </div>
+  );
+}
+
 export const measureStatusLabel = (s: string) => MEASURE_STATUS_LABELS[s] ?? s;
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {

@@ -308,6 +308,12 @@ model Case {
   // informe consolidado por IA. Solo se captura si el comisario habilitó la capacidad.
   descripcionPreliminar String? @db.Text
 
+  // Descargos / versión de los hechos del QUERELLADO (derecho a ser oído, debido
+  // proceso). Insumo del informe consolidado por IA junto al relato del querellante.
+  descargosQuerellado String?   @db.Text
+  descargosAt         DateTime?
+  descargosOrigen     String?   // PRESENCIAL (equipo) | PORTAL (el querellado en línea)
+
   // Versión de los hechos del comisario: su relato/valoración propia del caso, que
   // redacta aparte del informe del equipo. Insumo del informe final compilado.
   versionHechosComisario String?  @db.Text
