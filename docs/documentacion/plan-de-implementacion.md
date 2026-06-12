@@ -6,6 +6,13 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 96. Módulo del querellado — FASE 2: descargos por el portal
+**Estado:** COMPLETADO
+**Hecho:**
+- `family/public/descargos` (NUEVO, POST) — el querellado presenta descargos en línea. Doble factor: radicado + su documento (debe coincidir con una parte `AGRESOR`); error uniforme (no revela existencia del radicado). Rate limit `FORM_SUBMISSION` (5/h). **Anexa** (no sobrescribe) con sello de fecha, `origen=PORTAL`; auditado `FAMILY_DESCARGOS_PORTAL` (auditFamilyPublic). Resuelve tenant por host o por sigla del radicado.
+- `comisaria-en-linea/ComisariaPortal.tsx` — nueva pestaña "Descargos (querellado)": formulario (radicado + documento + texto) con aviso Ley 1581 y pantalla de éxito.
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos.
+
 ### 95. Módulo del querellado — FASE 1: descargos (campo + IA + UI presencial)
 **Estado:** COMPLETADO
 **Hecho:**

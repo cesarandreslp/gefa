@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   ShieldCheck, FileText, Search, Send, CheckCircle, AlertCircle,
-  Clock, Loader2, Copy, ArrowLeft,
+  Clock, Loader2, Copy, ArrowLeft, MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -59,7 +59,7 @@ interface StatusResult {
   timeline: Array<{ date: string; state: string; color: string }>;
 }
 
-type Tab = 'radicar' | 'consultar';
+type Tab = 'radicar' | 'consultar' | 'descargos';
 
 export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab?: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -76,6 +76,14 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
   const [searching, setSearching] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [result, setResult] = useState<StatusResult | null>(null);
+
+  // --- Descargos del querellado ---
+  const [dFiling, setDFiling] = useState('');
+  const [dDoc, setDDoc] = useState('');
+  const [dText, setDText] = useState('');
+  const [dSending, setDSending] = useState(false);
+  const [dError, setDError] = useState<string | null>(null);
+  const [dDone, setDDone] = useState(false);
 
   // Pre-llenar la consulta si llega ?radicado= (ej. clic desde el comprobante)
   useEffect(() => {
@@ -148,6 +156,29 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
     }
   };
 
+  const submitDescargos = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDError(null);
+    if (dFiling.trim().length < 5 || dDoc.trim().length < 4 || dText.trim().length < 10) {
+      setDError('Indique el radicado, su documento y sus descargos (mínimo 10 caracteres).');
+      return;
+    }
+    setDSending(true);
+    try {
+      const res = await fetch('/api/v1/family/public/descargos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filingNumber: dFiling.trim(), documentNumber: dDoc.trim(), descargos: dText.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) { setDDone(true); setDText(''); }
+      else setDError(data.error?.message || 'No se pudieron registrar los descargos.');
+    } catch {
+      setDError('Error de conexión. Intente nuevamente.');
+    } finally {
+      setDSending(false);
+    }
+  };
+
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -180,7 +211,7 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
 
         {/* Pestañas */}
         <div style={{ display: 'flex', gap: 4, background: '#fff', padding: 4, borderRadius: 10, marginBottom: 16, border: '1px solid #e2e8f0' }}>
-          {([['radicar', 'Radicar solicitud', FileText], ['consultar', 'Consultar estado', Search]] as const).map(
+          {([['radicar', 'Radicar solicitud', FileText], ['consultar', 'Consultar estado', Search], ['descargos', 'Descargos (querellado)', MessageSquare]] as const).map(
             ([key, label, Icon]) => (
               <button
                 key={key}
@@ -280,6 +311,46 @@ export default function ComisariaPortal({ initialTab = 'radicar' }: { initialTab
 
             {result && <StatusCard result={result} fmtDate={fmtDate} />}
           </>
+        )}
+
+        {tab === 'descargos' && (
+          dDone ? (
+            <div style={{ ...cardStyle, textAlign: 'center' }}>
+              <CheckCircle size={48} color="#16a34a" style={{ margin: '0 auto 12px' }} />
+              <h2 style={{ margin: '0 0 6px', color: '#1e293b' }}>Descargos recibidos</h2>
+              <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 16px' }}>
+                Sus descargos quedaron registrados en el expediente y serán tenidos en cuenta por la comisaría de familia.
+              </p>
+              <button onClick={() => setDDone(false)} style={{ ...secondaryBtn }}>Enviar otros descargos</button>
+            </div>
+          ) : (
+            <form onSubmit={submitDescargos} style={cardStyle}>
+              <SectionTitle>Presentar descargos</SectionTitle>
+              <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 12px' }}>
+                Si usted es la persona señalada en un proceso (querellado), aquí puede presentar su versión de los hechos.
+                Use el número de radicado de la citación que recibió y su documento de identidad.
+              </p>
+              <div style={rowStyle}>
+                <Field label="Número de radicado *">
+                  <input value={dFiling} onChange={(e) => setDFiling(e.target.value)} style={inputStyle} placeholder="Ej. VIF-2026-00001" />
+                </Field>
+                <Field label="Su documento de identidad *">
+                  <input value={dDoc} onChange={(e) => setDDoc(e.target.value)} style={inputStyle} inputMode="numeric" />
+                </Field>
+              </div>
+              <Field label="Sus descargos / versión de los hechos *">
+                <textarea value={dText} onChange={(e) => setDText(e.target.value)} style={{ ...inputStyle, minHeight: 140, resize: 'vertical' }} maxLength={5000} placeholder="Explique su versión de lo ocurrido (mínimo 10 caracteres)." />
+              </Field>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 12px' }}>
+                Al enviar autoriza el tratamiento de sus datos personales conforme a la Ley 1581 de 2012, con la
+                finalidad exclusiva de su defensa dentro del proceso ante la comisaría de familia.
+              </p>
+              {dError && <ErrorBanner>{dError}</ErrorBanner>}
+              <button type="submit" disabled={dSending} style={primaryBtn(dSending)}>
+                {dSending ? <><Loader2 size={18} className="spin" /> Enviando…</> : <><Send size={18} /> Enviar descargos</>}
+              </button>
+            </form>
+          )
         )}
       </div>
 
