@@ -165,9 +165,13 @@ model TenantSettings {
 
   // Integración IA por tenant
   groqApiKey            String?  // (legacy) API key de GROQ; sigue usándola la asignación inteligente
-  aiProvider            String?  // Proveedor IA: GROQ (def) | ANTHROPIC | OPENAI
+  aiProvider            String?  // Proveedor IA: GROQ (def) | ANTHROPIC | OPENAI | GEMINI
   aiApiKey              String?  // API key del proveedor seleccionado
   aiModel               String?  // ID del modelo (def. según proveedor)
+  // Proveedor de RESPALDO: si el principal falla, se reintenta con éste.
+  aiProviderSecondary   String?
+  aiApiKeySecondary     String?
+  aiModelSecondary      String?
 
   // Extensibilidad futura sin necesidad de alterar esquema SQL a cada iteración
   metadata              Json?    // Documento JSON para propiedades no restrictivas

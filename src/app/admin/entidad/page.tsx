@@ -40,6 +40,9 @@ export default function TenantEntidadPage() {
     aiProvider: '',
     aiApiKey: '',
     aiModel: '',
+    aiProviderSecondary: '',
+    aiApiKeySecondary: '',
+    aiModelSecondary: '',
     smtpUser: '',
     smtpPass: '',
     smtpFromName: '',
@@ -71,6 +74,9 @@ export default function TenantEntidadPage() {
         aiProvider: d?.aiProvider || '',
         aiApiKey: d?.aiApiKey || '',
         aiModel: d?.aiModel || '',
+        aiProviderSecondary: d?.aiProviderSecondary || '',
+        aiApiKeySecondary: d?.aiApiKeySecondary || '',
+        aiModelSecondary: d?.aiModelSecondary || '',
         smtpUser: d?.smtpUser || '',
         smtpPass: d?.smtpPass || '',
         smtpFromName: d?.smtpFromName || '',
@@ -271,6 +277,31 @@ export default function TenantEntidadPage() {
             </div>
           </div>
           <p style={help}>Usado para generar los informes preliminares de los instrumentos de valoración. Los datos sensibles se anonimizan antes de enviarse. Si se deja vacío, se usa GROQ con la key de arriba.</p>
+
+          <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid #e5e7eb' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#374151', margin: '0 0 4px' }}>Proveedor de respaldo (opcional)</h3>
+            <p style={{ ...help, marginTop: 0 }}>Si el proveedor principal falla, el sistema reintenta automáticamente con éste.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+              <div>
+                <label style={label}>Proveedor de respaldo</label>
+                <select value={formData.aiProviderSecondary} onChange={(e) => setFormData({ ...formData, aiProviderSecondary: e.target.value })} style={input}>
+                  <option value="">— Sin respaldo —</option>
+                  <option value="GROQ">GROQ</option>
+                  <option value="ANTHROPIC">Anthropic (Claude)</option>
+                  <option value="OPENAI">OpenAI</option>
+                  <option value="GEMINI">Google (Gemini)</option>
+                </select>
+              </div>
+              <div>
+                <label style={label}>API key del respaldo</label>
+                <input type="password" value={formData.aiApiKeySecondary} onChange={(e) => setFormData({ ...formData, aiApiKeySecondary: e.target.value })} placeholder="sk-… / gsk_… / AIza…" style={{ ...input, fontFamily: 'monospace' }} />
+              </div>
+              <div>
+                <label style={label}>Modelo del respaldo (opcional)</label>
+                <input type="text" value={formData.aiModelSecondary} onChange={(e) => setFormData({ ...formData, aiModelSecondary: e.target.value })} placeholder="ej. gpt-4o-mini" style={{ ...input, fontFamily: 'monospace' }} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Servicios de la página principal */}

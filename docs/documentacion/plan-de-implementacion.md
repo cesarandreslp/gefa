@@ -6,6 +6,17 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 101. IA: respaldo automático entre proveedores (failover)
+**Estado:** COMPLETADO
+**Objetivo:** Si la IA configurada falla, que entre otra a operar (si está configurada).
+**Hecho:**
+- `prisma/schema.prisma` (`TenantSettings`) — `aiProviderSecondary`/`aiApiKeySecondary`/`aiModelSecondary`. **db push** + `tenant-schema.sql`.
+- `src/services/aiClient.ts` — refactor a **cadena de proveedores**: `buildChain` arma el orden (principal → secundario → GROQ legacy → claves de entorno), sin duplicar; `callAI` intenta cada uno y devuelve la primera respuesta, registra el fallo y reintenta con el siguiente; `aiIsConfigured` = cadena no vacía. `callOne` aísla cada proveedor (Anthropic/Gemini/OpenAI-GROQ).
+- Los 4 servicios IA (instrumento, corrección, consolidado, final) pasan los campos del respaldo.
+- `tenant-settings` API — zod incluye `GEMINI` (faltaba) + campos del respaldo; upsert los persiste.
+- `admin/entidad` — bloque "Proveedor de respaldo (opcional)" (proveedor + API key + modelo).
+**Verificación:** `tsc --noEmit` exit=0; `next lint` sin errores nuevos. Bug corregido de paso: el zod de tenant-settings no permitía guardar `GEMINI`.
+
 ### 100. IA: agregar proveedor Google Gemini
 **Estado:** COMPLETADO
 **Hecho:** `src/services/aiClient.ts` — soporte de `GEMINI` (Generative Language API, esquema propio con `system_instruction`/`contents`/`generationConfig`; header `x-goog-api-key`; default `gemini-2.0-flash`; fallback `GEMINI_API_KEY`). `admin/entidad` — opción "Google (Gemini)" en el desplegable de proveedor. Aplica a todas las funciones IA (corrección, informe preliminar, consolidado, final).

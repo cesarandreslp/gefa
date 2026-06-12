@@ -32,11 +32,12 @@ export async function generateInstrumentReport(
   // Config IA del tenant
   const settings = await db.tenantSettings.findUnique({
     where: { tenantId },
-    select: { aiProvider: true, aiApiKey: true, aiModel: true, groqApiKey: true },
+    select: { aiProvider: true, aiApiKey: true, aiModel: true, groqApiKey: true, aiProviderSecondary: true, aiApiKeySecondary: true, aiModelSecondary: true },
   });
   const cfg = {
     provider: settings?.aiProvider, apiKey: settings?.aiApiKey,
     model: settings?.aiModel, groqApiKey: settings?.groqApiKey,
+    providerSecondary: settings?.aiProviderSecondary, apiKeySecondary: settings?.aiApiKeySecondary, modelSecondary: settings?.aiModelSecondary,
   };
   if (!aiIsConfigured(cfg)) {
     return { ok: false, error: 'IA no configurada para esta entidad. Configure el proveedor y la API key en Entidad → Integración IA.' };
