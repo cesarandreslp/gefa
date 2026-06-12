@@ -6,6 +6,11 @@ Bitácora de cambios del proyecto. Una entrada por instrucción (ver regla en `C
 
 ## 2026-06-11
 
+### 92. Informe consolidado por IA incluye la descripción preliminar — FASE 2
+**Estado:** COMPLETADO
+**Hecho:** `ConsolidatedReportService` ahora carga `Case.descripcionPreliminar` + `Case.description` y los antepone como "RELATO INICIAL DEL CASO" a los insumos del equipo (instrumentos) antes de pedir el pre‑informe; SYSTEM_PROMPT pide integrar el relato con los hallazgos. Sigue anonimizando (nombres de las partes) y requiere ≥1 instrumento del equipo. Sin cambios de schema.
+**Verificación:** `tsc --noEmit` exit=0.
+
 ### 91. Descripción preliminar + permiso del auxiliar — FASE 1
 **Estado:** COMPLETADO
 **Hecho:**
